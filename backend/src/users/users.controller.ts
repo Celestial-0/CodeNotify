@@ -8,22 +8,71 @@ import {
   UseGuards,
   HttpCode,
   HttpStatus,
+  Query,
+  Patch,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { Roles } from '../auth/decorators/roles.decorator';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
-import { ZodValidationPipe } from '../common/pipes/zod-validation.pipe';
-import type {
+import {
   UpdateUserDto,
   GetUserByIdDto,
-  UserPreferences,
+  type UserPreferences,
+  GetAllUsersDto,
+  UpdateUserRoleDto,
+  UpdateUserRoleBodyDto,
+  DeleteUserDto,
 } from '../common/dto/user.dto';
-import { UpdateUserSchema, GetUserByIdSchema } from '../common/dto/user.dto';
 import type { UserDocument } from './schemas/user.schema';
 
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
+
+  @Get()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('admin')
+  @HttpCode(HttpStatus.OK)
+  async getAllUsers(@Query() query: GetAllUsersDto): Promise<{
+    users: Array<{
+      id: string;
+      email: string;
+      name: string;
+      phoneNumber?: string;
+      role: string;
+      preferences: UserPreferences;
+      isActive: boolean;
+      createdAt: Date;
+      updatedAt: Date;
+    }>;
+    total: number;
+    limit: number;
+    offset: number;
+  }> {
+    const { users, total } = await this.usersService.getAllUsersWithPagination(
+      query.limit,
+      query.offset,
+    );
+
+    return {
+      users: users.map((user) => ({
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        phoneNumber: user.phoneNumber,
+        role: user.role,
+        preferences: user.preferences,
+        isActive: user.isActive,
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt,
+      })),
+      total,
+      limit: query.limit,
+      offset: query.offset,
+    };
+  }
 
   @Get('profile')
   @UseGuards(JwtAuthGuard)
@@ -47,7 +96,7 @@ export class UsersController {
   @HttpCode(HttpStatus.OK)
   async updateProfile(
     @CurrentUser() user: UserDocument,
-    @Body(new ZodValidationPipe(UpdateUserSchema)) updateUserDto: UpdateUserDto,
+    @Body() updateUserDto: UpdateUserDto,
   ): Promise<{
     id: string;
     email: string;
@@ -61,9 +110,7 @@ export class UsersController {
   @Get(':id')
   @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.OK)
-  async getUserById(
-    @Param(new ZodValidationPipe(GetUserByIdSchema)) params: GetUserByIdDto,
-  ): Promise<{
+  async getUserById(@Param() params: GetUserByIdDto): Promise<{
     id: string;
     email: string;
     name: string;
@@ -92,5 +139,40 @@ export class UsersController {
     @CurrentUser() user: UserDocument,
   ): Promise<{ message: string }> {
     return this.usersService.activateAccount(user);
+  }
+
+  @Patch(':id/role')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('admin')
+  @HttpCode(HttpStatus.OK)
+  async updateUserRole(
+    @Param() params: UpdateUserRoleDto,
+    @Body() body: UpdateUserRoleBodyDto,
+  ): Promise<{
+    id: string;
+    email: string;
+    name: string;
+    role: string;
+    message: string;
+  }> {
+    const user = await this.usersService.updateUserRole(params.id, body.role);
+    return {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      role: user.role,
+      message: `User role updated to ${body.role} successfully`,
+    };
+  }
+
+  @Delete(':id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('admin')
+  @HttpCode(HttpStatus.OK)
+  async deleteUser(
+    @Param() params: DeleteUserDto,
+  ): Promise<{ message: string }> {
+    await this.usersService.deleteUserById(params.id);
+    return { message: 'User deleted successfully' };
   }
 }

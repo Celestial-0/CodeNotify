@@ -1,25 +1,39 @@
 import { Module, Logger } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ConfigService } from '@nestjs/config';
+import { Connection, ConnectionStates } from 'mongoose';
+import { DATABASE, getDatabaseName } from '../common/common.constants';
 
 @Module({
   imports: [
     MongooseModule.forRootAsync({
-      useFactory: async (configService: ConfigService) => {
-        const DB_NAME = 'codenotify';
+      useFactory: (configService: ConfigService) => {
         const logger = new Logger('DatabaseModule');
-        const uri = configService.get<string>('MONGO_URI') + '/' + DB_NAME;
 
-        logger.log('Connecting to MongoDB...');
+        // Get environment variables from ConfigService (runtime)
+        const nodeEnv = configService.get<string>('NODE_ENV', 'dev');
+        const baseDbName = configService.get<string>('DB_NAME', 'codenotify');
+
+        // Get database name using centralized logic from constants
+        const dbName = getDatabaseName(nodeEnv, baseDbName);
+
+        const uri =
+          configService.get<string>('MONGO_URI', DATABASE.MONGO_URI) +
+          '/' +
+          dbName;
+
+        logger.log(`Connecting to MongoDB...`);
+        logger.log(`Environment: ${nodeEnv}`);
+        logger.log(`Database: ${dbName}`);
 
         return {
           uri,
-          connectionFactory: (connection) => {
+          connectionFactory: (connection: Connection) => {
             connection.on('connected', () => {
               logger.log('MongoDB connected successfully');
             });
 
-            connection.on('error', (error) => {
+            connection.on('error', (error: Error) => {
               logger.error('MongoDB connection error', error.stack);
             });
 
@@ -28,7 +42,7 @@ import { ConfigService } from '@nestjs/config';
             });
 
             // Log immediate connection state
-            if (connection.readyState === 1) {
+            if (connection.readyState === ConnectionStates.connected) {
               logger.log('MongoDB connected successfully');
             }
 

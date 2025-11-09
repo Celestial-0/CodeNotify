@@ -14,6 +14,7 @@ describe('AuthController', () => {
       email: 'test@example.com',
       name: 'Test User',
       phoneNumber: '+1234567890',
+      role: 'user',
     },
     accessToken: 'access-token',
     refreshToken: 'refresh-token',
@@ -50,7 +51,7 @@ describe('AuthController', () => {
       signup: jest.fn(),
       signin: jest.fn(),
       signout: jest.fn(),
-      refreshTokens: jest.fn(),
+      refreshAccessToken: jest.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -77,6 +78,9 @@ describe('AuthController', () => {
       // Assert
       expect(authService.signup).toHaveBeenCalledWith(mockCreateUserDto);
       expect(result).toEqual(mockAuthResponse);
+      expect(result.user).toHaveProperty('role');
+      expect(result).toHaveProperty('accessToken');
+      expect(result).toHaveProperty('refreshToken');
     });
 
     it('should handle signup errors', async () => {
@@ -141,21 +145,21 @@ describe('AuthController', () => {
     });
   });
 
-  describe('refreshTokens', () => {
-    it('should successfully refresh tokens', async () => {
+  describe('refreshAccessToken', () => {
+    it('should successfully refresh access token', async () => {
       // Arrange
       const refreshBody = { refreshToken: 'refresh-token', userId: 'user-id' };
       const expectedResponse = {
         accessToken: 'new-access-token',
-        refreshToken: 'new-refresh-token',
+        refreshToken: 'refresh-token',
       };
-      authService.refreshTokens.mockResolvedValue(expectedResponse);
+      authService.refreshAccessToken.mockResolvedValue(expectedResponse);
 
       // Act
-      const result = await controller.refreshTokens(refreshBody);
+      const result = await controller.refreshAccessToken(refreshBody);
 
       // Assert
-      expect(authService.refreshTokens).toHaveBeenCalledWith(
+      expect(authService.refreshAccessToken).toHaveBeenCalledWith(
         refreshBody.userId,
         refreshBody.refreshToken,
       );
@@ -166,13 +170,13 @@ describe('AuthController', () => {
       // Arrange
       const refreshBody = { refreshToken: 'invalid-token', userId: 'user-id' };
       const error = new Error('Invalid refresh token');
-      authService.refreshTokens.mockRejectedValue(error);
+      authService.refreshAccessToken.mockRejectedValue(error);
 
       // Act & Assert
-      await expect(controller.refreshTokens(refreshBody)).rejects.toThrow(
+      await expect(controller.refreshAccessToken(refreshBody)).rejects.toThrow(
         error,
       );
-      expect(authService.refreshTokens).toHaveBeenCalledWith(
+      expect(authService.refreshAccessToken).toHaveBeenCalledWith(
         refreshBody.userId,
         refreshBody.refreshToken,
       );

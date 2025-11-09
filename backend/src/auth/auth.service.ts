@@ -7,6 +7,7 @@ import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
 import { UsersService } from '../users/users.service';
+import { AUTH } from '../common/common.constants';
 import { CreateUserDto, SigninDto, AuthResponse } from '../common/dto/auth.dto';
 import { JwtPayload } from './strategies/jwt.strategy';
 import type { UserPreferences } from '../common/dto/user.dto';
@@ -42,7 +43,7 @@ export class AuthService {
     });
 
     // Generate tokens
-    const tokens = await this.generateTokens(user.id, user.email);
+    const tokens = await this.generateTokens(user.id, user.email, user.role);
 
     // Update user with refresh token
     await this.usersService.updateRefreshToken(user.id, tokens.refreshToken);
@@ -53,6 +54,7 @@ export class AuthService {
         email: user.email,
         name: user.name,
         phoneNumber: user.phoneNumber,
+        role: user.role,
       },
       accessToken: tokens.accessToken,
       refreshToken: tokens.refreshToken,
@@ -81,9 +83,9 @@ export class AuthService {
     }
 
     // Generate tokens
-    const tokens = await this.generateTokens(user.id, user.email);
+    const tokens = await this.generateTokens(user.id, user.email, user.role);
 
-    // Update user with refresh token and last login
+    // Update user with refresh token and last signin
     await this.usersService.updateRefreshToken(user.id, tokens.refreshToken);
     await this.usersService.updateLastLogin(user.id);
 
@@ -93,6 +95,7 @@ export class AuthService {
         email: user.email,
         name: user.name,
         phoneNumber: user.phoneNumber,
+        role: user.role,
       },
       accessToken: tokens.accessToken,
       refreshToken: tokens.refreshToken,
@@ -112,7 +115,7 @@ export class AuthService {
     return { message: 'Successfully signed out' };
   }
 
-  async refreshTokens(
+  async refreshAccessToken(
     userId: string,
     refreshToken: string,
   ): Promise<{ accessToken: string; refreshToken: string }> {
@@ -129,30 +132,46 @@ export class AuthService {
       throw new UnauthorizedException('Access denied');
     }
 
-    const tokens = await this.generateTokens(user.id, user.email);
-    await this.usersService.updateRefreshToken(user.id, tokens.refreshToken);
+    // Only generate a new access token, keep the same refresh token
+    const payload: JwtPayload = {
+      sub: user.id,
+      email: user.email,
+      role: user.role,
+    };
 
-    return tokens;
+    const accessToken = await this.jwtService.signAsync(payload, {
+      secret: this.configService.get<string>('JWT_SECRET', AUTH.JWT_SECRET),
+      expiresIn: '15m',
+    });
+
+    // Return new access token with the SAME refresh token
+    return {
+      accessToken,
+      refreshToken, // Return the same refresh token that was passed in
+    };
   }
 
   private async generateTokens(
     userId: string,
     email: string,
+    role: string,
   ): Promise<{ accessToken: string; refreshToken: string }> {
     const payload: JwtPayload = {
       sub: userId,
       email: email,
+      role: role,
     };
 
     const [accessToken, refreshToken] = await Promise.all([
       this.jwtService.signAsync(payload, {
-        secret: this.configService.get<string>('JWT_SECRET'),
+        secret: this.configService.get<string>('JWT_SECRET', AUTH.JWT_SECRET),
         expiresIn: '15m',
       }),
       this.jwtService.signAsync(payload, {
-        secret:
-          this.configService.get<string>('JWT_REFRESH_SECRET') ||
-          this.configService.get<string>('JWT_SECRET'),
+        secret: this.configService.get<string>(
+          'JWT_REFRESH_SECRET',
+          AUTH.JWT_REFRESH_SECRET,
+        ),
         expiresIn: '7d',
       }),
     ]);

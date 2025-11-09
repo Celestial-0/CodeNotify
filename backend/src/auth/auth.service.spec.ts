@@ -23,6 +23,7 @@ describe('AuthService', () => {
     name: 'Test User',
     password: 'hashedPassword',
     phoneNumber: '+1234567890',
+    role: 'user',
     isActive: true,
     preferences: {
       platforms: ['codeforces', 'leetcode'],
@@ -132,6 +133,7 @@ describe('AuthService', () => {
           email: mockUser.email,
           name: mockUser.name,
           phoneNumber: mockUser.phoneNumber,
+          role: mockUser.role,
         },
         accessToken: 'access-token',
         refreshToken: 'refresh-token',
@@ -187,6 +189,7 @@ describe('AuthService', () => {
           email: mockUser.email,
           name: mockUser.name,
           phoneNumber: mockUser.phoneNumber,
+          role: mockUser.role,
         },
         accessToken: 'access-token',
         refreshToken: 'refresh-token',
@@ -258,6 +261,163 @@ describe('AuthService', () => {
       );
       expect(result).toEqual({ message: 'Successfully signed out' });
     });
+
+    it('should throw UnauthorizedException if user not found', async () => {
+      // Arrange
+      const userId = 'non-existent-user';
+      usersService.getUserById.mockResolvedValue(null);
+
+      // Act & Assert
+      await expect(service.signout(userId)).rejects.toThrow(
+        UnauthorizedException,
+      );
+      expect(usersService.getUserById).toHaveBeenCalledWith(userId);
+      expect(usersService.updateRefreshToken).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('refreshAccessToken', () => {
+    it('should successfully refresh access token', async () => {
+      // Arrange
+      const userId = mockUser.id;
+      const refreshToken = 'refresh-token';
+      const userWithRefreshToken = {
+        ...mockUser,
+        refreshToken: 'hashed-refresh-token',
+      };
+
+      usersService.getUserById.mockResolvedValue(userWithRefreshToken as any);
+      mockedBcrypt.compare.mockResolvedValue(true as never);
+      jwtService.signAsync.mockResolvedValueOnce('new-access-token');
+
+      // Act
+      const result = await service.refreshAccessToken(userId, refreshToken);
+
+      // Assert
+      expect(usersService.getUserById).toHaveBeenCalledWith(userId);
+      expect(mockedBcrypt.compare).toHaveBeenCalledWith(
+        refreshToken,
+        userWithRefreshToken.refreshToken,
+      );
+      expect(jwtService.signAsync).toHaveBeenCalledTimes(1);
+      expect(usersService.updateRefreshToken).not.toHaveBeenCalled();
+      expect(result).toEqual({
+        accessToken: 'new-access-token',
+        refreshToken: refreshToken,
+      });
+    });
+
+    it('should throw UnauthorizedException if user not found', async () => {
+      // Arrange
+      const userId = 'non-existent-user';
+      const refreshToken = 'refresh-token';
+      usersService.getUserById.mockResolvedValue(null);
+
+      // Act & Assert
+      await expect(
+        service.refreshAccessToken(userId, refreshToken),
+      ).rejects.toThrow(UnauthorizedException);
+      expect(usersService.getUserById).toHaveBeenCalledWith(userId);
+      expect(mockedBcrypt.compare).not.toHaveBeenCalled();
+    });
+
+    it('should throw UnauthorizedException if user has no refresh token', async () => {
+      // Arrange
+      const userId = mockUser.id;
+      const refreshToken = 'refresh-token';
+      const userWithoutRefreshToken = { ...mockUser, refreshToken: null };
+      usersService.getUserById.mockResolvedValue(
+        userWithoutRefreshToken as any,
+      );
+
+      // Act & Assert
+      await expect(
+        service.refreshAccessToken(userId, refreshToken),
+      ).rejects.toThrow(UnauthorizedException);
+      expect(usersService.getUserById).toHaveBeenCalledWith(userId);
+      expect(mockedBcrypt.compare).not.toHaveBeenCalled();
+    });
+
+    it('should throw UnauthorizedException if refresh token does not match', async () => {
+      // Arrange
+      const userId = mockUser.id;
+      const refreshToken = 'invalid-refresh-token';
+      const userWithRefreshToken = {
+        ...mockUser,
+        refreshToken: 'hashed-refresh-token',
+      };
+
+      usersService.getUserById.mockResolvedValue(userWithRefreshToken as any);
+      mockedBcrypt.compare.mockResolvedValue(false as never);
+
+      // Act & Assert
+      await expect(
+        service.refreshAccessToken(userId, refreshToken),
+      ).rejects.toThrow(UnauthorizedException);
+      expect(usersService.getUserById).toHaveBeenCalledWith(userId);
+      expect(mockedBcrypt.compare).toHaveBeenCalledWith(
+        refreshToken,
+        userWithRefreshToken.refreshToken,
+      );
+      expect(jwtService.signAsync).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('validateUser', () => {
+    it('should return user without password if credentials are valid', async () => {
+      // Arrange
+      const email = 'test@example.com';
+      const password = 'password123';
+      usersService.findByEmail.mockResolvedValue(mockUser as any);
+      mockedBcrypt.compare.mockResolvedValue(true as never);
+
+      // Act
+      const result = await service.validateUser(email, password);
+
+      // Assert
+      expect(usersService.findByEmail).toHaveBeenCalledWith(email);
+      expect(mockedBcrypt.compare).toHaveBeenCalledWith(
+        password,
+        mockUser.password,
+      );
+      expect(result).toBeDefined();
+      expect(result).not.toHaveProperty('password');
+      expect(result?.email).toBe(email);
+    });
+
+    it('should return null if user not found', async () => {
+      // Arrange
+      const email = 'nonexistent@example.com';
+      const password = 'password123';
+      usersService.findByEmail.mockResolvedValue(null);
+
+      // Act
+      const result = await service.validateUser(email, password);
+
+      // Assert
+      expect(usersService.findByEmail).toHaveBeenCalledWith(email);
+      expect(mockedBcrypt.compare).not.toHaveBeenCalled();
+      expect(result).toBeNull();
+    });
+
+    it('should return null if password is invalid', async () => {
+      // Arrange
+      const email = 'test@example.com';
+      const password = 'wrongpassword';
+      usersService.findByEmail.mockResolvedValue(mockUser as any);
+      mockedBcrypt.compare.mockResolvedValue(false as never);
+
+      // Act
+      const result = await service.validateUser(email, password);
+
+      // Assert
+      expect(usersService.findByEmail).toHaveBeenCalledWith(email);
+      expect(mockedBcrypt.compare).toHaveBeenCalledWith(
+        password,
+        mockUser.password,
+      );
+      expect(result).toBeNull();
+    });
   });
 
   describe('error handling', () => {
@@ -310,9 +470,9 @@ describe('AuthService', () => {
       );
 
       // Act & Assert
-      await expect(service.refreshTokens(userId, refreshToken)).rejects.toThrow(
-        'JWT generation failed',
-      );
+      await expect(
+        service.refreshAccessToken(userId, refreshToken),
+      ).rejects.toThrow('JWT generation failed');
       expect(usersService.updateRefreshToken).not.toHaveBeenCalled();
     });
 

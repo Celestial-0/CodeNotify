@@ -1,45 +1,36 @@
-import {
-  Controller,
-  Post,
-  Body,
-  UseGuards,
-  HttpCode,
-  HttpStatus,
-} from '@nestjs/common';
+import { Controller, Post, Body, HttpCode, HttpStatus } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
-import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { Public } from '../common/decorators/public.decorator';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
-import { ZodValidationPipe } from '../common/pipes/zod-validation.pipe';
-import type {
+import {
   CreateUserDto,
   SigninDto,
-  AuthResponse,
+  type AuthResponse,
 } from '../common/dto/auth.dto';
-import { CreateUserSchema, SigninSchema } from '../common/dto/auth.dto';
 import type { UserDocument } from '../users/schemas/user.schema';
 
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
+  @Public()
+  @Throttle({ short: { limit: 50, ttl: 60000 } }) // 50 requests per minute
   @Post('signup')
   @HttpCode(HttpStatus.CREATED)
-  async signup(
-    @Body(new ZodValidationPipe(CreateUserSchema)) createUserDto: CreateUserDto,
-  ): Promise<AuthResponse> {
+  async signup(@Body() createUserDto: CreateUserDto): Promise<AuthResponse> {
     return await this.authService.signup(createUserDto);
   }
 
+  @Public()
+  @Throttle({ short: { limit: 100, ttl: 60000 } }) // 100 requests per minute
   @Post('signin')
   @HttpCode(HttpStatus.OK)
-  async signin(
-    @Body(new ZodValidationPipe(SigninSchema)) signinDto: SigninDto,
-  ): Promise<AuthResponse> {
+  async signin(@Body() signinDto: SigninDto): Promise<AuthResponse> {
     return await this.authService.signin(signinDto);
   }
 
   @Post('signout')
-  @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.OK)
   async signout(
     @CurrentUser() user: UserDocument,
@@ -47,11 +38,15 @@ export class AuthController {
     return await this.authService.signout(user.id);
   }
 
+  @Public()
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
-  async refreshTokens(
+  async refreshAccessToken(
     @Body() body: { refreshToken: string; userId: string },
   ): Promise<{ accessToken: string; refreshToken: string }> {
-    return await this.authService.refreshTokens(body.userId, body.refreshToken);
+    return await this.authService.refreshAccessToken(
+      body.userId,
+      body.refreshToken,
+    );
   }
 }

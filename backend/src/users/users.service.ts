@@ -89,6 +89,47 @@ export class UsersService {
       .exec();
   }
 
+  async getAllUsersWithPagination(
+    limit: number,
+    offset: number,
+  ): Promise<{ users: UserDocument[]; total: number }> {
+    const [users, total] = await Promise.all([
+      this.userModel
+        .find()
+        .select('-password -refreshToken')
+        .skip(offset)
+        .limit(limit)
+        .sort({ createdAt: -1 })
+        .exec(),
+      this.userModel.countDocuments().exec(),
+    ]);
+
+    return { users, total };
+  }
+
+  async updateUserRole(
+    userId: string,
+    role: 'user' | 'admin',
+  ): Promise<UserDocument> {
+    const user = await this.userModel
+      .findByIdAndUpdate(userId, { role }, { new: true })
+      .select('-password -refreshToken')
+      .exec();
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    return user;
+  }
+
+  async deleteUserById(userId: string): Promise<void> {
+    const result = await this.userModel.findByIdAndDelete(userId).exec();
+    if (!result) {
+      throw new NotFoundException('User not found');
+    }
+  }
+
   async deleteUser(id: string): Promise<void> {
     const result = await this.userModel.findByIdAndDelete(id).exec();
     if (!result) {

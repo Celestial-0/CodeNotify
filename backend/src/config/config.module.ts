@@ -5,9 +5,7 @@ import { z } from 'zod';
 const envSchema = z.object({
   // Server Configuration
   PORT: z.string().default('3000'),
-  NODE_ENV: z
-    .enum(['development', 'production', 'test'])
-    .default('development'),
+  NODE_ENV: z.enum(['dev', 'production', 'test']).default('dev'),
 
   // Database
   MONGO_URI: z.string().min(1, 'MONGO_URI is required'),
@@ -18,6 +16,10 @@ const envSchema = z.object({
   // Contest Platform APIs
   CODEFORCES_API: z.string().url().optional(),
   LEETCODE_API: z.string().url().optional(),
+
+  // Email Notifications (Resend)
+  RESEND_API_KEY: z.string().optional(),
+  EMAIL_FROM: z.string().optional(),
 
   // WhatsApp Cloud API (Meta)
   WHATSAPP_API_KEY: z.string().optional(),

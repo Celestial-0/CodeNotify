@@ -15,8 +15,10 @@ describe('AppController', () => {
   });
 
   describe('root', () => {
-    it('should return "Hello World!"', () => {
-      expect(appController.getHello()).toBe('Hello World!');
+    it('should return HTML landing page', () => {
+      const result = appController.gethome();
+      expect(result).toContain('<!DOCTYPE html>');
+      expect(result).toContain('CodeNotify API');
     });
   });
 });

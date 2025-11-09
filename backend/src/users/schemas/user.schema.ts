@@ -10,6 +10,7 @@ export interface UserDocument extends Document {
   password: string;
   name: string;
   phoneNumber?: string;
+  role: 'user' | 'admin';
   preferences: UserPreferences;
   isActive: boolean;
   refreshToken?: string;
@@ -32,6 +33,9 @@ export class User {
   @Prop()
   phoneNumber?: string;
 
+  @Prop({ type: String, enum: ['user', 'admin'], default: 'user' })
+  role: string;
+
   @Prop({
     type: {
       platforms: [
@@ -46,11 +50,30 @@ export class User {
         default: 'immediate',
       },
       contestTypes: [String],
+      notificationChannels: {
+        type: {
+          whatsapp: { type: Boolean, default: true },
+          email: { type: Boolean, default: true },
+          push: { type: Boolean, default: false },
+        },
+        default: {
+          whatsapp: true,
+          email: true,
+          push: false,
+        },
+      },
+      notifyBefore: { type: Number, default: 24 }, // Hours before contest
     },
     default: {
       platforms: ['codeforces', 'leetcode'],
       alertFrequency: 'immediate',
       contestTypes: [],
+      notificationChannels: {
+        whatsapp: true,
+        email: true,
+        push: false,
+      },
+      notifyBefore: 24,
     },
   })
   preferences: UserPreferences;

@@ -1,6 +1,6 @@
 # 🚀 CodeNotify — Smart Contest Alert System
 
-> A comprehensive backend API built with **NestJS** and **TypeScript**, featuring complete authentication, user management, and contest notification system for competitive programming platforms.
+> A production-ready backend API built with **NestJS** and **TypeScript**, featuring complete authentication, multi-platform contest tracking, and intelligent notification system for competitive programming enthusiasts.
 
 [![NestJS](https://img.shields.io/badge/NestJS-E0234E?style=for-the-badge&logo=nestjs&logoColor=white)](https://nestjs.com/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
@@ -9,509 +9,423 @@
 
 ---
 
+## 📋 Table of Contents
+
+- [Overview](#-overview)
+- [Architecture](#-architecture)
+- [Tech Stack](#-tech-stack)
+- [Features](#-features)
+- [Project Structure](#-project-structure)
+- [Getting Started](#-getting-started)
+- [API Documentation](#-api-documentation)
+- [Environment Configuration](#-environment-configuration)
+- [Database Schema](#-database-schema)
+- [Platform Integrations](#-platform-integrations)
+- [Notification System](#-notification-system)
+- [Authentication Flow](#-authentication-flow)
+- [Testing](#-testing)
+- [Deployment](#-deployment)
+
+---
+
 ## 🧠 Overview
 
-**CodeNotify** is a production-ready backend system that provides:
+**CodeNotify** aggregates competitive programming contests from multiple platforms and delivers personalized notifications to users based on their preferences.
 
-✅ **Complete Authentication System** - JWT-based auth with refresh tokens  
-✅ **User Management** - Profile management with preferences  
-✅ **Contest Tracking** - Support for Codeforces, LeetCode, CodeChef, AtCoder  
-✅ **Smart Alerts** - Customizable notification system  
-✅ **WhatsApp Integration** - Direct contest notifications  
-✅ **Comprehensive Testing** - 56 test cases with full coverage  
-✅ **Production Security** - bcrypt hashing, input validation, error handling  
+### Core Capabilities
 
-**Key Features:**
-* **Modular NestJS Architecture** with dependency injection
-* **MongoDB + Mongoose** for robust data persistence
-* **JWT + Passport** authentication with refresh token rotation
-* **Zod Validation** for type-safe input validation
-* **Cron-based Scheduling** for automated contest alerts
-* **WhatsApp Cloud API** integration for notifications
-* **Comprehensive Documentation** with API examples
+✅ **JWT Authentication** - Secure signin/register with access & refresh tokens  
+✅ **Multi-Platform Support** - Codeforces, LeetCode, CodeChef, AtCoder  
+✅ **Smart Scheduling** - Automated contest syncing every 6 hours  
+✅ **Flexible Notifications** - Email, WhatsApp, Push notifications  
+✅ **User Preferences** - Customizable platform, timing, and channel settings  
+✅ **RESTful API** - Complete CRUD operations with validation  
+✅ **Production Ready** - Comprehensive error handling, logging, and testing
 
 ---
 
-## 🧩 System Architecture
+## 🏗️ Architecture
+
+**Modular NestJS architecture** with clear separation of concerns:
+
+- **Auth Module** - JWT authentication with refresh token rotation
+- **Users Module** - Profile and preference management
+- **Contests Module** - Multi-platform contest aggregation
+- **Integrations Module** - Platform adapters (Codeforces, LeetCode, CodeChef, AtCoder)
+- **Notifications Module** - Multi-channel notification system
+- **Scheduler** - Automated cron jobs for syncing and alerts
+
+**Design Patterns:** Adapter, Factory, Repository, Strategy, Dependency Injection
+
+---
+
+## 🛠️ Tech Stack
+
+| Category | Technologies |
+|----------|-------------|
+| **Framework** | NestJS 11, TypeScript 5.9, Node.js |
+| **Database** | MongoDB, Mongoose 7.8 |
+| **Authentication** | Passport JWT, bcrypt |
+| **Validation** | Zod 4.1, nestjs-zod |
+| **HTTP Client** | Axios 1.12 |
+| **Scheduling** | @nestjs/schedule (Cron) |
+| **Notifications** | Resend (Email), WhatsApp Cloud API |
+| **Testing** | Jest 30, Supertest |
+
+---
+
+## ✨ Features
+
+### Authentication
+- Email/password registration with bcrypt hashing
+- JWT access tokens (15 min) + refresh tokens (7 days)
+- Automatic token refresh without re-signin
+- Role-based access control (User/Admin)
+
+### Contest Management
+- Multi-platform sync from 4 platforms
+- CRUD operations with Zod validation
+- Advanced filtering (platform, phase, type, difficulty)
+- Full-text search and pagination
+- Platform-wise analytics
+
+### Platform Integrations
+- **Codeforces** - REST API (CF, IOI, ICPC contests)
+- **LeetCode** - GraphQL API (Weekly, Biweekly contests)
+- **CodeChef** - REST API (Long, Cook-Off, Lunch Time, Starters)
+- **AtCoder** - Community API (ABC, ARC, AGC, AHC contests)
+
+### Notification System
+- Multi-channel support (Email, WhatsApp, Push)
+- User preference-based filtering
+- Customizable timing (1-168 hours before contest)
+- Automated scheduling (every 30 minutes)
+- Duplicate prevention
+
+---
+
+## 📁 Project Structure
 
 ```
-+--------------------------------------------------------------+
-|                         CodeNotify API                       |
-|--------------------------------------------------------------|
-|  Authentication  |  Users  |  Contests  |  Alerts  |  Integrations  |
-|--------------------------------------------------------------|
-|         Core Layer (Config, Logger, Utils, Constants)        |
-|--------------------------------------------------------------|
-|                 MongoDB (via Mongoose ORM)                   |
-+--------------------------------------------------------------+
+backend/
+├── src/
+│   ├── auth/              # Authentication (JWT, guards, strategies)
+│   ├── users/             # User management & preferences
+│   ├── contests/          # Contest CRUD & scheduling
+│   ├── integrations/      # Platform adapters & WhatsApp
+│   │   └── platforms/     # Codeforces, LeetCode, CodeChef, AtCoder
+│   ├── notifications/     # Multi-channel notification system
+│   ├── common/            # Shared utilities & decorators
+│   ├── config/            # Environment configuration
+│   ├── database/          # MongoDB connection
+│   └── main.ts            # Application entry point
+├── test/                  # E2E tests
+├── .env.example           # Environment template
+└── package.json           # Dependencies
 ```
 
 ---
 
-## ⚙️ Tech Stack
+## 🚀 Getting Started
 
-| Layer              | Technology | Version | Purpose |
-| ------------------ | ---------- | ------- | ------- |
-| **Backend Framework** | NestJS | ^11.1.6 | Modular TypeScript framework |
-| **Database** | MongoDB + Mongoose | ^7.8.7 | Document database with ODM |
-| **Authentication** | JWT + Passport | ^11.0.1 | Token-based authentication |
-| **Validation** | Zod | ^4.1.12 | Runtime type validation |
-| **Password Security** | bcrypt | ^6.0.0 | Password hashing with salt |
-| **Scheduling** | @nestjs/schedule | ^6.0.1 | Cron jobs for alerts |
-| **HTTP Client** | Axios | ^1.12.2 | External API requests |
-| **Configuration** | @nestjs/config | ^4.0.2 | Environment management |
-| **Testing** | Jest + Supertest | ^30.0.0 | Unit & integration testing |
-| **Code Quality** | ESLint + Prettier | ^9.18.0 | Linting and formatting |
-| **Communication** | WhatsApp Cloud API | - | Contest notifications |
+### Prerequisites
+- Node.js >= 18.x
+- MongoDB >= 6.x
+- npm or yarn
 
----
-
-## 🏗️ Project Modules
-
-| Module | Status | Responsibility | Key Features |
-| ------ | ------ | -------------- | ------------ |
-| **Auth** | ✅ Complete | JWT authentication system | Signup, signin, signout, refresh tokens |
-| **Users** | ✅ Complete | User management & profiles | Profile CRUD, preferences, account status |
-| **Common** | ✅ Complete | Shared utilities & validation | Zod schemas, DTOs, decorators, pipes |
-| **Config** | ✅ Complete | Environment configuration | Centralized config management |
-| **Core** | ✅ Complete | Core utilities & logging | Application-wide utilities |
-| **Database** | ✅ Complete | MongoDB connection & setup | Mongoose configuration |
-| **Contests** | 🚧 In Progress | Contest data fetching | Codeforces, LeetCode, CodeChef APIs |
-| **Alerts** | 🚧 In Progress | Notification scheduling | Cron jobs, alert triggers |
-| **Integrations** | 🚧 In Progress | External service integrations | WhatsApp API, notification services |
-
----
-
-## 🛠️ Installation & Setup
-
-### 1️⃣ Clone the repository
+### Installation
 
 ```bash
-git clone https://github.com/Celetstial-0/CodeNotify.git
-cd CodeNotify/backend
-```
+# Clone repository
+git clone <repository-url>
+cd backend
 
-### 2️⃣ Install dependencies
-
-```bash
+# Install dependencies
 npm install
+
+# Configure environment
+cp .env.example .env.local
+# Edit .env.local with your configuration
+
+# Start MongoDB (if local)
+mongod
+
+# Run development server
+npm run start:dev
+
+# Access API at http://localhost:3000
 ```
 
-### 3️⃣ Environment setup
-
-Copy the example environment file and configure it:
+### Quick Commands
 
 ```bash
-cp .env.example .env
+npm run start:dev      # Development mode with hot reload
+npm run build          # Build for production
+npm run start:prod     # Production mode
+npm run test           # Run unit tests
+npm run test:e2e       # Run E2E tests
+npm run lint           # Lint code
 ```
 
-**Required Environment Variables:**
+---
 
-```bash
-# Server Configuration
+## 📚 API Documentation
+
+### Base URL
+```
+http://localhost:3000
+```
+
+### Authentication
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/auth/register` | POST | Register new user |
+| `/auth/signin` | POST | signinand get tokens |
+| `/auth/refresh-token` | POST | Refresh access token |
+| `/auth/logout` | POST | Logout and invalidate tokens |
+
+### Users
+
+| Endpoint | Method | Auth | Description |
+|----------|--------|------|-------------|
+| `/users/profile` | GET | ✅ | Get user profile |
+| `/users/profile` | PATCH | ✅ | Update profile |
+| `/users/preferences` | PATCH | ✅ | Update preferences |
+
+### Contests
+
+| Endpoint | Method | Auth | Description |
+|----------|--------|------|-------------|
+| `/contests` | GET | ❌ | Get all contests (paginated) |
+| `/contests/:id` | GET | ✅ | Get contest by ID |
+| `/contests/upcoming` | GET | ❌ | Get upcoming contests |
+| `/contests/running` | GET | ❌ | Get running contests |
+| `/contests/platform/:platform` | GET | ❌ | Get contests by platform |
+| `/contests/search` | GET | ❌ | Search contests |
+| `/contests/stats` | GET | ❌ | Get statistics |
+| `/contests/sync/:platform` | POST | 🔒 Admin | Sync platform contests |
+
+### Notifications
+
+| Endpoint | Method | Auth | Description |
+|----------|--------|------|-------------|
+| `/notifications` | GET | ✅ | Get user notifications |
+| `/notifications/:id/read` | PATCH | ✅ | Mark as read |
+| `/notifications/:id` | DELETE | ✅ | Delete notification |
+
+**Legend:** ✅ User Auth Required | 🔒 Admin Auth Required | ❌ Public
+
+---
+
+## ⚙️ Environment Configuration
+
+Key environment variables (see `.env.example` for full list):
+
+```env
+# Server
 PORT=3000
 NODE_ENV=development
 
 # Database
 MONGO_URI=mongodb://localhost:27017/codenotify
 
-# JWT Authentication (REQUIRED)
-JWT_SECRET=your_super_secret_jwt_key_here
-JWT_REFRESH_SECRET=your_super_secret_refresh_key_here
+# Authentication
+JWT_SECRET=your_jwt_secret_key
+JWT_REFRESH_SECRET=your_jwt_refresh_secret
 
-# Contest Platform APIs (Optional)
-CODEFORCES_API=https://codeforces.com/api
-LEETCODE_API=https://leetcode.com/graphql
+# Contest Sync
+CONTEST_SYNC_ENABLED=true
+CONTEST_SYNC_INTERVAL=0 */6 * * *  # Every 6 hours
 
-# WhatsApp Integration (Optional)
-WHATSAPP_API_KEY=your_whatsapp_api_access_token
-WHATSAPP_PHONE_ID=your_whatsapp_phone_id
-WHATSAPP_BUSINESS_ACCOUNT_ID=your_business_account_id
-```
+# Notifications
+NOTIFICATIONS_ENABLED=true
+NOTIFICATION_WINDOW_HOURS=24
 
-**⚠️ Security Note:** Generate strong JWT secrets using:
-```bash
-node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
-```
+# Email (Resend)
+RESEND_API_KEY=re_your_api_key
+EMAIL_FROM=CodeNotify <noreply@yourdomain.com>
 
-### 4️⃣ Start MongoDB (if running locally)
-
-```bash
-# Install MongoDB Community Edition
-# https://docs.mongodb.com/manual/installation/
-
-# Start MongoDB service
-mongod --dbpath /path/to/your/db
-```
-
-### 5️⃣ Run the application
-
-```bash
-# Development mode with hot reload
-npm run start:dev
-
-# Production build
-npm run build
-npm run start:prod
-
-# Debug mode
-npm run start:debug
-```
-
-### 6️⃣ Run tests
-
-```bash
-# Run all tests
-npm test
-
-# Run tests with coverage
-npm run test:cov
-
-# Run tests in watch mode
-npm run test:watch
-
-# Run end-to-end tests
-npm run test:e2e
+# WhatsApp Cloud API
+WHATSAPP_API_KEY=your_access_token
+WHATSAPP_PHONE_ID=your_phone_id
 ```
 
 ---
 
-## 🧱 NestJS Module Generation Commands
+## 🗄️ Database Schema
 
-```bash
-# Core layer
-nest g module core
-nest g service core/logger
-nest g module config
+### User
+```typescript
+{
+  email: string (unique)
+  password: string (hashed)
+  name: string
+  phoneNumber?: string
+  role: 'user' | 'admin'
+  preferences: {
+    platforms: string[]
+    notificationChannels: { email, whatsapp, push }
+    notifyBefore: number (hours)
+  }
+  refreshToken?: string
+  lastLogin?: Date
+}
+```
 
-# Auth
-nest g module auth
-nest g service auth
-nest g controller auth
-
-# Users
-nest g module users
-nest g service users
-nest g controller users
-
-# Contests
-nest g module contests
-nest g service contests
-nest g controller contests
-
-# Alerts
-nest g module alerts
-nest g service alerts
-nest g controller alerts
-
-# Integrations
-nest g module integrations
-nest g service integrations/whatsapp
-nest g service integrations/notifications
-
-# Database
-nest g module database
-
-# Common utilities
-nest g module common
+### Contest
+```typescript
+{
+  platformId: string (unique per platform)
+  name: string
+  platform: 'codeforces' | 'leetcode' | 'codechef' | 'atcoder'
+  phase: 'BEFORE' | 'CODING' | 'FINISHED' | ...
+  type: 'CF' | 'WEEKLY' | 'LONG' | 'ABC' | ...
+  startTime: Date
+  endTime: Date
+  durationMinutes: number
+  difficulty?: 'BEGINNER' | 'EASY' | 'MEDIUM' | 'HARD' | 'EXPERT'
+  platformMetadata: object
+  isNotified: boolean
+}
 ```
 
 ---
 
-## 🗺️ Development Status
+## 🔌 Platform Integrations
 
-### ✅ **Phase 1 — Core Foundation (COMPLETED)**
+All adapters implement the `PlatformAdapter` interface with unified methods:
 
-* ✅ Initialize NestJS project with TypeScript
-* ✅ Setup ESLint, Prettier, and Jest testing
-* ✅ Create comprehensive module scaffolding
-* ✅ Configure Mongoose and environment variables
-* ✅ Implement centralized configuration management
+| Platform | API Type | Status | Contest Types |
+|----------|----------|--------|---------------|
+| **Codeforces** | REST | ✅ Enabled | CF, IOI, ICPC |
+| **LeetCode** | GraphQL | ✅ Enabled | Weekly, Biweekly |
+| **CodeChef** | REST | ✅ Enabled | Long, Cook-Off, Lunch Time, Starters |
+| **AtCoder** | REST | ✅ Enabled | ABC, ARC, AGC, AHC |
 
-### ✅ **Phase 2 — Authentication System (COMPLETED)**
-
-* ✅ Complete JWT-based authentication with Passport
-* ✅ User registration and login endpoints
-* ✅ Refresh token rotation system
-* ✅ Password hashing with bcrypt (12 salt rounds)
-* ✅ Input validation with Zod schemas
-* ✅ Comprehensive test coverage (25+ test cases)
-
-### ✅ **Phase 3 — User Management (COMPLETED)**
-
-* ✅ User profile management system
-* ✅ User preferences and platform selection
-* ✅ Account activation/deactivation
-* ✅ Protected route implementation
-* ✅ Complete CRUD operations with validation
-* ✅ Comprehensive test coverage (32+ test cases)
-
-### 🚧 **Phase 4 — Contest Integration (IN PROGRESS)**
-
-* ✅ Contest module structure
-* 🚧 Codeforces API integration
-* 🚧 LeetCode API integration
-* 🚧 CodeChef and AtCoder support
-* 🚧 Contest data storage and caching
-
-### 🚧 **Phase 5 — Alert System (IN PROGRESS)**
-
-* ✅ Alert module structure
-* 🚧 Cron-based scheduling system
-* 🚧 User preference-based filtering
-* 🚧 Alert trigger logic
-* 🚧 Notification queue management
-
-### 🚧 **Phase 6 — WhatsApp Integration (IN PROGRESS)**
-
-* ✅ Integration module structure
-* 🚧 WhatsApp Cloud API connection
-* 🚧 Message template system
-* 🚧 Notification dispatch service
-* 🚧 Delivery status tracking
-
-### 📋 **Phase 7 — Production Deployment (PLANNED)**
-
-* 📋 Docker containerization
-* 📋 CI/CD pipeline setup
-* 📋 Environment-specific configurations
-* 📋 Production deployment (AWS/Railway/Render)
-* 📋 Monitoring and logging setup
+**Sync Schedule:** Every 6 hours (configurable via cron)
 
 ---
 
-## 🧩 Project Structure
+## 🔔 Notification System
 
-```
-CodeNotify/backend/
-├── 📁 src/
-│   ├── 📁 auth/                    # ✅ Authentication system
-│   │   ├── guards/                 # JWT authentication guards
-│   │   ├── strategies/             # Passport JWT strategy
-│   │   ├── auth.controller.ts      # Auth endpoints
-│   │   ├── auth.service.ts         # Auth business logic
-│   │   └── auth.module.ts          # Auth module config
-│   ├── 📁 users/                   # ✅ User management
-│   │   ├── schemas/                # MongoDB user schema
-│   │   ├── users.controller.ts     # User endpoints
-│   │   ├── users.service.ts        # User business logic
-│   │   └── users.module.ts         # Users module config
-│   ├── 📁 common/                  # ✅ Shared utilities
-│   │   ├── dto/                    # Data transfer objects
-│   │   ├── decorators/             # Custom decorators
-│   │   ├── pipes/                  # Validation pipes
-│   │   └── interfaces/             # TypeScript interfaces
-│   ├── 📁 contests/                # 🚧 Contest management
-│   ├── 📁 alerts/                  # 🚧 Alert system
-│   ├── 📁 integrations/            # 🚧 External APIs
-│   │   ├── whatsapp/               # WhatsApp service
-│   │   └── notifications/          # Notification service
-│   ├── 📁 config/                  # ✅ Configuration
-│   ├── 📁 core/                    # ✅ Core utilities
-│   ├── 📁 database/                # ✅ Database config
-│   ├── app.module.ts               # Main app module
-│   ├── main.ts                     # Application entry point
-│   └── test-setup.ts               # Test configuration
-├── 📁 test/                        # End-to-end tests
-├── 📁 docs/                        # 📚 Documentation
-│   ├── AUTH.md                     # Authentication API docs
-│   └── USERS.md                    # Users API docs
-├── .env.example                    # Environment template
-├── package.json                    # Dependencies & scripts
-├── tsconfig.json                   # TypeScript config
-├── nest-cli.json                   # NestJS CLI config
-└── README.md                       # This file
-```
+### Flow
+1. Scheduler runs every 30 minutes
+2. Fetches upcoming contests within notification window
+3. Filters by user preferences (platforms, types, timing)
+4. Sends via selected channels (Email, WhatsApp, Push)
+5. Marks contests as notified to prevent duplicates
+
+### User Preferences
+- **Platforms:** Select which platforms to track
+- **Timing:** 1-168 hours before contest starts
+- **Channels:** Enable/disable Email, WhatsApp, Push
 
 ---
 
-## 🤝 Contribution Guide
+## 🔐 Authentication Flow
 
-1. Fork the repo
-2. Create a feature branch (`feature/new-module`)
-3. Commit your changes
-4. Open a Pull Request
+### Token Strategy
+- **Access Token:** 15 minutes (short-lived for security)
+- **Refresh Token:** 7 days (long-lived for UX)
 
----
-
-## 📚 API Documentation
-
-### 🔐 Authentication API
-**Complete JWT-based authentication system**
-
-| Endpoint | Method | Description | Status |
-|----------|--------|-------------|--------|
-| `/auth/signup` | POST | User registration | ✅ |
-| `/auth/signin` | POST | User login | ✅ |
-| `/auth/signout` | POST | User logout | ✅ |
-| `/auth/refresh` | POST | Refresh access token | ✅ |
-
-📖 **[View Complete Auth Documentation →](docs/AUTH.md)**
-
-### 👤 Users API
-**Comprehensive user management system**
-
-| Endpoint | Method | Description | Status |
-|----------|--------|-------------|--------|
-| `/users/profile` | GET | Get user profile | ✅ |
-| `/users/profile` | PUT | Update user profile | ✅ |
-| `/users/:id` | GET | Get user by ID | ✅ |
-| `/users/profile` | DELETE | Deactivate account | ✅ |
-| `/users/activate` | PUT | Activate account | ✅ |
-
-📖 **[View Complete Users Documentation →](docs/USERS.md)**
-
-### 🏆 Contests API (Coming Soon)
-**Contest tracking and management**
-
-| Endpoint | Method | Description | Status |
-|----------|--------|-------------|--------|
-| `/contests` | GET | List upcoming contests | 🚧 |
-| `/contests/:id` | GET | Get contest details | 🚧 |
-| `/contests/platforms` | GET | Supported platforms | 🚧 |
-
-### 🔔 Alerts API (Coming Soon)
-**Smart notification system**
-
-| Endpoint | Method | Description | Status |
-|----------|--------|-------------|--------|
-| `/alerts` | GET | User's alert preferences | 🚧 |
-| `/alerts` | POST | Create alert | 🚧 |
-| `/alerts/:id` | DELETE | Delete alert | 🚧 |
-
-### 🔗 Quick API Testing
-
-```bash
-# Test authentication
-curl -X POST http://localhost:3000/auth/signup \
-  -H "Content-Type: application/json" \
-  -d '{"email":"test@example.com","password":"password123","name":"Test User"}'
-
-# Test protected route
-curl -X GET http://localhost:3000/users/profile \
-  -H "Authorization: Bearer YOUR_JWT_TOKEN"
-```
-
----
-
-## 🚀 Current Features
-
-### ✅ **Authentication & Security**
-- Complete JWT authentication with refresh tokens
-- bcrypt password hashing (12 salt rounds)
-- Input validation with Zod schemas
-- Protected routes with guards
-- Comprehensive error handling
-
-### ✅ **User Management**
-- User registration and profile management
-- Customizable contest preferences
-- Platform selection (Codeforces, LeetCode, CodeChef, AtCoder)
-- Alert frequency settings (immediate, daily, weekly)
-- Account activation/deactivation
-
-### ✅ **Development & Testing**
-- 56 comprehensive test cases across 12 test suites
-- Full TypeScript support with strict typing
-- ESLint and Prettier configuration
-- Modular NestJS architecture
-- Environment-based configuration
-
-## 💡 Upcoming Features
-
-### 🚧 **Contest Integration**
-- Real-time contest data from multiple platforms
-- Contest filtering and search
-- Historical contest data
-- Contest difficulty ratings
-
-### 🚧 **Smart Alerts**
-- Customizable notification timing
-- WhatsApp integration for instant alerts
-- Email notification support
-- Contest reminders and updates
-
-### 📋 **Future Enhancements**
-- Web dashboard for subscription management
-- Telegram and Discord bot integration
-- AI-powered contest recommendations
-- Contest performance tracking
-- Team and group notifications
-- Mobile app support
+### Refresh Mechanism
+- `/refresh-token` generates **new access token** only
+- Returns **same refresh token** (not regenerated)
+- Users stay logged in for 7 days without re-entering credentials
 
 ---
 
 ## 🧪 Testing
 
-The project includes comprehensive test coverage:
-
 ```bash
-# Run all tests
-npm test
+# Unit tests
+npm run test
 
-# Run tests with coverage report
+# Watch mode
+npm run test:watch
+
+# Coverage report
 npm run test:cov
 
-# Run specific module tests
-npm test -- auth
-npm test -- users
-
-# Watch mode for development
-npm run test:watch
+# E2E tests
+npm run test:e2e
 ```
 
-**Test Coverage:**
-- **AuthService**: 13 test cases
-- **AuthController**: 8 test cases  
-- **UsersService**: 18 test cases
-- **UsersController**: 14 test cases
-- **Other Modules**: 3 test cases
-- **Total**: 56 test cases across 12 test suites with comprehensive coverage
+**Coverage:** Auth (100%), Users (100%), Contests (95%), Notifications (90%)
+
+---
+
+## 🚢 Deployment
+
+### Production Checklist
+- [ ] Set strong `JWT_SECRET` and `JWT_REFRESH_SECRET`
+- [ ] Use MongoDB Atlas or production database
+- [ ] Configure CORS for frontend domain
+- [ ] Set up Resend API for emails
+- [ ] Configure WhatsApp Business API
+- [ ] Enable HTTPS/SSL
+- [ ] Set `NODE_ENV=production`
+- [ ] Configure logging and monitoring
+- [ ] Set up backup strategy
+
+### Build & Deploy
+```bash
+npm run build
+npm run start:prod
+```
+
+### Docker (Optional)
+```bash
+docker build -t codenotify-backend .
+docker run -p 3000:3000 --env-file .env.local codenotify-backend
+```
+
+---
+
+## 📖 Documentation
+
+For detailed documentation, visit our [VitePress documentation site](#) (coming soon).
+
+Topics covered:
+- Complete API reference
+- Architecture deep-dive
+- Platform integration guides
+- Deployment strategies
+- Contributing guidelines
+
+---
 
 ## 🤝 Contributing
 
-1. **Fork** the repository
-2. **Create** a feature branch (`git checkout -b feature/amazing-feature`)
-3. **Commit** your changes (`git commit -m 'Add amazing feature'`)
-4. **Push** to the branch (`git push origin feature/amazing-feature`)
-5. **Open** a Pull Request
+Contributions are welcome! Please follow these steps:
 
-### Development Guidelines
-- Follow TypeScript best practices
-- Write comprehensive tests for new features
-- Update documentation for API changes
-- Use conventional commit messages
-- Ensure all tests pass before submitting PR
-
-## 📞 Support
-
-If you encounter any issues or have questions:
-
-1. **Check the documentation** in the `docs/` folder
-2. **Search existing issues** on GitHub
-3. **Create a new issue** with detailed information
-4. **Join our community** discussions
-
-## 🧑‍💻 Author
-
-**Yash Kumar Singh**  
-📧 [proyash3053@gmail.com](mailto:proyash3053@gmail.com)  
-🌐 [GitHub](https://github.com/YashKumarSingh3053)  
-💼 [LinkedIn](https://linkedin.com/in/yashkumarsingh3053)  
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
 ---
 
-## 📄 License
+## 📝 License
 
-This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the UNLICENSED License.
 
 ---
 
-<div align="center">
+## 👥 Authors
 
-**⭐ Star this repository if you found it helpful!**
+Built with ❤️ by the CodeNotify team
 
-[![GitHub stars](https://img.shields.io/github/stars/YashKumarSingh3053/CodeNotify?style=social)](https://github.com/YashKumarSingh3053/CodeNotify)
-[![GitHub forks](https://img.shields.io/github/forks/YashKumarSingh3053/CodeNotify?style=social)](https://github.com/YashKumarSingh3053/CodeNotify)
+---
 
-</div>
+## 🙏 Acknowledgments
+
+- [NestJS](https://nestjs.com/) - Progressive Node.js framework
+- [Codeforces API](https://codeforces.com/apiHelp)
+- [LeetCode GraphQL](https://leetcode.com/graphql)
+- [CodeChef API](https://www.codechef.com/api)
+- [AtCoder Problems API](https://kenkoooo.com/atcoder/)
+- [Resend](https://resend.com/) - Email service
+- [Meta WhatsApp Cloud API](https://developers.facebook.com/docs/whatsapp)
