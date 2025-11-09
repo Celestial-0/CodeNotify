@@ -1,0 +1,1713 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CodeNotify API Testing Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .response-box {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .response-box::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .response-box::-webkit-scrollbar-track {
+            background: rgb(0, 0, 0);
+            border-radius: 4px;
+        }
+
+        .response-box::-webkit-scrollbar-thumb {
+            background: rgb(55, 65, 81);
+            border-radius: 4px;
+        }
+
+        .response-box::-webkit-scrollbar-thumb:hover {
+            background: rgb(75, 85, 99);
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body class="bg-gray-950 text-gray-100 min-h-screen">
+    <div class="container mx-auto p-6 max-w-7xl">
+        <!-- Header -->
+        <div class="mb-8">
+            <div class="flex items-center justify-between mb-2">
+                <h1 class="text-4xl font-bold text-white">CodeNotify API</h1>
+                <div class="flex items-center gap-4">
+                    <span id="status-indicator" class="flex items-center gap-2">
+                        <span class="w-2 h-2 rounded-full bg-gray-500"></span>
+                        <span class="text-sm text-gray-400">Checking...</span>
+                    </span>
+                    <span id="auth-status" class="flex items-center gap-2">
+                        <span class="w-2 h-2 rounded-full bg-red-500"></span>
+                        <span class="text-sm text-red-400">Not Authenticated</span>
+                    </span>
+                    <span id="role-indicator" class="flex items-center gap-2">
+                        <span class="text-sm px-2 py-1 rounded bg-gray-800 text-gray-300">Role: <span id="user-role" class="font-semibold">-</span></span>
+                    </span>
+                    <input type="text" id="base-url" value="http://localhost:8000" 
+                           class="w-64 text-sm px-3 py-2 bg-black border border-gray-800 rounded-md text-gray-100 placeholder:text-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-700" placeholder="Base URL">
+                </div>
+            </div>
+            <p class="text-gray-400">Multi-Platform Contest Notification System Testing Dashboard (Codeforces, LeetCode, CodeChef, AtCoder)</p>
+        </div>
+
+        <!-- Auth Required Banner -->
+        <div id="auth-banner" class="mb-6 bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4 hidden">
+            <div class="flex items-center gap-3">
+                <span class="text-2xl">🔒</span>
+                <div class="flex-1">
+                    <h3 class="text-yellow-400 font-semibold mb-1">Authentication Required</h3>
+                    <p class="text-sm text-gray-300">Please login or register in the <strong>Auth</strong> tab to access protected endpoints. Some buttons are disabled until you authenticate.</p>
+                </div>
+                <button onclick="switchTab('auth')" class="px-4 py-2 bg-yellow-500/20 text-yellow-400 rounded-md font-medium hover:bg-yellow-500/30 transition-colors">
+                    Go to Auth
+                </button>
+            </div>
+        </div>
+
+        <!-- Admin Required Banner -->
+        <div id="admin-banner" class="mb-6 bg-red-500/10 border border-red-500/30 rounded-lg p-4 hidden">
+            <div class="flex items-center gap-3">
+                <span class="text-2xl">👑</span>
+                <div class="flex-1">
+                    <h3 class="text-red-400 font-semibold mb-1">Admin Access Required</h3>
+                    <p class="text-sm text-gray-300">You are logged in as a <strong>user</strong>. Admin-only operations (create, update, delete, sync) are disabled. Contact an administrator to upgrade your account.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="flex gap-2 mb-6 border-b border-gray-900">
+            <button onclick="switchTab('health')" id="tab-health" class="tab-btn px-4 py-2 font-medium border-b-2 border-white text-white">Health</button>
+            <button onclick="switchTab('auth')" id="tab-auth" class="tab-btn px-4 py-2 font-medium border-b-2 border-transparent text-gray-400 hover:text-white">Auth</button>
+            <button onclick="switchTab('users')" id="tab-users" class="tab-btn px-4 py-2 font-medium border-b-2 border-transparent text-gray-400 hover:text-white">Users</button>
+            <button onclick="switchTab('contests')" id="tab-contests" class="tab-btn px-4 py-2 font-medium border-b-2 border-transparent text-gray-400 hover:text-white">Contests</button>
+            <button onclick="switchTab('analytics')" id="tab-analytics" class="tab-btn px-4 py-2 font-medium border-b-2 border-transparent text-gray-400 hover:text-white">Analytics</button>
+            <button onclick="switchTab('notifications')" id="tab-notifications" class="tab-btn px-4 py-2 font-medium border-b-2 border-transparent text-gray-400 hover:text-white">Notifications</button>
+            <button onclick="switchTab('sync')" id="tab-sync" class="tab-btn px-4 py-2 font-medium border-b-2 border-transparent text-gray-400 hover:text-white">Sync</button>
+        </div>
+
+        <!-- Health Tab -->
+        <div id="content-health" class="tab-content">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="bg-black border border-gray-900 rounded-lg p-4">
+                    <h3 class="text-lg font-semibold mb-3 flex items-center gap-2">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-500/20 text-blue-400">GET</span>
+                        API Health Check
+                    </h3>
+                    <p class="text-sm text-gray-400 mb-4">Check if the API is running</p>
+                    <button onclick="testEndpoint('GET', '/contests/health')" class="w-full px-4 py-2 bg-white text-black rounded-md font-medium hover:bg-gray-200 transition-colors">
+                        Test Health
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Auth Tab -->
+        <div id="content-auth" class="tab-content hidden">
+            <div class="mb-4 bg-black border border-gray-900 rounded-lg p-4">
+                <h3 class="text-lg font-semibold mb-3 flex items-center gap-2">
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-purple-500/20 text-purple-400">JWT</span>
+                    Current Token
+                </h3>
+                <div class="flex gap-2 mb-2">
+                    <input type="text" id="jwt-token" placeholder="Paste your JWT token here" class="flex-1 text-sm px-3 py-2 bg-gray-950 border border-gray-900 rounded-md text-gray-100 placeholder:text-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-700">
+                    <button onclick="saveToken()" class="px-4 py-2 bg-purple-500/20 text-purple-400 rounded-md font-medium hover:bg-purple-500/30 transition-colors">Save</button>
+                    <button onclick="clearToken()" class="px-4 py-2 bg-red-500/20 text-red-400 rounded-md font-medium hover:bg-red-500/30 transition-colors">Clear</button>
+                </div>
+                <p class="text-xs text-gray-500 mt-2">Token will be automatically included in Authorization header for protected endpoints</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Register -->
+                <div class="bg-black border border-gray-900 rounded-lg p-4">
+                    <h3 class="text-lg font-semibold mb-3 flex items-center gap-2">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-green-500/20 text-green-400">POST</span>
+                        Register
+                    </h3>
+                    <div class="space-y-2 mb-4">
+                        <input type="email" id="register-email" placeholder="Email" class="w-full text-sm px-3 py-2 bg-gray-950 border border-gray-900 rounded-md text-gray-100 placeholder:text-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-700">
+                        <input type="password" id="register-password" placeholder="Password" class="w-full text-sm px-3 py-2 bg-gray-950 border border-gray-900 rounded-md text-gray-100 placeholder:text-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-700">
+                        <input type="text" id="register-name" placeholder="Name (optional)" class="w-full text-sm px-3 py-2 bg-gray-950 border border-gray-900 rounded-md text-gray-100 placeholder:text-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-700">
+                    </div>
+                    <button onclick="register()" class="w-full px-4 py-2 bg-white text-black rounded-md font-medium hover:bg-gray-200 transition-colors">Register</button>
+                </div>
+
+                <!-- Login -->
+                <div class="bg-black border border-gray-900 rounded-lg p-4">
+                    <h3 class="text-lg font-semibold mb-3 flex items-center gap-2">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-green-500/20 text-green-400">POST</span>
+                        Login
+                    </h3>
+                    <div class="space-y-2 mb-4">
+                        <input type="email" id="login-email" placeholder="Email" class="w-full text-sm px-3 py-2 bg-gray-950 border border-gray-900 rounded-md text-gray-100 placeholder:text-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-700">
+                        <input type="password" id="login-password" placeholder="Password" class="w-full text-sm px-3 py-2 bg-gray-950 border border-gray-900 rounded-md text-gray-100 placeholder:text-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-700">
+                    </div>
+                    <button onclick="login()" class="w-full px-4 py-2 bg-white text-black rounded-md font-medium hover:bg-gray-200 transition-colors">Login</button>
+                </div>
+
+                <!-- Refresh Token -->
+                <div class="bg-black border border-gray-900 rounded-lg p-4">
+                    <h3 class="text-lg font-semibold mb-3 flex items-center gap-2">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-green-500/20 text-green-400">POST</span>
+                        Refresh Token
+                    </h3>
+                    <div class="space-y-2 mb-4">
+                        <input type="text" id="refresh-user-id" placeholder="User ID" class="w-full text-sm px-3 py-2 bg-gray-950 border border-gray-900 rounded-md text-gray-100 placeholder:text-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-700">
+                        <input type="text" id="refresh-token" placeholder="Refresh Token" class="w-full text-sm px-3 py-2 bg-gray-950 border border-gray-900 rounded-md text-gray-100 placeholder:text-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-700">
+                    </div>
+                    <p class="text-xs text-gray-500 mb-3">💡 These fields auto-populate after login/register</p>
+                    <button onclick="refreshToken()" class="w-full px-4 py-2 bg-white text-black rounded-md font-medium hover:bg-gray-200 transition-colors">Refresh Token</button>
+                </div>
+
+                <!-- Logout -->
+                <div class="bg-black border border-gray-900 rounded-lg p-4">
+                    <h3 class="text-lg font-semibold mb-3 flex items-center gap-2">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-green-500/20 text-green-400">POST</span>
+                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-yellow-500/20 text-yellow-400">🔒 Protected</span>
+                        Logout
+                    </h3>
+                    <p class="text-sm text-gray-400 mb-4">Invalidate current token</p>
+                    <button onclick="logout()" data-protection="protected" class="w-full px-4 py-2 bg-red-500/20 text-red-400 rounded-md font-medium hover:bg-red-500/30 transition-colors">Logout</button>
+                </div>
+
+                <!-- Verify Token -->
+                <div class="bg-black border border-gray-900 rounded-lg p-4">
+                    <h3 class="text-lg font-semibold mb-3 flex items-center gap-2">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-500/20 text-blue-400">GET</span>
+                        Verify Token
+                    </h3>
+                    <p class="text-sm text-gray-400 mb-4">Check if current token is valid</p>
+                    <button onclick="verifyToken()" class="w-full px-4 py-2 bg-white text-black rounded-md font-medium hover:bg-gray-200 transition-colors">Verify Token</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Users Tab -->
+        <div id="content-users" class="tab-content hidden">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Get Profile -->
+                <div class="bg-black border border-gray-900 rounded-lg p-4">
+                    <h3 class="text-lg font-semibold mb-3 flex items-center gap-2">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-500/20 text-blue-400">GET</span>
+                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-yellow-500/20 text-yellow-400">🔒 Protected</span>
+                        Get My Profile
+                    </h3>
+                    <p class="text-sm text-gray-400 mb-4">Get current user profile</p>
+                    <button onclick="testProtectedEndpoint('GET', '/users/profile')" data-protection="protected" class="w-full px-4 py-2 bg-white text-black rounded-md font-medium hover:bg-gray-200 transition-colors">Get Profile</button>
+                </div>
+
+                <!-- Update Profile -->
+                <div class="bg-black border border-gray-900 rounded-lg p-4">
+                    <h3 class="text-lg font-semibold mb-3 flex items-center gap-2">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-purple-500/20 text-purple-400">PUT</span>
+                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-yellow-500/20 text-yellow-400">🔒 Protected</span>
+                        Update Profile
+                    </h3>
+                    <textarea id="update-profile-json" rows="4" class="w-full text-sm px-3 py-2 bg-gray-950 border border-gray-900 rounded-md text-gray-100 placeholder:text-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-700 font-mono mb-4" placeholder='{"name": "New Name", "email": "new@email.com", "phoneNumber": "+1234567890", "preferences": {"platforms": ["codeforces", "leetcode"], "notificationChannels": ["email"], "notifyBefore": 24}}'></textarea>
+                    <button onclick="updateProfile()" data-protection="protected" class="w-full px-4 py-2 bg-white text-black rounded-md font-medium hover:bg-gray-200 transition-colors">Update Profile</button>
+                </div>
+
+
+                <!-- Get User by ID -->
+                <div class="bg-black border border-gray-900 rounded-lg p-4">
+                    <h3 class="text-lg font-semibold mb-3 flex items-center gap-2">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-500/20 text-blue-400">GET</span>
+                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-yellow-500/20 text-yellow-400">🔒 Protected</span>
+                        Get User by ID
+                    </h3>
+                    <input type="text" id="user-id" placeholder="User ID" class="w-full text-sm px-3 py-2 bg-gray-950 border border-gray-900 rounded-md text-gray-100 placeholder:text-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-700 mb-4">
+                    <button onclick="getUserById()" data-protection="protected" class="w-full px-4 py-2 bg-white text-black rounded-md font-medium hover:bg-gray-200 transition-colors">Get User</button>
+                </div>
+
+                <!-- Get All Users (Admin Only) -->
+                <div class="bg-black border border-red-900/30 rounded-lg p-4">
+                    <h3 class="text-lg font-semibold mb-3 flex items-center gap-2">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-500/20 text-blue-400">GET</span>
+                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-yellow-500/20 text-yellow-400">🔒 Protected</span>
+                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-red-500/20 text-red-400">👑 Admin Only</span>
+                        Get All Users
+                    </h3>
+                    <div class="space-y-2 mb-4">
+                        <input type="number" id="users-limit" placeholder="Limit (default: 20)" class="w-full text-sm px-3 py-2 bg-gray-950 border border-gray-900 rounded-md text-gray-100 placeholder:text-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-700">
+                        <input type="number" id="users-offset" placeholder="Offset (default: 0)" class="w-full text-sm px-3 py-2 bg-gray-950 border border-gray-900 rounded-md text-gray-100 placeholder:text-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-700">
+                    </div>
+                    <button onclick="getAllUsers()" data-protection="admin" class="w-full px-4 py-2 bg-red-500/20 text-red-400 rounded-md font-medium hover:bg-red-500/30 transition-colors">Get All Users</button>
+                </div>
+
+                <!-- Update User Role (Admin Only) -->
+                <div class="bg-black border border-red-900/30 rounded-lg p-4">
+                    <h3 class="text-lg font-semibold mb-3 flex items-center gap-2">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-purple-500/20 text-purple-400">PATCH</span>
+                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-yellow-500/20 text-yellow-400">🔒 Protected</span>
+                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-red-500/20 text-red-400">👑 Admin Only</span>
+                        Update User Role
+                    </h3>
+                    <div class="space-y-2 mb-4">
+                        <input type="text" id="role-user-id" placeholder="User ID" class="w-full text-sm px-3 py-2 bg-gray-950 border border-gray-900 rounded-md text-gray-100 placeholder:text-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-700">
+                        <select id="new-role" class="w-full text-sm px-3 py-2 bg-gray-950 border border-gray-900 rounded-md text-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-700">
+                            <option value="user">User</option>
+                            <option value="admin">Admin</option>
+                        </select>
+                    </div>
+                    <button onclick="updateUserRole()" data-protection="admin" class="w-full px-4 py-2 bg-red-500/20 text-red-400 rounded-md font-medium hover:bg-red-500/30 transition-colors">Update Role</button>
+                </div>
+
+                <!-- Delete User (Admin Only) -->
+                <div class="bg-black border border-red-900/30 rounded-lg p-4">
+                    <h3 class="text-lg font-semibold mb-3 flex items-center gap-2">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-red-500/20 text-red-400">DELETE</span>
+                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-yellow-500/20 text-yellow-400">🔒 Protected</span>
+                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-red-500/20 text-red-400">👑 Admin Only</span>
+                        Delete User
+                    </h3>
+                    <input type="text" id="delete-user-id" placeholder="User ID" class="w-full text-sm px-3 py-2 bg-gray-950 border border-gray-900 rounded-md text-gray-100 placeholder:text-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-700 mb-4">
+                    <button onclick="deleteUser()" data-protection="admin" class="w-full px-4 py-2 bg-red-500/20 text-red-400 rounded-md font-medium hover:bg-red-500/30 transition-colors">Delete User</button>
+                </div>
+
+                <!-- Delete Account -->
+                <div class="bg-black border border-gray-900 rounded-lg p-4">
+                    <h3 class="text-lg font-semibold mb-3 flex items-center gap-2">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-red-500/20 text-red-400">DELETE</span>
+                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-yellow-500/20 text-yellow-400">🔒 Protected</span>
+                        Deactivate Account
+                    </h3>
+                    <p class="text-sm text-gray-400 mb-4">Deactivate your account (can be reactivated)</p>
+                    <button onclick="deleteAccount()" data-protection="protected" class="w-full px-4 py-2 bg-red-500/20 text-red-400 rounded-md font-medium hover:bg-red-500/30 transition-colors">Deactivate Account</button>
+                </div>
+
+                <!-- Activate Account -->
+                <div class="bg-black border border-gray-900 rounded-lg p-4">
+                    <h3 class="text-lg font-semibold mb-3 flex items-center gap-2">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-purple-500/20 text-purple-400">PUT</span>
+                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-yellow-500/20 text-yellow-400">🔒 Protected</span>
+                        Activate Account
+                    </h3>
+                    <p class="text-sm text-gray-400 mb-4">Reactivate a deactivated account</p>
+                    <button onclick="activateAccount()" data-protection="protected" class="w-full px-4 py-2 bg-green-500/20 text-green-400 rounded-md font-medium hover:bg-green-500/30 transition-colors">Activate Account</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Contests Tab -->
+        <div id="content-contests" class="tab-content hidden">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Get All Contests -->
+                <div class="bg-black border border-gray-900 rounded-lg p-4">
+                    <h3 class="text-lg font-semibold mb-3 flex items-center gap-2">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-500/20 text-blue-400">GET</span>
+                        Get All Contests
+                    </h3>
+                    <div class="space-y-2 mb-4">
+                        <input type="number" id="limit" placeholder="Limit (default: 20)" class="w-full text-sm px-3 py-2 bg-gray-950 border border-gray-900 rounded-md text-gray-100 placeholder:text-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-700">
+                        <input type="number" id="offset" placeholder="Offset (default: 0)" class="w-full text-sm px-3 py-2 bg-gray-950 border border-gray-900 rounded-md text-gray-100 placeholder:text-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-700">
+                        <select id="platform-filter" class="w-full text-sm px-3 py-2 bg-gray-950 border border-gray-900 rounded-md text-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-700">
+                            <option value="">All Platforms</option>
+                            <option value="codeforces">Codeforces</option>
+                            <option value="leetcode">LeetCode</option>
+                            <option value="codechef">CodeChef</option>
+                            <option value="atcoder">AtCoder</option>
+                        </select>
+                    </div>
+                    <button onclick="getAllContests()" class="w-full px-4 py-2 bg-white text-black rounded-md font-medium hover:bg-gray-200 transition-colors">Get Contests</button>
+                </div>
+
+                <!-- Get Upcoming -->
+                <div class="bg-black border border-gray-900 rounded-lg p-4">
+                    <h3 class="text-lg font-semibold mb-3 flex items-center gap-2">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-500/20 text-blue-400">GET</span>
+                        Upcoming Contests
+                    </h3>
+                    <p class="text-sm text-gray-400 mb-4">Get all upcoming contests</p>
+                    <button onclick="testEndpoint('GET', '/contests/upcoming')" class="w-full px-4 py-2 bg-white text-black rounded-md font-medium hover:bg-gray-200 transition-colors">
+                        Get Upcoming
+                    </button>
+                </div>
+
+                <!-- Get Running -->
+                <div class="bg-black border border-gray-900 rounded-lg p-4">
+                    <h3 class="text-lg font-semibold mb-3 flex items-center gap-2">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-500/20 text-blue-400">GET</span>
+                        Running Contests
+                    </h3>
+                    <p class="text-sm text-gray-400 mb-4">Get currently running contests</p>
+                    <button onclick="testEndpoint('GET', '/contests/running')" class="w-full px-4 py-2 bg-white text-black rounded-md font-medium hover:bg-gray-200 transition-colors">
+                        Get Running
+                    </button>
+                </div>
+
+                <!-- Get Finished -->
+                <div class="bg-black border border-gray-900 rounded-lg p-4">
+                    <h3 class="text-lg font-semibold mb-3 flex items-center gap-2">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-500/20 text-blue-400">GET</span>
+                        Finished Contests
+                    </h3>
+                    <p class="text-sm text-gray-400 mb-4">Get finished contests</p>
+                    <button onclick="testEndpoint('GET', '/contests/finished')" class="w-full px-4 py-2 bg-white text-black rounded-md font-medium hover:bg-gray-200 transition-colors">
+                        Get Finished
+                    </button>
+                </div>
+
+                <!-- Search -->
+                <div class="bg-black border border-gray-900 rounded-lg p-4">
+                    <h3 class="text-lg font-semibold mb-3 flex items-center gap-2">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-500/20 text-blue-400">GET</span>
+                        Search Contests
+                    </h3>
+                    <input type="text" id="search-query" placeholder="Search query" class="w-full text-sm px-3 py-2 bg-gray-950 border border-gray-900 rounded-md text-gray-100 placeholder:text-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-700 mb-4">
+                    <button onclick="searchContests()" class="w-full px-4 py-2 bg-white text-black rounded-md font-medium hover:bg-gray-200 transition-colors">Search</button>
+                </div>
+
+                <!-- Get by ID -->
+                <div class="bg-black border border-gray-900 rounded-lg p-4">
+                    <h3 class="text-lg font-semibold mb-3 flex items-center gap-2">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-500/20 text-blue-400">GET</span>
+                        Get Contest by ID
+                    </h3>
+                    <input type="text" id="contest-id" placeholder="Contest ID" class="w-full text-sm px-3 py-2 bg-gray-950 border border-gray-900 rounded-md text-gray-100 placeholder:text-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-700 mb-4">
+                    <button onclick="getContestById()" class="w-full px-4 py-2 bg-white text-black rounded-md font-medium hover:bg-gray-200 transition-colors">Get Contest</button>
+                </div>
+
+                <!-- Create Contest -->
+                <div class="bg-black border border-red-900/30 rounded-lg p-4 md:col-span-2">
+                    <h3 class="text-lg font-semibold mb-3 flex items-center gap-2">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-green-500/20 text-green-400">POST</span>
+                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-yellow-500/20 text-yellow-400">🔒 Protected</span>
+                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-red-500/20 text-red-400">👑 Admin Only</span>
+                        Create Contest
+                    </h3>
+                    <textarea id="create-contest-json" rows="8" class="w-full text-sm px-3 py-2 bg-gray-950 border border-gray-900 rounded-md text-gray-100 placeholder:text-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-700 font-mono mb-4" placeholder='{"platformId": "123", "name": "Test Contest", "platform": "codeforces", "phase": "BEFORE", "type": "CF", "startTime": "2024-12-01T10:00:00Z", "endTime": "2024-12-01T12:00:00Z", "durationMinutes": 120}'></textarea>
+                    <button onclick="createContest()" data-protection="admin" class="w-full px-4 py-2 bg-red-500/20 text-red-400 rounded-md font-medium hover:bg-red-500/30 transition-colors">Create Contest</button>
+                </div>
+
+                <!-- Update Contest -->
+                <div class="bg-black border border-red-900/30 rounded-lg p-4 md:col-span-2">
+                    <h3 class="text-lg font-semibold mb-3 flex items-center gap-2">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-yellow-500/20 text-yellow-400">PATCH</span>
+                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-yellow-500/20 text-yellow-400">🔒 Protected</span>
+                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-red-500/20 text-red-400">👑 Admin Only</span>
+                        Update Contest
+                    </h3>
+                    <input type="text" id="update-contest-id" placeholder="Contest ID" class="w-full text-sm px-3 py-2 bg-gray-950 border border-gray-900 rounded-md text-gray-100 placeholder:text-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-700 mb-2">
+                    <textarea id="update-contest-json" rows="6" class="w-full text-sm px-3 py-2 bg-gray-950 border border-gray-900 rounded-md text-gray-100 placeholder:text-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-700 font-mono mb-4" placeholder='{"name": "Updated Contest Name", "phase": "CODING"}'></textarea>
+                    <button onclick="updateContest()" data-protection="admin" class="w-full px-4 py-2 bg-red-500/20 text-red-400 rounded-md font-medium hover:bg-red-500/30 transition-colors">Update Contest</button>
+                </div>
+
+                <!-- Delete Contest -->
+                <div class="bg-black border border-red-900/30 rounded-lg p-4">
+                    <h3 class="text-lg font-semibold mb-3 flex items-center gap-2">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-red-500/20 text-red-400">DELETE</span>
+                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-yellow-500/20 text-yellow-400">🔒 Protected</span>
+                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-red-500/20 text-red-400">👑 Admin Only</span>
+                        Delete Contest
+                    </h3>
+                    <input type="text" id="delete-contest-id" placeholder="Contest ID" class="w-full text-sm px-3 py-2 bg-gray-950 border border-gray-900 rounded-md text-gray-100 placeholder:text-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-700 mb-4">
+                    <button onclick="deleteContest()" data-protection="admin" class="w-full px-4 py-2 bg-red-500/20 text-red-400 rounded-md font-medium hover:bg-red-500/30 transition-colors">
+                        Delete Contest
+                    </button>
+                </div>
+
+                <!-- Filter by Platform -->
+                <div class="bg-black border border-gray-900 rounded-lg p-4">
+                    <h3 class="text-lg font-semibold mb-3 flex items-center gap-2">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-500/20 text-blue-400">GET</span>
+                        Get by Platform
+                    </h3>
+                    <select id="platform-specific" class="w-full text-sm px-3 py-2 bg-gray-950 border border-gray-900 rounded-md text-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-700 mb-4">
+                        <option value="codeforces">Codeforces</option>
+                        <option value="leetcode">LeetCode</option>
+                        <option value="codechef">CodeChef</option>
+                        <option value="atcoder">AtCoder</option>
+                    </select>
+                    <button onclick="getByPlatform()" class="w-full px-4 py-2 bg-white text-black rounded-md font-medium hover:bg-gray-200 transition-colors">Get Contests</button>
+                </div>
+
+                <!-- Filter by Difficulty -->
+                <div class="bg-black border border-gray-900 rounded-lg p-4">
+                    <h3 class="text-lg font-semibold mb-3 flex items-center gap-2">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-500/20 text-blue-400">GET</span>
+                        Filter by Difficulty
+                    </h3>
+                    <select id="difficulty-level" class="w-full text-sm px-3 py-2 bg-gray-950 border border-gray-900 rounded-md text-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-700 mb-4">
+                        <option value="BEGINNER">Beginner</option>
+                        <option value="MEDIUM">Medium</option>
+                        <option value="HARD">Hard</option>
+                        <option value="EXPERT">Expert</option>
+                    </select>
+                    <button onclick="filterByDifficulty()" class="w-full px-4 py-2 bg-white text-black rounded-md font-medium hover:bg-gray-200 transition-colors">Filter Contests</button>
+                </div>
+
+                <!-- Filter by Type -->
+                <div class="bg-black border border-gray-900 rounded-lg p-4">
+                    <h3 class="text-lg font-semibold mb-3 flex items-center gap-2">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-500/20 text-blue-400">GET</span>
+                        Filter by Type
+                    </h3>
+                    <select id="contest-type" class="w-full text-sm px-3 py-2 bg-gray-950 border border-gray-900 rounded-md text-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-700 mb-4">
+                        <optgroup label="Codeforces">
+                            <option value="CF">CF (Codeforces Round)</option>
+                            <option value="IOI">IOI</option>
+                            <option value="ICPC">ICPC</option>
+                        </optgroup>
+                        <optgroup label="LeetCode">
+                            <option value="WEEKLY">Weekly Contest</option>
+                            <option value="BIWEEKLY">Biweekly Contest</option>
+                        </optgroup>
+                        <optgroup label="CodeChef">
+                            <option value="LONG">Long Challenge</option>
+                            <option value="COOK_OFF">Cook-Off</option>
+                            <option value="LUNCH_TIME">Lunchtime</option>
+                            <option value="STARTERS">Starters</option>
+                        </optgroup>
+                        <optgroup label="AtCoder">
+                            <option value="ABC">ABC (Beginner)</option>
+                            <option value="ARC">ARC (Regular)</option>
+                            <option value="AGC">AGC (Grand)</option>
+                            <option value="AHC">AHC (Heuristic)</option>
+                        </optgroup>
+                    </select>
+                    <button onclick="filterByType()" class="w-full px-4 py-2 bg-white text-black rounded-md font-medium hover:bg-gray-200 transition-colors">Filter Contests</button>
+                </div>
+
+                <!-- Bulk Create Contests -->
+                <div class="bg-black border border-red-900/30 rounded-lg p-4 md:col-span-2">
+                    <h3 class="text-lg font-semibold mb-3 flex items-center gap-2">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-green-500/20 text-green-400">POST</span>
+                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-yellow-500/20 text-yellow-400">🔒 Protected</span>
+                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-red-500/20 text-red-400">👑 Admin Only</span>
+                        Bulk Create Contests
+                    </h3>
+                    <textarea id="bulk-create-json" rows="10" class="w-full text-sm px-3 py-2 bg-gray-950 border border-gray-900 rounded-md text-gray-100 placeholder:text-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-700 font-mono mb-4" placeholder='{"contests": [{"platformId": "123", "name": "Contest 1", "platform": "codeforces", "phase": "BEFORE", "type": "CF", "startTime": "2024-12-01T10:00:00Z", "endTime": "2024-12-01T12:00:00Z", "durationMinutes": 120}, {"platformId": "124", "name": "Contest 2", "platform": "leetcode", "phase": "BEFORE", "type": "WEEKLY", "startTime": "2024-12-02T10:00:00Z", "endTime": "2024-12-02T11:30:00Z", "durationMinutes": 90}]}'></textarea>
+                    <button onclick="bulkCreateContests()" data-protection="admin" class="w-full px-4 py-2 bg-red-500/20 text-red-400 rounded-md font-medium hover:bg-red-500/30 transition-colors">Bulk Create</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Analytics Tab -->
+        <div id="content-analytics" class="tab-content hidden">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="bg-black border border-gray-900 rounded-lg p-4">
+                    <h3 class="text-lg font-semibold mb-3 flex items-center gap-2">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-500/20 text-blue-400">GET</span>
+                        Overall Statistics
+                    </h3>
+                    <p class="text-sm text-gray-400 mb-4">Get overall contest statistics</p>
+                    <button onclick="testEndpoint('GET', '/contests/stats')" class="w-full px-4 py-2 bg-white text-black rounded-md font-medium hover:bg-gray-200 transition-colors">
+                        Get Stats
+                    </button>
+                </div>
+
+                <div class="bg-black border border-gray-900 rounded-lg p-4">
+                    <h3 class="text-lg font-semibold mb-3 flex items-center gap-2">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-500/20 text-blue-400">GET</span>
+                        Platform Statistics
+                    </h3>
+                    <select id="stats-platform" class="w-full text-sm px-3 py-2 bg-gray-950 border border-gray-900 rounded-md text-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-700 mb-4">
+                        <option value="codeforces">Codeforces</option>
+                        <option value="leetcode">LeetCode</option>
+                        <option value="codechef">CodeChef</option>
+                        <option value="atcoder">AtCoder</option>
+                    </select>
+                    <button onclick="getPlatformStats()" class="w-full px-4 py-2 bg-white text-black rounded-md font-medium hover:bg-gray-200 transition-colors">Get Platform Stats</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sync Tab -->
+        <div id="content-sync" class="tab-content hidden">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="bg-black border border-red-900/30 rounded-lg p-4">
+                    <h3 class="text-lg font-semibold mb-3 flex items-center gap-2">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-green-500/20 text-green-400">POST</span>
+                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-yellow-500/20 text-yellow-400">🔒 Protected</span>
+                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-red-500/20 text-red-400">👑 Admin Only</span>
+                        Sync Platform
+                    </h3>
+                    <select id="sync-platform" class="w-full text-sm px-3 py-2 bg-gray-950 border border-gray-900 rounded-md text-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-700 mb-2">
+                        <option value="codeforces">Codeforces</option>
+                        <option value="leetcode">LeetCode</option>
+                        <option value="codechef">CodeChef</option>
+                        <option value="atcoder">AtCoder</option>
+                    </select>
+                    <label class="flex items-center gap-2 mb-4 text-sm text-gray-300">
+                        <input type="checkbox" id="force-sync" class="w-4 h-4 rounded border-gray-800 bg-gray-950">
+                        <span>Force Sync</span>
+                    </label>
+                    <button onclick="syncPlatform()" data-protection="admin" class="w-full px-4 py-2 bg-red-500/20 text-red-400 rounded-md font-medium hover:bg-red-500/30 transition-colors">Sync Platform</button>
+                </div>
+
+                <div class="bg-black border border-red-900/30 rounded-lg p-4">
+                    <h3 class="text-lg font-semibold mb-3 flex items-center gap-2">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-green-500/20 text-green-400">POST</span>
+                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-yellow-500/20 text-yellow-400">🔒 Protected</span>
+                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-red-500/20 text-red-400">👑 Admin Only</span>
+                        Sync All Platforms
+                    </h3>
+                    <p class="text-sm text-gray-400 mb-4">Sync all platforms at once</p>
+                    <button onclick="testProtectedEndpoint('POST', '/contests/sync/all', {})" data-protection="admin" class="w-full px-4 py-2 bg-red-500/20 text-red-400 rounded-md font-medium hover:bg-red-500/30 transition-colors">
+                        Sync All
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Notifications Tab -->
+        <div id="content-notifications" class="tab-content hidden">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Notification Health -->
+                <div class="bg-black border border-gray-900 rounded-lg p-4">
+                    <h3 class="text-lg font-semibold mb-3 flex items-center gap-2">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-500/20 text-blue-400">GET</span>
+                        Notification Health
+                    </h3>
+                    <p class="text-sm text-gray-400 mb-4">Check all notification services health</p>
+                    <button onclick="testEndpoint('GET', '/notifications/health')" class="w-full px-4 py-2 bg-white text-black rounded-md font-medium hover:bg-gray-200 transition-colors">Check Health</button>
+                </div>
+
+                <!-- Notification Status -->
+                <div class="bg-black border border-gray-900 rounded-lg p-4">
+                    <h3 class="text-lg font-semibold mb-3 flex items-center gap-2">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-500/20 text-blue-400">GET</span>
+                        Service Status
+                    </h3>
+                    <p class="text-sm text-gray-400 mb-4">Get notification services status</p>
+                    <button onclick="testEndpoint('GET', '/notifications/status')" class="w-full px-4 py-2 bg-white text-black rounded-md font-medium hover:bg-gray-200 transition-colors">Get Status</button>
+                </div>
+
+                <!-- Test Email (Admin Only) -->
+                <div class="bg-black border border-red-900/30 rounded-lg p-4">
+                    <h3 class="text-lg font-semibold mb-3 flex items-center gap-2">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-green-500/20 text-green-400">POST</span>
+                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-yellow-500/20 text-yellow-400">🔒 Protected</span>
+                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-red-500/20 text-red-400">👑 Admin Only</span>
+                        Test Email
+                    </h3>
+                    <input type="email" id="test-email" placeholder="recipient@example.com" class="w-full text-sm px-3 py-2 bg-gray-950 border border-gray-900 rounded-md text-gray-100 placeholder:text-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-700 mb-4">
+                    <button onclick="testEmailNotification()" data-protection="admin" class="w-full px-4 py-2 bg-red-500/20 text-red-400 rounded-md font-medium hover:bg-red-500/30 transition-colors">Send Test Email</button>
+                </div>
+
+                <!-- Test WhatsApp (Admin Only) -->
+                <div class="bg-black border border-red-900/30 rounded-lg p-4">
+                    <h3 class="text-lg font-semibold mb-3 flex items-center gap-2">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-green-500/20 text-green-400">POST</span>
+                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-yellow-500/20 text-yellow-400">🔒 Protected</span>
+                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-red-500/20 text-red-400">👑 Admin Only</span>
+                        Test WhatsApp
+                    </h3>
+                    <input type="tel" id="test-whatsapp" placeholder="+1234567890" class="w-full text-sm px-3 py-2 bg-gray-950 border border-gray-900 rounded-md text-gray-100 placeholder:text-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-700 mb-4">
+                    <button onclick="testWhatsAppNotification()" data-protection="admin" class="w-full px-4 py-2 bg-red-500/20 text-red-400 rounded-md font-medium hover:bg-red-500/30 transition-colors">Send Test WhatsApp</button>
+                </div>
+
+                <!-- Test Push (Admin Only) -->
+                <div class="bg-black border border-red-900/30 rounded-lg p-4">
+                    <h3 class="text-lg font-semibold mb-3 flex items-center gap-2">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-green-500/20 text-green-400">POST</span>
+                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-yellow-500/20 text-yellow-400">🔒 Protected</span>
+                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-red-500/20 text-red-400">👑 Admin Only</span>
+                        Test Push Notification
+                    </h3>
+                    <input type="text" id="test-push-user" placeholder="User ID" class="w-full text-sm px-3 py-2 bg-gray-950 border border-gray-900 rounded-md text-gray-100 placeholder:text-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-700 mb-4">
+                    <button onclick="testPushNotification()" data-protection="admin" class="w-full px-4 py-2 bg-red-500/20 text-red-400 rounded-md font-medium hover:bg-red-500/30 transition-colors">Send Test Push</button>
+                </div>
+
+                <!-- Get Notifications -->
+                <div class="bg-black border border-gray-900 rounded-lg p-4">
+                    <h3 class="text-lg font-semibold mb-3 flex items-center gap-2">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-500/20 text-blue-400">GET</span>
+                        Get Notifications
+                    </h3>
+                    <div class="space-y-2 mb-4">
+                        <input type="text" id="notif-user-id" placeholder="User ID" class="w-full text-sm px-3 py-2 bg-gray-950 border border-gray-900 rounded-md text-gray-100 placeholder:text-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-700">
+                        <select id="notif-status" class="w-full text-sm px-3 py-2 bg-gray-950 border border-gray-900 rounded-md text-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-700">
+                            <option value="">All Statuses</option>
+                            <option value="SENT">Sent</option>
+                            <option value="FAILED">Failed</option>
+                            <option value="PENDING">Pending</option>
+                        </select>
+                    </div>
+                    <button onclick="getNotifications()" class="w-full px-4 py-2 bg-white text-black rounded-md font-medium hover:bg-gray-200 transition-colors">Get Notifications</button>
+                </div>
+
+                <!-- Get Notification by ID -->
+                <div class="bg-black border border-gray-900 rounded-lg p-4">
+                    <h3 class="text-lg font-semibold mb-3 flex items-center gap-2">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-500/20 text-blue-400">GET</span>
+                        Get Notification by ID
+                    </h3>
+                    <input type="text" id="notif-id" placeholder="Notification ID" class="w-full text-sm px-3 py-2 bg-gray-950 border border-gray-900 rounded-md text-gray-100 placeholder:text-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-700 mb-4">
+                    <button onclick="getNotificationById()" class="w-full px-4 py-2 bg-white text-black rounded-md font-medium hover:bg-gray-200 transition-colors">Get Notification</button>
+                </div>
+
+                <!-- Mark as Read -->
+                <div class="bg-black border border-gray-900 rounded-lg p-4">
+                    <h3 class="text-lg font-semibold mb-3 flex items-center gap-2">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-purple-500/20 text-purple-400">PATCH</span>
+                        Mark as Read
+                    </h3>
+                    <input type="text" id="mark-read-id" placeholder="Notification ID" class="w-full text-sm px-3 py-2 bg-gray-950 border border-gray-900 rounded-md text-gray-100 placeholder:text-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-700 mb-4">
+                    <button onclick="markNotificationAsRead()" class="w-full px-4 py-2 bg-white text-black rounded-md font-medium hover:bg-gray-200 transition-colors">Mark as Read</button>
+                </div>
+
+                <!-- Mark All as Read -->
+                <div class="bg-black border border-gray-900 rounded-lg p-4">
+                    <h3 class="text-lg font-semibold mb-3 flex items-center gap-2">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-purple-500/20 text-purple-400">PATCH</span>
+                        Mark All as Read
+                    </h3>
+                    <input type="text" id="mark-all-user-id" placeholder="User ID" class="w-full text-sm px-3 py-2 bg-gray-950 border border-gray-900 rounded-md text-gray-100 placeholder:text-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-700 mb-4">
+                    <button onclick="markAllNotificationsAsRead()" class="w-full px-4 py-2 bg-white text-black rounded-md font-medium hover:bg-gray-200 transition-colors">Mark All as Read</button>
+                </div>
+
+                <!-- Notification Stats -->
+                <div class="bg-black border border-gray-900 rounded-lg p-4">
+                    <h3 class="text-lg font-semibold mb-3 flex items-center gap-2">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-500/20 text-blue-400">GET</span>
+                        Notification Stats
+                    </h3>
+                    <input type="text" id="stats-user-id" placeholder="User ID (optional)" class="w-full text-sm px-3 py-2 bg-gray-950 border border-gray-900 rounded-md text-gray-100 placeholder:text-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-700 mb-4">
+                    <button onclick="getNotificationStats()" class="w-full px-4 py-2 bg-white text-black rounded-md font-medium hover:bg-gray-200 transition-colors">Get Stats</button>
+                </div>
+
+                <!-- Retry Failed Notification -->
+                <div class="bg-black border border-gray-900 rounded-lg p-4">
+                    <h3 class="text-lg font-semibold mb-3 flex items-center gap-2">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-green-500/20 text-green-400">POST</span>
+                        Retry Failed Notification
+                    </h3>
+                    <input type="text" id="retry-notif-id" placeholder="Notification ID" class="w-full text-sm px-3 py-2 bg-gray-950 border border-gray-900 rounded-md text-gray-100 placeholder:text-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-700 mb-4">
+                    <button onclick="retryNotification()" class="w-full px-4 py-2 bg-white text-black rounded-md font-medium hover:bg-gray-200 transition-colors">Retry Notification</button>
+                </div>
+
+                <!-- Cleanup Old Notifications -->
+                <div class="bg-black border border-gray-900 rounded-lg p-4">
+                    <h3 class="text-lg font-semibold mb-3 flex items-center gap-2">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-red-500/20 text-red-400">DELETE</span>
+                        Cleanup Old Notifications
+                    </h3>
+                    <input type="number" id="cleanup-days" placeholder="Days old (default: 90)" class="w-full text-sm px-3 py-2 bg-gray-950 border border-gray-900 rounded-md text-gray-100 placeholder:text-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-700 mb-4">
+                    <button onclick="cleanupNotifications()" class="w-full px-4 py-2 bg-red-500/20 text-red-400 rounded-md font-medium hover:bg-red-500/30 transition-colors">Cleanup</button>
+                </div>
+
+                <!-- Send Custom Email (Admin) -->
+                <div class="bg-black border border-red-900/30 rounded-lg p-4 md:col-span-2">
+                    <h3 class="text-lg font-semibold mb-3 flex items-center gap-2">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-green-500/20 text-green-400">POST</span>
+                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-yellow-500/20 text-yellow-400">🔒 Protected</span>
+                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-red-500/20 text-red-400">👑 Admin Only</span>
+                        Send Custom Email
+                    </h3>
+                    <p class="text-sm text-gray-400 mb-3">Send custom email to one or multiple recipients (HTML required, plain text optional)</p>
+                    <textarea id="custom-email-json" rows="6" class="w-full text-sm px-3 py-2 bg-gray-950 border border-gray-900 rounded-md text-gray-100 placeholder:text-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-700 font-mono mb-4" placeholder='{"to": ["user1@example.com", "user2@example.com"], "subject": "Email Subject", "html": "<h1>HTML Content</h1><p>Your message here</p>", "text": "Plain text fallback (optional)", "replyTo": "reply@example.com (optional)"}'></textarea>
+                    <button onclick="sendCustomEmail()" data-protection="admin" class="w-full px-4 py-2 bg-red-500/20 text-red-400 rounded-md font-medium hover:bg-red-500/30 transition-colors">Send Custom Email</button>
+                </div>
+
+                <!-- Send Bulk Email (Admin) -->
+                <div class="bg-black border border-red-900/30 rounded-lg p-4 md:col-span-2">
+                    <h3 class="text-lg font-semibold mb-3 flex items-center gap-2">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-green-500/20 text-green-400">POST</span>
+                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-yellow-500/20 text-yellow-400">🔒 Protected</span>
+                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-red-500/20 text-red-400">👑 Admin Only</span>
+                        Send Bulk Email
+                    </h3>
+                    <textarea id="bulk-email-json" rows="6" class="w-full text-sm px-3 py-2 bg-gray-950 border border-gray-900 rounded-md text-gray-100 placeholder:text-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-700 font-mono mb-4" placeholder='{"userIds": ["user-id-1", "user-id-2"], "subject": "Bulk Email Subject", "body": "Email body", "html": "<p>HTML content</p>"}'></textarea>
+                    <button onclick="sendBulkEmail()" data-protection="admin" class="w-full px-4 py-2 bg-red-500/20 text-red-400 rounded-md font-medium hover:bg-red-500/30 transition-colors">Send Bulk Email</button>
+                </div>
+
+                <!-- Send Announcement (Admin) -->
+                <div class="bg-black border border-red-900/30 rounded-lg p-4 md:col-span-2">
+                    <h3 class="text-lg font-semibold mb-3 flex items-center gap-2">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-green-500/20 text-green-400">POST</span>
+                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-yellow-500/20 text-yellow-400">🔒 Protected</span>
+                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-red-500/20 text-red-400">👑 Admin Only</span>
+                        Send Announcement
+                    </h3>
+                    <textarea id="announcement-json" rows="6" class="w-full text-sm px-3 py-2 bg-gray-950 border border-gray-900 rounded-md text-gray-100 placeholder:text-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-700 font-mono mb-4" placeholder='{"subject": "Important Announcement", "body": "Announcement content", "html": "<h1>Announcement</h1>", "filters": {"platforms": ["codeforces", "leetcode"], "isActive": true}}'></textarea>
+                    <button onclick="sendAnnouncement()" data-protection="admin" class="w-full px-4 py-2 bg-red-500/20 text-red-400 rounded-md font-medium hover:bg-red-500/30 transition-colors">Send Announcement</button>
+                </div>
+
+                <!-- Send Contest Reminder (Admin) -->
+                <div class="bg-black border border-red-900/30 rounded-lg p-4 md:col-span-2">
+                    <h3 class="text-lg font-semibold mb-3 flex items-center gap-2">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-green-500/20 text-green-400">POST</span>
+                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-yellow-500/20 text-yellow-400">🔒 Protected</span>
+                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-red-500/20 text-red-400">👑 Admin Only</span>
+                        Send Contest Reminder
+                    </h3>
+                    <textarea id="contest-reminder-json" rows="6" class="w-full text-sm px-3 py-2 bg-gray-950 border border-gray-900 rounded-md text-gray-100 placeholder:text-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-700 font-mono mb-4" placeholder='{"contestId": "contest-id-here", "userIds": ["user-id-1", "user-id-2"], "customMessage": "Don\'t forget to participate!"}'></textarea>
+                    <button onclick="sendContestReminder()" data-protection="admin" class="w-full px-4 py-2 bg-red-500/20 text-red-400 rounded-md font-medium hover:bg-red-500/30 transition-colors">Send Contest Reminder</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Response Section -->
+        <div class="mt-8">
+            <div class="flex items-center justify-between mb-3">
+                <h2 class="text-xl font-semibold text-white">Response</h2>
+                <button onclick="clearResponse()" class="px-4 py-2 bg-black border border-gray-900 text-gray-100 rounded-md font-medium hover:bg-gray-950 transition-colors text-sm">Clear</button>
+            </div>
+            <div class="bg-black border border-gray-900 rounded-lg p-4">
+                <div id="response-status" class="mb-3 text-sm"></div>
+                <pre id="response-body" class="response-box bg-black p-4 rounded text-sm font-mono overflow-x-auto text-gray-100"></pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const baseUrlInput = document.getElementById('base-url');
+        const statusIndicator = document.getElementById('status-indicator');
+
+        async function checkHealth() {
+            try {
+                const response = await fetch(`${baseUrlInput.value}/contests/health`);
+                if (response.ok) {
+                    statusIndicator.innerHTML = '<span class="w-2 h-2 rounded-full bg-green-500"></span><span class="text-sm text-green-400">Online</span>';
+                } else {
+                    statusIndicator.innerHTML = '<span class="w-2 h-2 rounded-full bg-red-500"></span><span class="text-sm text-red-400">Error</span>';
+                }
+            } catch (error) {
+                statusIndicator.innerHTML = '<span class="w-2 h-2 rounded-full bg-red-500"></span><span class="text-sm text-red-400">Offline</span>';
+            }
+        }
+
+        function switchTab(tab) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.tab-btn').forEach(el => {
+                el.classList.remove('border-white', 'text-white');
+                el.classList.add('border-transparent', 'text-gray-400');
+            });
+
+            // Show selected tab
+            document.getElementById(`content-${tab}`).classList.remove('hidden');
+            const tabBtn = document.getElementById(`tab-${tab}`);
+            tabBtn.classList.add('border-white', 'text-white');
+            tabBtn.classList.remove('border-transparent', 'text-gray-400');
+        }
+
+        async function testEndpoint(method, path, body = null) {
+            const url = `${baseUrlInput.value}${path}`;
+            showResponse('Loading...', '');
+
+            try {
+                const options = {
+                    method,
+                    headers: { 'Content-Type': 'application/json' }
+                };
+
+                // Add JWT token if available (for protected endpoints)
+                if (jwtToken) {
+                    options.headers['Authorization'] = `Bearer ${jwtToken}`;
+                }
+
+                if (body) {
+                    options.body = JSON.stringify(body);
+                }
+
+                const response = await fetch(url, options);
+                const data = await response.json();
+
+                showResponse(
+                    `${response.status} ${response.statusText}`,
+                    JSON.stringify(data, null, 2),
+                    response.ok
+                );
+            } catch (error) {
+                showResponse('Error', error.message, false);
+            }
+        }
+
+        function getAllContests() {
+            const limit = parseInt(document.getElementById('limit').value) || 20;
+            const offset = parseInt(document.getElementById('offset').value) || 0;
+            const platform = document.getElementById('platform-filter').value;
+            
+            let query = `?limit=${limit}&offset=${offset}`;
+            if (platform) query += `&platform=${platform}`;
+            
+            testEndpoint('GET', `/contests${query}`);
+        }
+
+        function searchContests() {
+            const query = document.getElementById('search-query').value;
+            if (!query) {
+                showResponse('Error', 'Please enter a search query', false);
+                return;
+            }
+            testEndpoint('GET', `/contests/search?q=${encodeURIComponent(query)}`);
+        }
+
+        function getContestById() {
+            const id = document.getElementById('contest-id').value;
+            if (!id) {
+                showResponse('Error', 'Please enter a contest ID', false);
+                return;
+            }
+            testEndpoint('GET', `/contests/${id}`);
+        }
+
+        async function createContest() {
+            const jsonStr = document.getElementById('create-contest-json').value;
+            try {
+                const body = JSON.parse(jsonStr);
+                await testEndpoint('POST', '/contests', body);
+            } catch (error) {
+                showResponse('Error', 'Invalid JSON: ' + error.message, false);
+            }
+        }
+
+        async function updateContest() {
+            const id = document.getElementById('update-contest-id').value;
+            const jsonStr = document.getElementById('update-contest-json').value;
+            
+            if (!id) {
+                showResponse('Error', 'Please enter a contest ID', false);
+                return;
+            }
+
+            try {
+                const body = JSON.parse(jsonStr);
+                await testEndpoint('PATCH', `/contests/${id}`, body);
+            } catch (error) {
+                showResponse('Error', 'Invalid JSON: ' + error.message, false);
+            }
+        }
+
+        async function deleteContest() {
+            const id = document.getElementById('delete-contest-id').value;
+            if (!id) {
+                showResponse('Error', 'Please enter a contest ID', false);
+                return;
+            }
+
+            if (!confirm('Are you sure you want to delete this contest?')) {
+                return;
+            }
+
+            const url = `${baseUrlInput.value}/contests/${id}`;
+            showResponse('Loading...', '');
+
+            try {
+                const response = await fetch(url, { method: 'DELETE' });
+                
+                if (response.status === 204) {
+                    showResponse('204 No Content', 'Contest deleted successfully', true);
+                } else {
+                    const data = await response.json();
+                    showResponse(
+                        `${response.status} ${response.statusText}`,
+                        JSON.stringify(data, null, 2),
+                        response.ok
+                    );
+                }
+            } catch (error) {
+                showResponse('Error', error.message, false);
+            }
+        }
+
+        function getPlatformStats() {
+            const platform = document.getElementById('stats-platform').value;
+            testEndpoint('GET', `/contests/stats/${platform}`);
+        }
+
+        async function syncPlatform() {
+            const platform = document.getElementById('sync-platform').value;
+            const forceSync = document.getElementById('force-sync').checked;
+            await testEndpoint('POST', `/contests/sync/${platform}`, { platform, forceSync });
+        }
+
+        function showResponse(status, body, success = true) {
+            const statusEl = document.getElementById('response-status');
+            const bodyEl = document.getElementById('response-body');
+
+            statusEl.innerHTML = `<span class="font-semibold ${success ? 'text-green-400' : 'text-red-400'}">${status}</span>`;
+            bodyEl.textContent = body;
+        }
+
+        function clearResponse() {
+            document.getElementById('response-status').innerHTML = '';
+            document.getElementById('response-body').textContent = '';
+        }
+
+        // ========== Auth Functions ==========
+        
+        let jwtToken = localStorage.getItem('jwt_token') || '';
+        let currentUserRole = null;
+        
+        // Helper function to check if user is authenticated
+        function isAuthenticated() {
+            return !!jwtToken;
+        }
+        
+        // Helper function to check if user is admin
+        function isAdmin() {
+            return currentUserRole === 'admin';
+        }
+        
+        // Helper function to get user role from token
+        function getUserRole() {
+            if (!jwtToken) return null;
+            
+            try {
+                const parts = jwtToken.split('.');
+                if (parts.length === 3) {
+                    const payload = JSON.parse(atob(parts[1]));
+                    return payload.role || null;
+                }
+            } catch (error) {
+                console.error('Failed to decode token:', error);
+            }
+            return null;
+        }
+        
+        // Update route protection UI
+        function updateRouteProtection() {
+            const isAuth = isAuthenticated();
+            const isAdminUser = isAdmin();
+            
+            // Get all buttons with data-protection attribute
+            const allButtons = document.querySelectorAll('button[data-protection]');
+            
+            allButtons.forEach(button => {
+                const protection = button.getAttribute('data-protection');
+                
+                if (protection === 'protected') {
+                    // Protected routes - require authentication
+                    if (!isAuth) {
+                        button.disabled = true;
+                        button.classList.add('opacity-50', 'cursor-not-allowed');
+                        button.title = '🔒 Authentication required';
+                    } else {
+                        button.disabled = false;
+                        button.classList.remove('opacity-50', 'cursor-not-allowed');
+                        button.title = '';
+                    }
+                } else if (protection === 'admin') {
+                    // Admin routes - require admin role
+                    if (!isAuth || !isAdminUser) {
+                        button.disabled = true;
+                        button.classList.add('opacity-50', 'cursor-not-allowed');
+                        button.title = '👑 Admin access required';
+                    } else {
+                        button.disabled = false;
+                        button.classList.remove('opacity-50', 'cursor-not-allowed');
+                        button.title = '';
+                    }
+                }
+            });
+            
+            console.log(`Route protection updated - Auth: ${isAuth}, Admin: ${isAdminUser}`);
+        }
+        
+        // Wrapper function to check route access before execution
+        function executeProtectedAction(action, requiredRole = null) {
+            if (!isAuthenticated()) {
+                showResponse('Error', '🔒 Authentication required. Please login first.', false);
+                return;
+            }
+            
+            if (requiredRole === 'admin' && !isAdmin()) {
+                showResponse('Error', '👑 Admin access required. You do not have permission to perform this action.', false);
+                return;
+            }
+            
+            // Execute the action
+            action();
+        }
+        
+        // Update auth status UI
+        function updateAuthStatus() {
+            const authStatus = document.getElementById('auth-status');
+            const authBanner = document.getElementById('auth-banner');
+            const adminBanner = document.getElementById('admin-banner');
+            const roleIndicator = document.getElementById('role-indicator');
+            const userRoleSpan = document.getElementById('user-role');
+            
+            if (!authStatus || !authBanner || !adminBanner) {
+                console.error('Auth status elements not found');
+                return;
+            }
+            
+            if (jwtToken) {
+                authStatus.innerHTML = '<span class="w-2 h-2 rounded-full bg-green-500"></span><span class="text-sm text-green-400">Authenticated ✓</span>';
+                authBanner.classList.add('hidden');
+                
+                // Decode JWT to get role
+                currentUserRole = getUserRole();
+                if (currentUserRole) {
+                    roleIndicator.classList.remove('hidden');
+                    userRoleSpan.textContent = currentUserRole;
+                    userRoleSpan.className = currentUserRole === 'admin' ? 'font-semibold text-red-400' : 'font-semibold text-blue-400';
+                    
+                    // Show admin banner if user is not admin
+                    if (currentUserRole !== 'admin') {
+                        adminBanner.classList.remove('hidden');
+                    } else {
+                        adminBanner.classList.add('hidden');
+                    }
+                }
+                
+                console.log('Auth status updated: Authenticated as', currentUserRole);
+            } else {
+                authStatus.innerHTML = '<span class="w-2 h-2 rounded-full bg-red-500"></span><span class="text-sm text-red-400">Not Authenticated</span>';
+                authBanner.classList.remove('hidden');
+                adminBanner.classList.add('hidden');
+                roleIndicator.classList.add('hidden');
+                currentUserRole = null;
+                console.log('Auth status updated: Not Authenticated');
+            }
+            
+            // Update route protection after auth status changes
+            updateRouteProtection();
+        }
+        
+        // Check if token is expired
+        function isTokenExpired() {
+            if (!jwtToken) return true;
+            
+            try {
+                const parts = jwtToken.split('.');
+                if (parts.length !== 3) return true;
+                
+                const payload = JSON.parse(atob(parts[1]));
+                const now = Math.floor(Date.now() / 1000);
+                return payload.exp && payload.exp < now;
+            } catch (error) {
+                console.error('Error checking token expiration:', error);
+                return true;
+            }
+        }
+
+        // Check token expiration and clear if expired
+        function checkTokenExpiration() {
+            if (jwtToken && isTokenExpired()) {
+                console.warn('Token has expired. Clearing auth state.');
+                clearAuthState();
+                showResponse(
+                    '⏰ Session Expired',
+                    '⚠️ Your session has expired. Please login again to continue.',
+                    false
+                );
+            }
+        }
+
+        // Initialize on page load
+        window.addEventListener('load', () => {
+            // Load saved token
+            if (jwtToken) {
+                const tokenInput = document.getElementById('jwt-token');
+                if (tokenInput) {
+                    tokenInput.value = jwtToken;
+                }
+            }
+            
+            // Load saved refresh token and user ID
+            const savedRefreshToken = localStorage.getItem('refresh_token');
+            const savedUserId = localStorage.getItem('user_id');
+            if (savedRefreshToken) {
+                const refreshTokenInput = document.getElementById('refresh-token');
+                if (refreshTokenInput) {
+                    refreshTokenInput.value = savedRefreshToken;
+                }
+            }
+            if (savedUserId) {
+                const userIdInput = document.getElementById('refresh-user-id');
+                if (userIdInput) {
+                    userIdInput.value = savedUserId;
+                }
+            }
+            
+            // Check if token is expired on load
+            checkTokenExpiration();
+            
+            // Update auth status
+            updateAuthStatus();
+            
+            // Check API health
+            checkHealth();
+            
+            // Set up periodic token expiration check (every 60 seconds)
+            setInterval(checkTokenExpiration, 60000);
+        });
+
+        function saveToken() {
+            jwtToken = document.getElementById('jwt-token').value.trim();
+            if (jwtToken) {
+                localStorage.setItem('jwt_token', jwtToken);
+                updateAuthStatus();
+                showResponse('Success', 'Token saved successfully! You can now access protected endpoints.', true);
+            } else {
+                showResponse('Error', 'Please enter a token', false);
+            }
+        }
+
+        function clearToken() {
+            clearAuthState();
+            showResponse('Success', '🗑️ All tokens cleared. Protected endpoints will now return 401 Unauthorized.', true);
+        }
+
+        async function register() {
+            const email = document.getElementById('register-email').value;
+            const password = document.getElementById('register-password').value;
+            const name = document.getElementById('register-name').value;
+
+            if (!email || !password) {
+                showResponse('Error', 'Email and password are required', false);
+                return;
+            }
+
+            const body = { email, password };
+            if (name) body.name = name;
+
+            const url = `${baseUrlInput.value}/auth/signup`;
+            showResponse('Loading...', '');
+
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.accessToken) {
+                    // Auto-save token
+                    jwtToken = data.accessToken;
+                    localStorage.setItem('jwt_token', jwtToken);
+                    document.getElementById('jwt-token').value = jwtToken;
+                    updateAuthStatus();
+                    
+                    // Auto-populate refresh token fields if available
+                    if (data.refreshToken) {
+                        localStorage.setItem('refresh_token', data.refreshToken);
+                        document.getElementById('refresh-token').value = data.refreshToken;
+                    }
+                    if (data.user && data.user.id) {
+                        localStorage.setItem('user_id', data.user.id);
+                        document.getElementById('refresh-user-id').value = data.user.id;
+                    }
+                    
+                    showResponse(
+                        `✅ Registration Successful! You are now logged in.`,
+                        JSON.stringify(data, null, 2),
+                        true
+                    );
+                } else {
+                    showResponse(
+                        `${response.status} ${response.statusText}`,
+                        JSON.stringify(data, null, 2),
+                        false
+                    );
+                }
+            } catch (error) {
+                showResponse('Error', error.message, false);
+            }
+        }
+
+        async function login() {
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+
+            if (!email || !password) {
+                showResponse('Error', 'Email and password are required', false);
+                return;
+            }
+
+            const url = `${baseUrlInput.value}/auth/signin`;
+            showResponse('Loading...', '');
+
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.accessToken) {
+                    // Auto-save token
+                    jwtToken = data.accessToken;
+                    localStorage.setItem('jwt_token', jwtToken);
+                    document.getElementById('jwt-token').value = jwtToken;
+                    updateAuthStatus();
+                    
+                    // Auto-populate refresh token fields if available
+                    if (data.refreshToken) {
+                        localStorage.setItem('refresh_token', data.refreshToken);
+                        document.getElementById('refresh-token').value = data.refreshToken;
+                    }
+                    if (data.user && data.user.id) {
+                        localStorage.setItem('user_id', data.user.id);
+                        document.getElementById('refresh-user-id').value = data.user.id;
+                    }
+                    
+                    showResponse(
+                        `✅ Login Successful! You can now access all protected endpoints.`,
+                        JSON.stringify(data, null, 2),
+                        true
+                    );
+                } else {
+                    showResponse(
+                        `${response.status} ${response.statusText}`,
+                        JSON.stringify(data, null, 2),
+                        false
+                    );
+                }
+            } catch (error) {
+                showResponse('Error', error.message, false);
+            }
+        }
+
+        async function testProtectedEndpoint(method, path, body = null) {
+            if (!jwtToken) {
+                showResponse('Error', 'No JWT token found. Please login or paste a token.', false);
+                return;
+            }
+
+            const url = `${baseUrlInput.value}${path}`;
+            showResponse('Loading...', '');
+
+            try {
+                const options = {
+                    method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${jwtToken}`
+                    }
+                };
+
+                if (body) {
+                    options.body = JSON.stringify(body);
+                }
+
+                const response = await fetch(url, options);
+                
+                let data;
+                const contentType = response.headers.get('content-type');
+                if (contentType && contentType.includes('application/json')) {
+                    data = await response.json();
+                } else {
+                    data = await response.text();
+                }
+
+                // Handle 401 Unauthorized - token expired or invalid
+                if (response.status === 401) {
+                    console.warn('Token expired or invalid (401). Clearing auth state.');
+                    clearAuthState();
+                    showResponse(
+                        '🔒 Unauthorized - Token Expired',
+                        '⚠️ Your session has expired. Please login again.\n\n' + (typeof data === 'string' ? data : JSON.stringify(data, null, 2)),
+                        false
+                    );
+                    return;
+                }
+
+                showResponse(
+                    `${response.status} ${response.statusText}`,
+                    typeof data === 'string' ? data : JSON.stringify(data, null, 2),
+                    response.ok
+                );
+            } catch (error) {
+                showResponse('Error', error.message, false);
+            }
+        }
+
+        async function refreshToken() {
+            const userId = document.getElementById('refresh-user-id').value;
+            const refreshToken = document.getElementById('refresh-token').value;
+
+            if (!userId || !refreshToken) {
+                showResponse('Error', 'User ID and Refresh Token are required', false);
+                return;
+            }
+
+            const url = `${baseUrlInput.value}/auth/refresh`;
+            showResponse('Loading...', '');
+
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ userId, refreshToken })
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.accessToken) {
+                    // Update with new access token
+                    jwtToken = data.accessToken;
+                    localStorage.setItem('jwt_token', jwtToken);
+                    document.getElementById('jwt-token').value = jwtToken;
+                    updateAuthStatus();
+                    
+                    showResponse(
+                        `✅ Token Refreshed Successfully!`,
+                        JSON.stringify(data, null, 2),
+                        true
+                    );
+                } else {
+                    // Refresh token expired or invalid
+                    if (response.status === 401 || response.status === 403) {
+                        console.warn('Refresh token expired or invalid. Clearing auth state.');
+                        clearAuthState();
+                        showResponse(
+                            '🔒 Refresh Token Expired',
+                            '⚠️ Your refresh token has expired. Please login again.\n\n' + JSON.stringify(data, null, 2),
+                            false
+                        );
+                    } else {
+                        showResponse(
+                            `${response.status} ${response.statusText}`,
+                            JSON.stringify(data, null, 2),
+                            false
+                        );
+                    }
+                }
+            } catch (error) {
+                showResponse('Error', error.message, false);
+            }
+        }
+
+        // Helper function to clear all auth state
+        function clearAuthState() {
+            jwtToken = '';
+            currentUserRole = null;
+            localStorage.removeItem('jwt_token');
+            localStorage.removeItem('refresh_token');
+            localStorage.removeItem('user_id');
+            document.getElementById('jwt-token').value = '';
+            document.getElementById('refresh-token').value = '';
+            document.getElementById('refresh-user-id').value = '';
+            updateAuthStatus();
+        }
+
+        async function logout() {
+            // Only call signout if we have a valid token
+            if (jwtToken) {
+                try {
+                    await testProtectedEndpoint('POST', '/auth/signout');
+                } catch (error) {
+                    console.warn('Logout request failed:', error);
+                }
+            }
+            
+            // Always clear local state regardless of API response
+            setTimeout(() => {
+                clearAuthState();
+                showResponse('Success', '✅ Logged out successfully. You will need to login again to access protected endpoints.', true);
+            }, 500);
+        }
+
+        async function verifyToken() {
+            if (!jwtToken) {
+                showResponse('Error', 'No JWT token found', false);
+                return;
+            }
+
+            try {
+                // Decode JWT to show payload (without verification)
+                const parts = jwtToken.split('.');
+                if (parts.length !== 3) {
+                    showResponse('Error', 'Invalid JWT format', false);
+                    return;
+                }
+
+                const payload = JSON.parse(atob(parts[1]));
+                const now = Math.floor(Date.now() / 1000);
+                const isExpired = payload.exp && payload.exp < now;
+
+                const result = {
+                    valid: !isExpired,
+                    payload: payload,
+                    expiresAt: payload.exp ? new Date(payload.exp * 1000).toISOString() : 'N/A',
+                    issuedAt: payload.iat ? new Date(payload.iat * 1000).toISOString() : 'N/A',
+                    expired: isExpired,
+                    timeRemaining: payload.exp ? `${Math.max(0, payload.exp - now)} seconds` : 'N/A'
+                };
+
+                showResponse(
+                    isExpired ? 'Token Expired' : 'Token Valid',
+                    JSON.stringify(result, null, 2),
+                    !isExpired
+                );
+            } catch (error) {
+                showResponse('Error', 'Failed to decode token: ' + error.message, false);
+            }
+        }
+
+        // ========== User Functions ==========
+
+        async function updateProfile() {
+            const jsonStr = document.getElementById('update-profile-json').value;
+            
+            if (!jsonStr) {
+                showResponse('Error', 'Please enter profile data to update', false);
+                return;
+            }
+
+            try {
+                const body = JSON.parse(jsonStr);
+                await testProtectedEndpoint('PUT', '/users/profile', body);
+            } catch (error) {
+                showResponse('Error', 'Invalid JSON: ' + error.message, false);
+            }
+        }
+
+        async function getUserById() {
+            const userId = document.getElementById('user-id').value.trim();
+            
+            if (!userId) {
+                showResponse('Error', 'Please enter a user ID', false);
+                return;
+            }
+
+            await testProtectedEndpoint('GET', `/users/${userId}`);
+        }
+
+        async function deleteAccount() {
+            if (!confirm('Are you sure you want to deactivate your account? You can reactivate it later.')) {
+                return;
+            }
+
+            await testProtectedEndpoint('DELETE', '/users/profile');
+            
+            // Clear token after account deactivation
+            setTimeout(() => {
+                jwtToken = '';
+                localStorage.removeItem('jwt_token');
+                document.getElementById('jwt-token').value = '';
+                updateAuthStatus();
+                showResponse('Success', 'Account deactivated successfully.', true);
+            }, 1000);
+        }
+
+        async function activateAccount() {
+            await testProtectedEndpoint('PUT', '/users/activate');
+        }
+
+        // ========== Admin User Management Functions ==========
+
+        async function getAllUsers() {
+            const limit = parseInt(document.getElementById('users-limit').value) || 20;
+            const offset = parseInt(document.getElementById('users-offset').value) || 0;
+            
+            let query = `?limit=${limit}&offset=${offset}`;
+            await testProtectedEndpoint('GET', `/users${query}`);
+        }
+
+        async function updateUserRole() {
+            const userId = document.getElementById('role-user-id').value.trim();
+            const newRole = document.getElementById('new-role').value;
+            
+            if (!userId) {
+                showResponse('Error', 'Please enter a user ID', false);
+                return;
+            }
+
+            if (!confirm(`Are you sure you want to change this user's role to ${newRole}?`)) {
+                return;
+            }
+
+            await testProtectedEndpoint('PATCH', `/users/${userId}/role`, { role: newRole });
+        }
+
+        async function deleteUser() {
+            const userId = document.getElementById('delete-user-id').value.trim();
+            
+            if (!userId) {
+                showResponse('Error', 'Please enter a user ID', false);
+                return;
+            }
+
+            if (!confirm('Are you sure you want to permanently delete this user? This action cannot be undone.')) {
+                return;
+            }
+
+            await testProtectedEndpoint('DELETE', `/users/${userId}`);
+        }
+
+        // ========== Contest Filter Functions ==========
+
+        function getByPlatform() {
+            const platform = document.getElementById('platform-specific').value;
+            testEndpoint('GET', `/contests/platform/${platform}`);
+        }
+
+        function filterByDifficulty() {
+            const level = document.getElementById('difficulty-level').value;
+            testEndpoint('GET', `/contests/difficulty/${level}`);
+        }
+
+        function filterByType() {
+            const type = document.getElementById('contest-type').value;
+            testEndpoint('GET', `/contests/type/${type}`);
+        }
+
+        async function bulkCreateContests() {
+            const jsonStr = document.getElementById('bulk-create-json').value;
+            try {
+                const body = JSON.parse(jsonStr);
+                await testEndpoint('POST', '/contests/bulk', body);
+            } catch (error) {
+                showResponse('Error', 'Invalid JSON: ' + error.message, false);
+            }
+        }
+
+        // ========== Notification Functions ==========
+
+        async function testEmailNotification() {
+            const email = document.getElementById('test-email').value.trim();
+            if (!email) {
+                showResponse('Error', 'Please enter an email address', false);
+                return;
+            }
+            await testProtectedEndpoint('POST', '/notifications/test/email', { email });
+        }
+
+        async function testWhatsAppNotification() {
+            const phoneNumber = document.getElementById('test-whatsapp').value.trim();
+            if (!phoneNumber) {
+                showResponse('Error', 'Please enter a phone number', false);
+                return;
+            }
+            await testProtectedEndpoint('POST', '/notifications/test/whatsapp', { phoneNumber });
+        }
+
+        async function testPushNotification() {
+            const userId = document.getElementById('test-push-user').value.trim();
+            if (!userId) {
+                showResponse('Error', 'Please enter a user ID', false);
+                return;
+            }
+            await testProtectedEndpoint('POST', '/notifications/test/push', { userId });
+        }
+
+        async function getNotifications() {
+            const userId = document.getElementById('notif-user-id').value.trim();
+            const status = document.getElementById('notif-status').value;
+            
+            let query = '?';
+            if (userId) query += `userId=${userId}&`;
+            if (status) query += `status=${status}&`;
+            query += 'page=1&limit=20';
+            
+            await testEndpoint('GET', `/notifications/notifications${query}`);
+        }
+
+        async function getNotificationById() {
+            const id = document.getElementById('notif-id').value.trim();
+            if (!id) {
+                showResponse('Error', 'Please enter a notification ID', false);
+                return;
+            }
+            await testEndpoint('GET', `/notifications/notifications/${id}`);
+        }
+
+        async function markNotificationAsRead() {
+            const id = document.getElementById('mark-read-id').value.trim();
+            if (!id) {
+                showResponse('Error', 'Please enter a notification ID', false);
+                return;
+            }
+            await testEndpoint('PATCH', `/notifications/notifications/${id}/read`);
+        }
+
+        async function markAllNotificationsAsRead() {
+            const userId = document.getElementById('mark-all-user-id').value.trim();
+            if (!userId) {
+                showResponse('Error', 'Please enter a user ID', false);
+                return;
+            }
+            await testEndpoint('PATCH', `/notifications/notifications/user/${userId}/read-all`);
+        }
+
+        async function getNotificationStats() {
+            const userId = document.getElementById('stats-user-id').value.trim();
+            let query = userId ? `?userId=${userId}` : '';
+            await testEndpoint('GET', `/notifications/notifications/stats${query}`);
+        }
+
+        async function retryNotification() {
+            const id = document.getElementById('retry-notif-id').value.trim();
+            if (!id) {
+                showResponse('Error', 'Please enter a notification ID', false);
+                return;
+            }
+            await testEndpoint('POST', `/notifications/notifications/${id}/retry`);
+        }
+
+        async function cleanupNotifications() {
+            const days = document.getElementById('cleanup-days').value.trim();
+            const query = days ? `?daysOld=${days}` : '';
+            
+            if (!confirm(`Are you sure you want to cleanup notifications older than ${days || 90} days?`)) {
+                return;
+            }
+            
+            await testEndpoint('DELETE', `/notifications/notifications/cleanup${query}`);
+        }
+
+        async function sendCustomEmail() {
+            const jsonStr = document.getElementById('custom-email-json').value;
+            if (!jsonStr) {
+                showResponse('Error', 'Please enter email data', false);
+                return;
+            }
+            try {
+                const body = JSON.parse(jsonStr);
+                await testProtectedEndpoint('POST', '/notifications/emails/custom', body);
+            } catch (error) {
+                showResponse('Error', 'Invalid JSON: ' + error.message, false);
+            }
+        }
+
+        async function sendBulkEmail() {
+            const jsonStr = document.getElementById('bulk-email-json').value;
+            if (!jsonStr) {
+                showResponse('Error', 'Please enter bulk email data', false);
+                return;
+            }
+            try {
+                const body = JSON.parse(jsonStr);
+                await testProtectedEndpoint('POST', '/notifications/emails/bulk', body);
+            } catch (error) {
+                showResponse('Error', 'Invalid JSON: ' + error.message, false);
+            }
+        }
+
+        async function sendAnnouncement() {
+            const jsonStr = document.getElementById('announcement-json').value;
+            if (!jsonStr) {
+                showResponse('Error', 'Please enter announcement data', false);
+                return;
+            }
+            try {
+                const body = JSON.parse(jsonStr);
+                await testProtectedEndpoint('POST', '/notifications/emails/announcement', body);
+            } catch (error) {
+                showResponse('Error', 'Invalid JSON: ' + error.message, false);
+            }
+        }
+
+        async function sendContestReminder() {
+            const jsonStr = document.getElementById('contest-reminder-json').value;
+            if (!jsonStr) {
+                showResponse('Error', 'Please enter contest reminder data', false);
+                return;
+            }
+            try {
+                const body = JSON.parse(jsonStr);
+                await testProtectedEndpoint('POST', '/notifications/emails/contest-reminder', body);
+            } catch (error) {
+                showResponse('Error', 'Invalid JSON: ' + error.message, false);
+            }
+        }
+    </script>
+</body>
+</html> 

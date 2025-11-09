@@ -1,0 +1,28 @@
+{
+  "name": "codenotify-docs",
+  "version": "0.0.1",
+  "description": "CodeNotify Documentation - VitePress",
+  "type": "module",
+  "scripts": {
+    "docs:dev": "vitepress dev",
+    "docs:build": "vitepress build",
+    "docs:preview": "vitepress preview"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Celestial-0/CodeNotify.git"
+  },
+  "keywords": [
+    "codenotify"
+  ],
+  "author": "Yash Kumar Singh <yashkumarsingh@ieee.com>",
+  "license": "ISC",
+  "devDependencies": {
+    "mermaid": "^11.12.1",
+    "vitepress": "^1.0.0",
+    "vitepress-plugin-mermaid": "^2.0.17"
+  },
+  "dependencies": {
+    "@catppuccin/vitepress": "^0.1.2"
+  }
+}
