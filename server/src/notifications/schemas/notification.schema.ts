@@ -127,7 +127,7 @@ export class Notification {
   isActive: boolean;
 
   // Expiration (for cleanup)
-  @Prop({ index: true })
+  @Prop()
   expiresAt?: Date;
 
   // Virtual fields

@@ -128,6 +128,16 @@ export interface ContestQueryDto {
   difficulty?: DifficultyLevel;
   isActive?: boolean;
   isNotified?: boolean;
+  search?: string;
+  startDate?: Date | string;
+  endDate?: Date | string;
+  country?: string;
+  city?: string;
+  limit?: number;
+  offset?: number;
+  sortBy?: 'startTime' | 'endTime' | 'name';
+  sortOrder?: 'asc' | 'desc';
+}
 
 // Create Contest DTO
 export interface CreateContestDto {
@@ -167,16 +177,6 @@ export interface UpdateContestDto {
   platformMetadata?: PlatformMetadata;
   isActive?: boolean;
   isNotified?: boolean;
-}
-  search?: string;
-  startDate?: Date | string;
-  endDate?: Date | string;
-  country?: string;
-  city?: string;
-  limit?: number;
-  offset?: number;
-  sortBy?: 'startTime' | 'endTime' | 'name' | 'participantCount';
-  sortOrder?: 'asc' | 'desc';
 }
 
 // Stats DTOs

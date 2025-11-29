@@ -7,7 +7,7 @@ import {
   UseQueryOptions,
   UseMutationOptions,
 } from '@tanstack/react-query';
-import { apiClient } from '@/lib/api/api-client';
+import { NotificationService } from '@/lib/api';
 import type {
   Notification,
   NotificationQueryDto,
@@ -39,7 +39,7 @@ export function useNotifications(
 ) {
   return useQuery<PaginatedNotificationsResponse, Error>({
     queryKey: notificationKeys.list(query),
-    queryFn: () => apiClient.getNotifications(query),
+    queryFn: () => NotificationService.getNotifications(query),
     staleTime: 1 * 60 * 1000, // 1 minute
     gcTime: 5 * 60 * 1000, // 5 minutes
     ...options,
@@ -57,7 +57,7 @@ export function useNotification(
 ) {
   return useQuery<Notification, Error>({
     queryKey: notificationKeys.detail(id),
-    queryFn: () => apiClient.getNotificationById(id),
+    queryFn: () => NotificationService.getNotificationById(id),
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes
     enabled: !!id,
@@ -76,7 +76,7 @@ export function useNotificationStats(
 ) {
   return useQuery<NotificationStats, Error>({
     queryKey: notificationKeys.stats(query),
-    queryFn: () => apiClient.getNotificationStats(query),
+    queryFn: () => NotificationService.getNotificationStats(query),
     staleTime: 2 * 60 * 1000, // 2 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes
     ...options,
@@ -99,7 +99,7 @@ export function useMarkAsRead(
     Error,
     string
   >({
-    mutationFn: (id) => apiClient.markNotificationAsRead(id),
+    mutationFn: (id) => NotificationService.markNotificationAsRead(id),
     onSuccess: (data, id) => {
       // Update the notification in the cache
       queryClient.setQueryData(notificationKeys.detail(id), data.notification);
@@ -127,7 +127,7 @@ export function useMarkAllAsRead(
     Error,
     string
   >({
-    mutationFn: (userId) => apiClient.markAllNotificationsAsRead(userId),
+    mutationFn: (userId) => NotificationService.markAllNotificationsAsRead(userId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: notificationKeys.all });
     },
@@ -151,7 +151,7 @@ export function useRetryNotification(
     Error,
     string
   >({
-    mutationFn: (id) => apiClient.retryNotification(id),
+    mutationFn: (id) => NotificationService.retryNotification(id),
     onSuccess: (data, id) => {
       queryClient.setQueryData(notificationKeys.detail(id), data.notification);
       queryClient.invalidateQueries({ queryKey: notificationKeys.lists() });
@@ -169,7 +169,7 @@ export function usePrefetchNotification() {
   return (id: string) => {
     queryClient.prefetchQuery({
       queryKey: notificationKeys.detail(id),
-      queryFn: () => apiClient.getNotificationById(id),
+      queryFn: () => NotificationService.getNotificationById(id),
       staleTime: 5 * 60 * 1000,
     });
   };
@@ -181,7 +181,7 @@ export function usePrefetchNotifications() {
   return (query: NotificationQueryDto) => {
     queryClient.prefetchQuery({
       queryKey: notificationKeys.list(query),
-      queryFn: () => apiClient.getNotifications(query),
+      queryFn: () => NotificationService.getNotifications(query),
       staleTime: 1 * 60 * 1000,
     });
   };

@@ -52,7 +52,7 @@ export interface AuthResponse {
 
 export interface RefreshTokenResponse {
   accessToken: string;
-  refreshToken: string;
+  refreshToken: string; // Both tokens regenerated with token rotation
 }
 
 export interface ApiError {

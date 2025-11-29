@@ -26,6 +26,9 @@ export function NotificationCard({
   onRetry,
   showActions = true,
 }: NotificationCardProps) {
+  // Handle both id and _id from MongoDB
+  const notificationId = notification.id || notification._id || '';
+  
   const getStatusIcon = (status: NotificationStatus) => {
     switch (status) {
       case NotificationStatus.SENT:
@@ -114,7 +117,7 @@ export function NotificationCard({
                 <Button
                   size="sm"
                   variant="outline"
-                  onClick={() => onMarkAsRead(notification.id)}
+                  onClick={() => onMarkAsRead(notificationId)}
                 >
                   <Eye className="h-3 w-3 mr-1" />
                   Mark as Read
@@ -126,7 +129,7 @@ export function NotificationCard({
                   <Button
                     size="sm"
                     variant="outline"
-                    onClick={() => onRetry(notification.id)}
+                    onClick={() => onRetry(notificationId)}
                   >
                     <RefreshCw className="h-3 w-3 mr-1" />
                     Retry

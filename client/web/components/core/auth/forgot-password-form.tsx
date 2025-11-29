@@ -11,7 +11,7 @@ import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import { AxiosError } from "axios";
 
-import { ForgotPasswordSchema, type ForgotPasswordFormData } from "@/lib/types/auth";
+import { ForgotPasswordSchema, type ForgotPasswordFormData } from "@/lib/types/auth.types";
 import { AuthService } from "@/lib/api/auth.service";
 
 export interface TypewriterProps {

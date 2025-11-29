@@ -54,12 +54,14 @@ export class ContestsController {
   }
 
   // Analytics endpoints (before :id route)
+  @Public()
   @Get('stats')
   async getContestStats(): Promise<ContestStatsDto> {
     this.logger.log('Getting contest statistics');
     return this.contestsService.getContestStats();
   }
 
+  @Public()
   @Get('stats/:platform')
   async getPlatformStats(
     @Param('platform', new EnumValidationPipe(ContestPlatform, 'platform'))
@@ -70,6 +72,7 @@ export class ContestsController {
   }
 
   // Status endpoints (before :id route)
+  @Public()
   @Get('upcoming')
   async getUpcomingContests(
     @Query('platform') platform?: ContestPlatform,
@@ -80,6 +83,7 @@ export class ContestsController {
     return this.contestsService.findUpcoming(platform);
   }
 
+  @Public()
   @Get('running')
   async getRunningContests(
     @Query('platform') platform?: ContestPlatform,
@@ -90,6 +94,7 @@ export class ContestsController {
     return this.contestsService.findRunning(platform);
   }
 
+  @Public()
   @Get('finished')
   async getFinishedContests(
     @Query('platform') platform?: ContestPlatform,
@@ -101,6 +106,7 @@ export class ContestsController {
   }
 
   // Search and filtering endpoints (before :id route)
+  @Public()
   @Get('search')
   async searchContests(
     @Query('q') query: string,
@@ -112,6 +118,7 @@ export class ContestsController {
     return this.contestsService.searchContests(query);
   }
 
+  @Public()
   @Get('difficulty/:level')
   async filterByDifficulty(
     @Param('level', new EnumValidationPipe(DifficultyLevel, 'difficulty level'))
@@ -121,6 +128,7 @@ export class ContestsController {
     return this.contestsService.filterByDifficulty(level);
   }
 
+  @Public()
   @Get('type/:type')
   async filterByType(
     @Param('type', new EnumValidationPipe(ContestType, 'contest type'))
@@ -131,6 +139,7 @@ export class ContestsController {
   }
 
   // Platform-specific endpoints (before :id route)
+  @Public()
   @Get('platform/:platform')
   async findByPlatform(
     @Param('platform', new EnumValidationPipe(ContestPlatform, 'platform'))
@@ -213,6 +222,7 @@ export class ContestsController {
     return this.contestsService.create(createContestDto);
   }
 
+  @Public()
   @Get()
   async findAll(
     @Query() query: ContestQueryDto,
@@ -221,6 +231,7 @@ export class ContestsController {
     return this.contestsService.findAll(query);
   }
 
+  @Public()
   @Get(':id')
   async findById(@Param('id') id: string): Promise<ContestResponseDto> {
     this.logger.log(`Finding contest by ID: ${id}`);

@@ -31,7 +31,9 @@ export function QuickActions() {
   ];
 
   return (
-    <Card>
+    <Card className="relative overflow-hidden border-border bg-card/80 shadow-sm backdrop-blur-xl">
+      <div className="absolute inset-0 -z-10 bg-linear-to-br from-primary/5 via-transparent to-transparent" />
+      
       <CardHeader>
         <CardTitle>Quick Actions</CardTitle>
         <CardDescription>Commonly used features</CardDescription>
@@ -45,13 +47,15 @@ export function QuickActions() {
                 key={action.href}
                 asChild
                 variant="outline"
-                className="h-auto py-4 px-4 justify-start"
+                className="group h-auto py-4 px-4 justify-start border-border bg-background/50 transition-all hover:scale-[1.02] hover:border-primary/30 hover:shadow-md"
               >
                 <Link href={action.href}>
                   <div className="flex items-start gap-3 w-full">
-                    <Icon className={`h-5 w-5 shrink-0 mt-0.5 ${action.color}`} />
+                    <div className="rounded-full bg-primary/10 p-2 transition-colors group-hover:bg-primary/20">
+                      <Icon className={`h-4 w-4 shrink-0 ${action.color}`} />
+                    </div>
                     <div className="text-left flex-1">
-                      <div className="font-medium text-sm mb-0.5">
+                      <div className="font-medium text-sm mb-0.5 text-foreground">
                         {action.title}
                       </div>
                       <div className="text-xs text-muted-foreground">

@@ -1,0 +1,36 @@
+/* Wraps created by vitepress-mermaid-renderer */
+.mermaid,
+.mermaid-container {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  margin: 1rem auto;
+  text-align: center;
+}
+
+/* Make all Mermaid SVGs responsive and centered */
+.mermaid svg {
+  display: inline-block;
+  width: auto !important;
+  height: auto !important;
+  max-width: 100% !important;
+  margin: 0 auto !important;
+}
+
+
+
+
+
+/* Ensure the parent div centers its content */
+.vp-doc .language-mermaid,
+.vp-doc [class*="language-mermaid"] {
+  text-align: center;
+  width: 100%;
+  max-width: 100%;
+}
+
+/* Fix HTML label sizing inside foreignObject */
+.mermaid svg foreignObject {
+  width: 100% !important;
+  max-width: 100% !important;
+}

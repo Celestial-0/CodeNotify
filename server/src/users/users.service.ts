@@ -42,13 +42,10 @@ export class UsersService {
     id: string,
     refreshToken: string | null,
   ): Promise<void> {
-    let hashedRefreshToken: string | null = null;
-    if (refreshToken) {
-      hashedRefreshToken = await bcrypt.hash(refreshToken, 12);
-    }
-
+    // Store refresh token as-is (JWT tokens are already cryptographically secure)
+    // No need to hash them - they should be verified by signature, not compared
     await this.userModel
-      .findByIdAndUpdate(id, { refreshToken: hashedRefreshToken })
+      .findByIdAndUpdate(id, { refreshToken: refreshToken })
       .exec();
   }
 
@@ -143,6 +140,7 @@ export class UsersService {
     email: string;
     name: string;
     phoneNumber?: string;
+    role: 'user' | 'admin';
     preferences: UserPreferences;
     isActive: boolean;
     createdAt: Date;
@@ -154,6 +152,7 @@ export class UsersService {
       email: user.email,
       name: user.name,
       phoneNumber: user.phoneNumber,
+      role: user.role,
       preferences: user.preferences,
       isActive: user.isActive,
       createdAt: user.createdAt,

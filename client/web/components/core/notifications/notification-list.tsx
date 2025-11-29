@@ -67,7 +67,7 @@ export function NotificationList({
     <div className="space-y-3">
       {notifications.map((notification) => (
         <NotificationCard
-          key={notification.id}
+          key={notification.id || notification._id}
           notification={notification}
           onMarkAsRead={onMarkAsRead}
           onRetry={onRetry}

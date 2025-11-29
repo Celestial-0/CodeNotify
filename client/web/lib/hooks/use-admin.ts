@@ -7,7 +7,7 @@ import {
   UseQueryOptions,
   UseMutationOptions,
 } from '@tanstack/react-query';
-import { apiClient } from '@/lib/api/api-client';
+import { AdminService, ContestService, NotificationService } from '@/lib/api';
 import type {
   AdminUser,
   AdminUsersResponse,
@@ -47,7 +47,7 @@ export function useAdminUsers(
 ) {
   return useQuery<AdminUsersResponse, Error>({
     queryKey: adminKeys.usersList(limit, offset),
-    queryFn: () => apiClient.getAllUsers(limit, offset),
+    queryFn: () => AdminService.getAllUsers(limit, offset),
     staleTime: 2 * 60 * 1000, // 2 minutes
     gcTime: 5 * 60 * 1000, // 5 minutes
     ...options,
@@ -60,7 +60,7 @@ export function useAdminUser(
 ) {
   return useQuery<AdminUser, Error>({
     queryKey: adminKeys.user(id),
-    queryFn: () => apiClient.getUserById(id) as Promise<AdminUser>,
+    queryFn: () => AdminService.getUserById(id) as Promise<AdminUser>,
     staleTime: 5 * 60 * 1000,
     enabled: !!id,
     ...options,
@@ -81,7 +81,7 @@ export function useUpdateUserRole(
     Error,
     { userId: string; role: 'user' | 'admin' }
   >({
-    mutationFn: ({ userId, role }) => apiClient.updateUserRole(userId, role),
+    mutationFn: ({ userId, role }) => AdminService.updateUserRole(userId, role),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: adminKeys.users() });
     },
@@ -95,7 +95,7 @@ export function useDeleteUser(
   const queryClient = useQueryClient();
 
   return useMutation<{ message: string }, Error, string>({
-    mutationFn: (userId) => apiClient.deleteUser(userId),
+    mutationFn: (userId) => AdminService.deleteUser(userId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: adminKeys.users() });
     },
@@ -111,7 +111,7 @@ export function useSyncAllPlatforms(
   const queryClient = useQueryClient();
 
   return useMutation<AllPlatformsSyncResult, Error, void>({
-    mutationFn: () => apiClient.syncAllPlatforms(),
+    mutationFn: () => ContestService.syncAllPlatforms(),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['contests'] });
     },
@@ -134,7 +134,7 @@ export function useSyncPlatform(
     { platform: string; forceSync?: boolean }
   >({
     mutationFn: ({ platform, forceSync }) =>
-      apiClient.syncPlatform(platform, forceSync),
+      ContestService.syncPlatform(platform, forceSync),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['contests'] });
     },
@@ -148,7 +148,7 @@ export function useDeleteContest(
   const queryClient = useQueryClient();
 
   return useMutation<void, Error, string>({
-    mutationFn: (contestId) => apiClient.deleteContest(contestId),
+    mutationFn: (contestId) => ContestService.deleteContest(contestId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['contests'] });
     },
@@ -162,7 +162,7 @@ export function useBulkCreateContests(
   const queryClient = useQueryClient();
 
   return useMutation<ContestResponseDto[], Error, CreateContestDto[]>({
-    mutationFn: (contests) => apiClient.bulkCreateContests(contests),
+    mutationFn: (contests) => ContestService.bulkCreateContests(contests),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['contests'] });
     },
@@ -176,7 +176,7 @@ export function useSendCustomEmail(
   options?: UseMutationOptions<EmailSendResult, Error, SendCustomEmailDto>
 ) {
   return useMutation<EmailSendResult, Error, SendCustomEmailDto>({
-    mutationFn: (data) => apiClient.sendCustomEmail(data),
+    mutationFn: (data) => NotificationService.sendCustomEmail(data),
     ...options,
   });
 }
@@ -185,7 +185,7 @@ export function useSendBulkEmail(
   options?: UseMutationOptions<EmailSendResult, Error, SendBulkEmailDto>
 ) {
   return useMutation<EmailSendResult, Error, SendBulkEmailDto>({
-    mutationFn: (data) => apiClient.sendBulkEmail(data),
+    mutationFn: (data) => NotificationService.sendBulkEmail(data),
     ...options,
   });
 }
@@ -194,7 +194,7 @@ export function useSendAnnouncement(
   options?: UseMutationOptions<EmailSendResult, Error, SendAnnouncementDto>
 ) {
   return useMutation<EmailSendResult, Error, SendAnnouncementDto>({
-    mutationFn: (data) => apiClient.sendAnnouncement(data),
+    mutationFn: (data) => NotificationService.sendAnnouncement(data),
     ...options,
   });
 }
@@ -203,7 +203,7 @@ export function useSendContestReminder(
   options?: UseMutationOptions<EmailSendResult, Error, SendContestReminderDto>
 ) {
   return useMutation<EmailSendResult, Error, SendContestReminderDto>({
-    mutationFn: (data) => apiClient.sendContestReminder(data),
+    mutationFn: (data) => NotificationService.sendContestReminder(data),
     ...options,
   });
 }
@@ -215,7 +215,7 @@ export function useServiceStatus(
 ) {
   return useQuery<ServiceStatus, Error>({
     queryKey: adminKeys.serviceStatus(),
-    queryFn: () => apiClient.getServiceStatus(),
+    queryFn: () => NotificationService.getServiceStatus(),
     staleTime: 30 * 1000, // 30 seconds
     gcTime: 2 * 60 * 1000, // 2 minutes
     refetchInterval: 60 * 1000, // Refetch every minute
@@ -231,7 +231,7 @@ export function useHealthCheck(
 ) {
   return useQuery<HealthCheckResult, Error>({
     queryKey: adminKeys.healthCheck(),
-    queryFn: () => apiClient.healthCheckNotifications(),
+    queryFn: () => NotificationService.healthCheck(),
     staleTime: 30 * 1000, // 30 seconds
     gcTime: 2 * 60 * 1000, // 2 minutes
     refetchInterval: 60 * 1000, // Refetch every minute

@@ -36,7 +36,6 @@ const SORT_OPTIONS = [
   { value: 'startTime', label: 'Start Time' },
   { value: 'endTime', label: 'End Time' },
   { value: 'name', label: 'Name' },
-  { value: 'participantCount', label: 'Participants' },
 ] as const;
 
 export function ContestFilters({
@@ -64,7 +63,7 @@ export function ContestFilters({
   };
 
   const handleSortChange = (
-    sortBy: 'startTime' | 'endTime' | 'name' | 'participantCount'
+    sortBy: 'startTime' | 'endTime' | 'name'
   ) => {
     onFilterChange({ sortBy });
   };
@@ -248,7 +247,7 @@ export function ContestFilters({
           value={filters.sortBy || 'startTime'}
           onValueChange={(value) =>
             handleSortChange(
-              value as 'startTime' | 'endTime' | 'name' | 'participantCount'
+              value as 'startTime' | 'endTime' | 'name'
             )
           }
         >

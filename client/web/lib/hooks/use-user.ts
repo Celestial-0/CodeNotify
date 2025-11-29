@@ -7,7 +7,7 @@ import {
   UseQueryOptions,
   UseMutationOptions,
 } from '@tanstack/react-query';
-import { apiClient } from '@/lib/api/api-client';
+import { UserService } from '@/lib/api';
 import type {
   UserProfile,
   UpdateUserDto,
@@ -27,7 +27,7 @@ export function useProfile(
 ) {
   return useQuery<UserProfile, Error>({
     queryKey: userKeys.profile(),
-    queryFn: () => apiClient.getProfile(),
+    queryFn: () => UserService.getProfile(),
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes
     ...options,
@@ -42,7 +42,7 @@ export function useUpdateProfile(
   const queryClient = useQueryClient();
 
   return useMutation<UserProfile, Error, UpdateUserDto>({
-    mutationFn: (data) => apiClient.updateProfile(data),
+    mutationFn: (data) => UserService.updateProfile(data),
     onSuccess: (data) => {
       queryClient.setQueryData(userKeys.profile(), data);
       queryClient.invalidateQueries({ queryKey: userKeys.all });
@@ -59,7 +59,7 @@ export function useUpdatePreferences(
   const queryClient = useQueryClient();
 
   return useMutation<UserProfile, Error, UpdatePreferencesDto>({
-    mutationFn: (data) => apiClient.updatePreferences(data),
+    mutationFn: (data) => UserService.updatePreferences(data),
     onSuccess: (data) => {
       queryClient.setQueryData(userKeys.profile(), data);
       queryClient.invalidateQueries({ queryKey: userKeys.all });
@@ -76,7 +76,7 @@ export function useDeactivateAccount(
   const queryClient = useQueryClient();
 
   return useMutation<{ message: string }, Error, void>({
-    mutationFn: () => apiClient.deactivateAccount(),
+    mutationFn: () => UserService.deactivateAccount(),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: userKeys.all });
     },
@@ -92,7 +92,7 @@ export function useActivateAccount(
   const queryClient = useQueryClient();
 
   return useMutation<{ message: string }, Error, void>({
-    mutationFn: () => apiClient.activateAccount(),
+    mutationFn: () => UserService.activateAccount(),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: userKeys.all });
     },
@@ -110,7 +110,7 @@ export function useTestEmailNotification(
   >
 ) {
   return useMutation<{ success: boolean; message: string }, Error, string>({
-    mutationFn: (email) => apiClient.testEmailNotification(email),
+    mutationFn: (email) => UserService.testEmailNotification(email),
     ...options,
   });
 }
@@ -123,7 +123,7 @@ export function useTestWhatsAppNotification(
   >
 ) {
   return useMutation<{ success: boolean; message: string }, Error, string>({
-    mutationFn: (phoneNumber) => apiClient.testWhatsAppNotification(phoneNumber),
+    mutationFn: (phoneNumber) => UserService.testWhatsAppNotification(phoneNumber),
     ...options,
   });
 }

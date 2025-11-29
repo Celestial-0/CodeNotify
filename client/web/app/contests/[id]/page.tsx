@@ -6,8 +6,16 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft, Calendar, ExternalLink } from 'lucide-react';
 import { useContest } from '@/lib/hooks/use-contests';
 import { Skeleton } from '@/components/ui/skeleton';
-import { format } from 'date-fns';
+import { format, isValid } from 'date-fns';
 import { PLATFORM_CONFIG } from '@/lib/types/contest.types';
+import { downloadContestICS } from '@/lib/utils';
+
+// Helper function to safely format dates
+const formatDate = (date: Date | string | undefined, formatStr: string, fallback = 'TBD'): string => {
+  if (!date) return fallback;
+  const dateObj = typeof date === 'string' ? new Date(date) : date;
+  return isValid(dateObj) ? format(dateObj, formatStr) : fallback;
+};
 
 export default function ContestDetailPage() {
   const params = useParams();
@@ -22,58 +30,9 @@ export default function ContestDetailPage() {
   } = useContest(contestId);
 
   // Generate ICS file for calendar
-  const generateICS = () => {
+  const handleAddToCalendar = () => {
     if (!contest) return;
-
-    const startTime = new Date(contest.startTime);
-    const endTime = new Date(contest.endTime);
-
-    const formatDate = (date: Date) => {
-      return date
-        .toISOString()
-        .replace(/[-:]/g, '')
-        .replace(/\.\d{3}/, '');
-    };
-
-    const icsContent = [
-      'BEGIN:VCALENDAR',
-      'VERSION:2.0',
-      'PRODID:-//CodeNotify//Contest Calendar//EN',
-      'CALSCALE:GREGORIAN',
-      'METHOD:PUBLISH',
-      'X-WR-CALNAME:CodeNotify Contests',
-      'X-WR-TIMEZONE:UTC',
-      'BEGIN:VEVENT',
-      `DTSTART:${formatDate(startTime)}`,
-      `DTEND:${formatDate(endTime)}`,
-      `DTSTAMP:${formatDate(new Date())}`,
-      `UID:${contest.id}@codenotify.app`,
-      `SUMMARY:${contest.name}`,
-      `DESCRIPTION:${contest.platform} Contest\\n${contest.description || ''}\\n\\nRegistration: ${contest.registrationUrl || contest.websiteUrl || 'N/A'}`,
-      `LOCATION:${contest.websiteUrl || 'Online'}`,
-      `URL:${contest.websiteUrl || ''}`,
-      'STATUS:CONFIRMED',
-      'SEQUENCE:0',
-      'BEGIN:VALARM',
-      'TRIGGER:-PT30M',
-      'DESCRIPTION:Contest starts in 30 minutes',
-      'ACTION:DISPLAY',
-      'END:VALARM',
-      'END:VEVENT',
-      'END:VCALENDAR',
-    ].join('\r\n');
-
-    const blob = new Blob([icsContent], {
-      type: 'text/calendar;charset=utf-8',
-    });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `${contest.name.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.ics`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+    downloadContestICS(contest);
   };
 
   if (isLoading) {
@@ -122,12 +81,17 @@ export default function ContestDetailPage() {
     );
   }
 
-  const platformConfig = PLATFORM_CONFIG[contest.platform];
+  const platformConfig = PLATFORM_CONFIG[contest.platform] ?? {
+    name: contest.platform,
+    color: 'bg-gray-500',
+    textColor: 'text-gray-500',
+    icon: '?',
+  };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="bg-background">
       {/* Header */}
-      <div className="border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60 sticky top-0 z-40">
+      <div className="border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60 sticky top-16 z-30">
         <div className="container mx-auto px-4 py-6">
           <Button
             variant="ghost"
@@ -143,8 +107,7 @@ export default function ContestDetailPage() {
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-2">
                 <span
-                  className="px-2 py-1 rounded text-xs font-semibold text-white"
-                  style={{ backgroundColor: platformConfig.color }}
+                  className={`px-2 py-1 rounded text-xs font-semibold text-white ${platformConfig.color}`}
                 >
                   {platformConfig.icon} {contest.platform}
                 </span>
@@ -158,13 +121,13 @@ export default function ContestDetailPage() {
                 {contest.name}
               </h1>
               <p className="text-muted-foreground">
-                {format(new Date(contest.startTime), 'PPP p')} -{' '}
-                {format(new Date(contest.endTime), 'p')}
+                {formatDate(contest.startTime, 'PPP p')} -{' '}
+                {formatDate(contest.endTime, 'p')}
               </p>
             </div>
 
             <div className="flex flex-wrap gap-2">
-              <Button onClick={generateICS} variant="outline" size="sm">
+              <Button onClick={handleAddToCalendar} variant="outline" size="sm">
                 <Calendar className="h-4 w-4 mr-2" />
                 Add to Calendar
               </Button>
@@ -199,7 +162,7 @@ export default function ContestDetailPage() {
 
       {/* Contest Details */}
       <div className="container mx-auto px-4 py-6">
-        <ContestDetailView contest={contest} />
+        <ContestDetailView contest={contest} onAddToCalendar={handleAddToCalendar} />
       </div>
     </div>
   );

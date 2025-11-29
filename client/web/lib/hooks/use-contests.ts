@@ -5,7 +5,7 @@ import {
   useQueryClient,
   UseQueryOptions,
 } from '@tanstack/react-query';
-import { apiClient } from '@/lib/api/api-client';
+import { ContestService } from '@/lib/api';
 import {
   ContestQueryDto,
   ContestResponseDto,
@@ -46,7 +46,7 @@ export function useContests(
 ) {
   return useQuery<PaginatedContestResponseDto, Error>({
     queryKey: contestKeys.list(query),
-    queryFn: () => apiClient.getContests(query),
+    queryFn: () => ContestService.getContests(query),
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes (formerly cacheTime)
     ...options,
@@ -64,7 +64,7 @@ export function useContest(
 ) {
   return useQuery<ContestResponseDto, Error>({
     queryKey: contestKeys.detail(id),
-    queryFn: () => apiClient.getContestById(id),
+    queryFn: () => ContestService.getContestById(id),
     staleTime: 10 * 60 * 1000, // 10 minutes
     gcTime: 30 * 60 * 1000, // 30 minutes
     enabled: !!id,
@@ -83,7 +83,7 @@ export function useUpcomingContests(
 ) {
   return useQuery<ContestResponseDto[], Error>({
     queryKey: contestKeys.upcoming(platform),
-    queryFn: () => apiClient.getUpcomingContests(platform),
+    queryFn: () => ContestService.getUpcomingContests(platform),
     staleTime: 3 * 60 * 1000, // 3 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes
     ...options,
@@ -101,7 +101,7 @@ export function useRunningContests(
 ) {
   return useQuery<ContestResponseDto[], Error>({
     queryKey: contestKeys.running(platform),
-    queryFn: () => apiClient.getRunningContests(platform),
+    queryFn: () => ContestService.getRunningContests(platform),
     staleTime: 1 * 60 * 1000, // 1 minute (more frequent updates for running contests)
     gcTime: 5 * 60 * 1000, // 5 minutes
     refetchInterval: 2 * 60 * 1000, // Auto-refetch every 2 minutes
@@ -120,7 +120,7 @@ export function useFinishedContests(
 ) {
   return useQuery<ContestResponseDto[], Error>({
     queryKey: contestKeys.finished(platform),
-    queryFn: () => apiClient.getFinishedContests(platform),
+    queryFn: () => ContestService.getFinishedContests(platform),
     staleTime: 15 * 60 * 1000, // 15 minutes
     gcTime: 30 * 60 * 1000, // 30 minutes
     ...options,
@@ -138,7 +138,7 @@ export function useSearchContests(
 ) {
   return useQuery<ContestResponseDto[], Error>({
     queryKey: contestKeys.search(searchQuery),
-    queryFn: () => apiClient.searchContests(searchQuery),
+    queryFn: () => ContestService.searchContests(searchQuery),
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes
     enabled: searchQuery.length > 0,
@@ -156,7 +156,7 @@ export function useContestStats(
 ) {
   return useQuery<ContestStatsDto, Error>({
     queryKey: contestKeys.stats(),
-    queryFn: () => apiClient.getContestStats(),
+    queryFn: () => ContestService.getContestStats(),
     staleTime: 10 * 60 * 1000, // 10 minutes
     gcTime: 30 * 60 * 1000, // 30 minutes
     ...options,
@@ -174,7 +174,7 @@ export function usePlatformStats(
 ) {
   return useQuery<PlatformStatsDto, Error>({
     queryKey: contestKeys.platformStats(platform),
-    queryFn: () => apiClient.getPlatformStats(platform),
+    queryFn: () => ContestService.getPlatformStats(platform),
     staleTime: 10 * 60 * 1000, // 10 minutes
     gcTime: 30 * 60 * 1000, // 30 minutes
     enabled: !!platform,
@@ -190,7 +190,7 @@ export function usePrefetchContest() {
   return (id: string) => {
     queryClient.prefetchQuery({
       queryKey: contestKeys.detail(id),
-      queryFn: () => apiClient.getContestById(id),
+      queryFn: () => ContestService.getContestById(id),
       staleTime: 10 * 60 * 1000,
     });
   };
@@ -202,7 +202,7 @@ export function usePrefetchContests() {
   return (query: ContestQueryDto) => {
     queryClient.prefetchQuery({
       queryKey: contestKeys.list(query),
-      queryFn: () => apiClient.getContests(query),
+      queryFn: () => ContestService.getContests(query),
       staleTime: 5 * 60 * 1000,
     });
   };

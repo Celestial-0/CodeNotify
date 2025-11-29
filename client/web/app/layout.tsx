@@ -3,7 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { QueryProvider } from "@/lib/providers/query-provider";
-import AnoAI from "@/components/animated-shader-background";
+// import AnoAI from "@/components/animated-shader-background";
 import { Toaster } from "sonner";
 
 const geistSans = Geist({
@@ -40,9 +40,9 @@ export default function RootLayout({
             enableSystem
             disableTransitionOnChange
           >
-            <div className="fixed inset-0 -z-10">
+            {/* <div className="fixed inset-0 -z-10">
               <AnoAI />
-            </div>
+            </div> */}
             <div className="relative z-0">
               {children}
             </div>
