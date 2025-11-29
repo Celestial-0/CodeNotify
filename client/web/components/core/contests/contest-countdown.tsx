@@ -9,6 +9,7 @@ interface ContestCountdownProps {
   endTime: Date | string;
   className?: string;
   showIcon?: boolean;
+  compact?: boolean;
 }
 
 interface TimeRemaining {
@@ -26,6 +27,11 @@ function calculateTimeRemaining(
   const now = new Date().getTime();
   const start = new Date(startTime).getTime();
   const end = new Date(endTime).getTime();
+
+  // Handle invalid dates
+  if (isNaN(start) || isNaN(end)) {
+    return { days: 0, hours: 0, minutes: 0, seconds: 0, status: 'finished' };
+  }
 
   let status: 'upcoming' | 'running' | 'finished';
   let targetTime: number;
@@ -55,6 +61,7 @@ export function ContestCountdown({
   endTime,
   className,
   showIcon = true,
+  compact = false,
 }: ContestCountdownProps) {
   const [timeRemaining, setTimeRemaining] = useState<TimeRemaining>(
     calculateTimeRemaining(startTime, endTime)
@@ -74,18 +81,21 @@ export function ContestCountdown({
     upcoming: {
       icon: Clock,
       text: 'Starts in',
+      shortText: 'Starts',
       color: 'text-blue-500',
       bgColor: 'bg-blue-500/10',
     },
     running: {
       icon: PlayCircle,
       text: 'Ends in',
+      shortText: 'Ends',
       color: 'text-green-500',
       bgColor: 'bg-green-500/10',
     },
     finished: {
       icon: CheckCircle,
       text: 'Finished',
+      shortText: 'Done',
       color: 'text-gray-500',
       bgColor: 'bg-gray-500/10',
     },
@@ -98,37 +108,42 @@ export function ContestCountdown({
     return (
       <div
         className={cn(
-          'flex items-center gap-2 rounded-lg px-3 py-2',
+          'flex items-center gap-2 rounded-lg',
+          compact ? 'px-2 py-1' : 'px-3 py-2',
           config.bgColor,
           className
         )}
       >
-        {showIcon && <Icon className={cn('h-4 w-4', config.color)} />}
-        <span className={cn('text-sm font-medium', config.color)}>
-          {config.text}
+        {showIcon && <Icon className={cn(compact ? 'h-3.5 w-3.5' : 'h-4 w-4', config.color)} />}
+        <span className={cn(compact ? 'text-xs' : 'text-sm', 'font-medium', config.color)}>
+          {compact ? config.shortText : config.text}
         </span>
       </div>
     );
   }
 
+  const timeString = compact
+    ? `${days > 0 ? `${days}d ` : ''}${hours}h ${minutes}m`
+    : `${days > 0 ? `${days}d ` : ''}${days > 0 || hours > 0 ? `${hours}h ` : ''}${days > 0 || hours > 0 || minutes > 0 ? `${minutes}m ` : ''}${days === 0 ? `${seconds}s` : ''}`;
+
   return (
     <div
       className={cn(
-        'flex items-center gap-2 rounded-lg px-3 py-2',
+        'flex items-center gap-2 rounded-lg',
+        compact ? 'px-2 py-1' : 'px-3 py-2',
         config.bgColor,
         className
       )}
     >
-      {showIcon && <Icon className={cn('h-4 w-4', config.color)} />}
+      {showIcon && <Icon className={cn(compact ? 'h-3.5 w-3.5' : 'h-4 w-4', config.color)} />}
       <div className="flex items-center gap-1">
-        <span className={cn('text-sm font-medium', config.color)}>
-          {config.text}:
-        </span>
-        <span className={cn('font-mono text-sm font-bold', config.color)}>
-          {days > 0 && `${days}d `}
-          {(days > 0 || hours > 0) && `${hours}h `}
-          {(days > 0 || hours > 0 || minutes > 0) && `${minutes}m `}
-          {days === 0 && `${seconds}s`}
+        {!compact && (
+          <span className={cn('text-sm font-medium', config.color)}>
+            {config.text}:
+          </span>
+        )}
+        <span className={cn('font-mono font-bold', compact ? 'text-xs' : 'text-sm', config.color)}>
+          {timeString}
         </span>
       </div>
     </div>

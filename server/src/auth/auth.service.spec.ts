@@ -3,9 +3,11 @@ import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { ConflictException, UnauthorizedException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
+import { Types } from 'mongoose';
 import { AuthService } from './auth.service';
 import { UsersService } from '../users/users.service';
 import { CreateUserDto, SigninDto } from '../common/dto/auth.dto';
+import type { UserDocument } from '../users/schemas/user.schema';
 
 // Mock bcrypt
 jest.mock('bcrypt');
@@ -17,7 +19,8 @@ describe('AuthService', () => {
   let jwtService: jest.Mocked<JwtService>;
   let configService: jest.Mocked<ConfigService>;
 
-  const mockUser = {
+  const mockUser: Partial<UserDocument> = {
+    _id: new Types.ObjectId('64f8a1b2c3d4e5f6a7b8c9d0'),
     id: '64f8a1b2c3d4e5f6a7b8c9d0',
     email: 'test@example.com',
     name: 'Test User',
@@ -30,8 +33,8 @@ describe('AuthService', () => {
       alertFrequency: 'immediate',
       contestTypes: [],
     },
-    refreshToken: null,
-    lastLogin: null,
+    refreshToken: undefined,
+    lastLogin: undefined,
     createdAt: new Date(),
     updatedAt: new Date(),
   };
@@ -59,6 +62,7 @@ describe('AuthService', () => {
 
     const mockJwtService = {
       signAsync: jest.fn(),
+      verifyAsync: jest.fn(),
     };
 
     const mockConfigService = {
@@ -101,7 +105,7 @@ describe('AuthService', () => {
       // Arrange
       usersService.findByEmail.mockResolvedValue(null);
       mockedBcrypt.hash.mockResolvedValue('hashedPassword' as never);
-      usersService.createUser.mockResolvedValue(mockUser as any);
+      usersService.createUser.mockResolvedValue(mockUser as UserDocument);
       jwtService.signAsync
         .mockResolvedValueOnce('access-token')
         .mockResolvedValueOnce('refresh-token');
@@ -142,7 +146,7 @@ describe('AuthService', () => {
 
     it('should throw ConflictException if user already exists', async () => {
       // Arrange
-      usersService.findByEmail.mockResolvedValue(mockUser as any);
+      usersService.findByEmail.mockResolvedValue(mockUser as UserDocument);
 
       // Act & Assert
       await expect(service.signup(mockCreateUserDto)).rejects.toThrow(
@@ -158,7 +162,7 @@ describe('AuthService', () => {
   describe('signin', () => {
     it('should successfully sign in a user', async () => {
       // Arrange
-      usersService.findByEmail.mockResolvedValue(mockUser as any);
+      usersService.findByEmail.mockResolvedValue(mockUser as UserDocument);
       mockedBcrypt.compare.mockResolvedValue(true as never);
       jwtService.signAsync
         .mockResolvedValueOnce('access-token')
@@ -212,7 +216,7 @@ describe('AuthService', () => {
 
     it('should throw UnauthorizedException if password is invalid', async () => {
       // Arrange
-      usersService.findByEmail.mockResolvedValue(mockUser as any);
+      usersService.findByEmail.mockResolvedValue(mockUser as UserDocument);
       mockedBcrypt.compare.mockResolvedValue(false as never);
 
       // Act & Assert
@@ -230,8 +234,8 @@ describe('AuthService', () => {
 
     it('should throw UnauthorizedException if user is inactive', async () => {
       // Arrange
-      const inactiveUser = { ...mockUser, isActive: false };
-      usersService.findByEmail.mockResolvedValue(inactiveUser as any);
+      const inactiveUser = { ...mockUser, isActive: false } as UserDocument;
+      usersService.findByEmail.mockResolvedValue(inactiveUser);
 
       // Act & Assert
       await expect(service.signin(mockSigninDto)).rejects.toThrow(
@@ -247,7 +251,7 @@ describe('AuthService', () => {
     it('should successfully sign out a user without refresh token', async () => {
       // Arrange
       const userId = 'user-id';
-      usersService.getUserById.mockResolvedValue(mockUser as any);
+      usersService.getUserById.mockResolvedValue(mockUser as UserDocument);
       usersService.updateRefreshToken.mockResolvedValue(undefined);
 
       // Act
@@ -277,88 +281,131 @@ describe('AuthService', () => {
   });
 
   describe('refreshAccessToken', () => {
-    it('should successfully refresh access token', async () => {
+    it('should successfully refresh access token with token rotation', async () => {
       // Arrange
-      const userId = mockUser.id;
-      const refreshToken = 'refresh-token';
+      const refreshToken = 'valid-refresh-token';
       const userWithRefreshToken = {
         ...mockUser,
-        refreshToken: 'hashed-refresh-token',
+        refreshToken: refreshToken, // Store plain token now
+      } as UserDocument;
+
+      const jwtPayload = {
+        sub: mockUser.id,
+        email: mockUser.email,
+        role: mockUser.role,
+        iat: Math.floor(Date.now() / 1000),
+        exp: Math.floor(Date.now() / 1000) + 7 * 24 * 60 * 60,
       };
 
-      usersService.getUserById.mockResolvedValue(userWithRefreshToken as any);
-      mockedBcrypt.compare.mockResolvedValue(true as never);
-      jwtService.signAsync.mockResolvedValueOnce('new-access-token');
+      jwtService.verifyAsync.mockResolvedValue(jwtPayload);
+      usersService.getUserById.mockResolvedValue(userWithRefreshToken);
+      jwtService.signAsync
+        .mockResolvedValueOnce('new-access-token')
+        .mockResolvedValueOnce('new-refresh-token');
+      usersService.updateRefreshToken.mockResolvedValue(undefined);
 
       // Act
-      const result = await service.refreshAccessToken(userId, refreshToken);
+      const result = await service.refreshAccessToken(refreshToken);
 
       // Assert
-      expect(usersService.getUserById).toHaveBeenCalledWith(userId);
-      expect(mockedBcrypt.compare).toHaveBeenCalledWith(
-        refreshToken,
-        userWithRefreshToken.refreshToken,
+      expect(jwtService.verifyAsync).toHaveBeenCalledWith(refreshToken, {
+        secret: 'test-refresh-secret',
+      });
+      expect(usersService.getUserById).toHaveBeenCalledWith(mockUser.id);
+      expect(jwtService.signAsync).toHaveBeenCalledTimes(2); // Both tokens regenerated
+      expect(usersService.updateRefreshToken).toHaveBeenCalledWith(
+        mockUser.id,
+        'new-refresh-token',
       );
-      expect(jwtService.signAsync).toHaveBeenCalledTimes(1);
-      expect(usersService.updateRefreshToken).not.toHaveBeenCalled();
       expect(result).toEqual({
         accessToken: 'new-access-token',
-        refreshToken: refreshToken,
+        refreshToken: 'new-refresh-token',
       });
+    });
+
+    it('should throw UnauthorizedException if JWT verification fails', async () => {
+      // Arrange
+      const refreshToken = 'invalid-refresh-token';
+      jwtService.verifyAsync.mockRejectedValue(new Error('Invalid token'));
+
+      // Act & Assert
+      await expect(service.refreshAccessToken(refreshToken)).rejects.toThrow(
+        UnauthorizedException,
+      );
+      expect(jwtService.verifyAsync).toHaveBeenCalledWith(refreshToken, {
+        secret: 'test-refresh-secret',
+      });
+      expect(usersService.getUserById).not.toHaveBeenCalled();
     });
 
     it('should throw UnauthorizedException if user not found', async () => {
       // Arrange
-      const userId = 'non-existent-user';
-      const refreshToken = 'refresh-token';
+      const refreshToken = 'valid-refresh-token';
+      const jwtPayload = {
+        sub: 'non-existent-user',
+        email: 'test@example.com',
+        role: 'user',
+      };
+
+      jwtService.verifyAsync.mockResolvedValue(jwtPayload);
       usersService.getUserById.mockResolvedValue(null);
 
       // Act & Assert
-      await expect(
-        service.refreshAccessToken(userId, refreshToken),
-      ).rejects.toThrow(UnauthorizedException);
-      expect(usersService.getUserById).toHaveBeenCalledWith(userId);
-      expect(mockedBcrypt.compare).not.toHaveBeenCalled();
+      await expect(service.refreshAccessToken(refreshToken)).rejects.toThrow(
+        UnauthorizedException,
+      );
+      expect(jwtService.verifyAsync).toHaveBeenCalled();
+      expect(usersService.getUserById).toHaveBeenCalledWith(
+        'non-existent-user',
+      );
     });
 
     it('should throw UnauthorizedException if user has no refresh token', async () => {
       // Arrange
-      const userId = mockUser.id;
-      const refreshToken = 'refresh-token';
-      const userWithoutRefreshToken = { ...mockUser, refreshToken: null };
-      usersService.getUserById.mockResolvedValue(
-        userWithoutRefreshToken as any,
-      );
-
-      // Act & Assert
-      await expect(
-        service.refreshAccessToken(userId, refreshToken),
-      ).rejects.toThrow(UnauthorizedException);
-      expect(usersService.getUserById).toHaveBeenCalledWith(userId);
-      expect(mockedBcrypt.compare).not.toHaveBeenCalled();
-    });
-
-    it('should throw UnauthorizedException if refresh token does not match', async () => {
-      // Arrange
-      const userId = mockUser.id;
-      const refreshToken = 'invalid-refresh-token';
-      const userWithRefreshToken = {
+      const refreshToken = 'valid-refresh-token';
+      const userWithoutRefreshToken = {
         ...mockUser,
-        refreshToken: 'hashed-refresh-token',
+        refreshToken: undefined,
+      } as UserDocument;
+      const jwtPayload = {
+        sub: mockUser.id,
+        email: mockUser.email,
+        role: mockUser.role,
       };
 
-      usersService.getUserById.mockResolvedValue(userWithRefreshToken as any);
-      mockedBcrypt.compare.mockResolvedValue(false as never);
+      jwtService.verifyAsync.mockResolvedValue(jwtPayload);
+      usersService.getUserById.mockResolvedValue(userWithoutRefreshToken);
 
       // Act & Assert
-      await expect(
-        service.refreshAccessToken(userId, refreshToken),
-      ).rejects.toThrow(UnauthorizedException);
-      expect(usersService.getUserById).toHaveBeenCalledWith(userId);
-      expect(mockedBcrypt.compare).toHaveBeenCalledWith(
-        refreshToken,
-        userWithRefreshToken.refreshToken,
+      await expect(service.refreshAccessToken(refreshToken)).rejects.toThrow(
+        UnauthorizedException,
       );
+      expect(jwtService.verifyAsync).toHaveBeenCalled();
+      expect(usersService.getUserById).toHaveBeenCalledWith(mockUser.id);
+    });
+
+    it('should throw UnauthorizedException if refresh token does not match stored token', async () => {
+      // Arrange
+      const refreshToken = 'different-refresh-token';
+      const userWithRefreshToken = {
+        ...mockUser,
+        refreshToken: 'stored-refresh-token',
+      } as UserDocument;
+      const jwtPayload = {
+        sub: mockUser.id,
+        email: mockUser.email,
+        role: mockUser.role,
+      };
+
+      jwtService.verifyAsync.mockResolvedValue(jwtPayload);
+      usersService.getUserById.mockResolvedValue(userWithRefreshToken);
+
+      // Act & Assert
+      await expect(service.refreshAccessToken(refreshToken)).rejects.toThrow(
+        UnauthorizedException,
+      );
+      expect(jwtService.verifyAsync).toHaveBeenCalled();
+      expect(usersService.getUserById).toHaveBeenCalledWith(mockUser.id);
       expect(jwtService.signAsync).not.toHaveBeenCalled();
     });
   });
@@ -368,7 +415,7 @@ describe('AuthService', () => {
       // Arrange
       const email = 'test@example.com';
       const password = 'password123';
-      usersService.findByEmail.mockResolvedValue(mockUser as any);
+      usersService.findByEmail.mockResolvedValue(mockUser as UserDocument);
       mockedBcrypt.compare.mockResolvedValue(true as never);
 
       // Act
@@ -404,7 +451,7 @@ describe('AuthService', () => {
       // Arrange
       const email = 'test@example.com';
       const password = 'wrongpassword';
-      usersService.findByEmail.mockResolvedValue(mockUser as any);
+      usersService.findByEmail.mockResolvedValue(mockUser as UserDocument);
       mockedBcrypt.compare.mockResolvedValue(false as never);
 
       // Act
@@ -425,7 +472,7 @@ describe('AuthService', () => {
       // Arrange
       usersService.findByEmail.mockResolvedValue(null);
       mockedBcrypt.hash.mockResolvedValue('hashedPassword' as never);
-      usersService.createUser.mockResolvedValue(mockUser as any);
+      usersService.createUser.mockResolvedValue(mockUser as UserDocument);
       jwtService.signAsync.mockRejectedValue(
         new Error('JWT generation failed'),
       );
@@ -456,23 +503,27 @@ describe('AuthService', () => {
 
     it('should handle JWT token generation failure during token refresh', async () => {
       // Arrange
-      const userId = mockUser.id;
-      const refreshToken = 'refresh-token';
+      const refreshToken = 'valid-refresh-token';
       const userWithRefreshToken = {
         ...mockUser,
-        refreshToken: 'hashed-refresh-token',
+        refreshToken: refreshToken,
+      };
+      const jwtPayload = {
+        sub: mockUser.id,
+        email: mockUser.email,
+        role: mockUser.role,
       };
 
+      jwtService.verifyAsync.mockResolvedValue(jwtPayload as any);
       usersService.getUserById.mockResolvedValue(userWithRefreshToken as any);
-      mockedBcrypt.compare.mockResolvedValue(true as never);
       jwtService.signAsync.mockRejectedValue(
         new Error('JWT generation failed'),
       );
 
       // Act & Assert
-      await expect(
-        service.refreshAccessToken(userId, refreshToken),
-      ).rejects.toThrow('JWT generation failed');
+      await expect(service.refreshAccessToken(refreshToken)).rejects.toThrow(
+        'JWT generation failed',
+      );
       expect(usersService.updateRefreshToken).not.toHaveBeenCalled();
     });
 

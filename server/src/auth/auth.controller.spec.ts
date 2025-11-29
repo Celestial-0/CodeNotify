@@ -146,12 +146,12 @@ describe('AuthController', () => {
   });
 
   describe('refreshAccessToken', () => {
-    it('should successfully refresh access token', async () => {
+    it('should successfully refresh access token with new tokens', async () => {
       // Arrange
-      const refreshBody = { refreshToken: 'refresh-token', userId: 'user-id' };
+      const refreshBody = { refreshToken: 'refresh-token' };
       const expectedResponse = {
         accessToken: 'new-access-token',
-        refreshToken: 'refresh-token',
+        refreshToken: 'new-refresh-token', // Both tokens are new
       };
       authService.refreshAccessToken.mockResolvedValue(expectedResponse);
 
@@ -160,7 +160,6 @@ describe('AuthController', () => {
 
       // Assert
       expect(authService.refreshAccessToken).toHaveBeenCalledWith(
-        refreshBody.userId,
         refreshBody.refreshToken,
       );
       expect(result).toEqual(expectedResponse);
@@ -168,7 +167,7 @@ describe('AuthController', () => {
 
     it('should handle refresh token errors', async () => {
       // Arrange
-      const refreshBody = { refreshToken: 'invalid-token', userId: 'user-id' };
+      const refreshBody = { refreshToken: 'invalid-token' };
       const error = new Error('Invalid refresh token');
       authService.refreshAccessToken.mockRejectedValue(error);
 
@@ -177,7 +176,6 @@ describe('AuthController', () => {
         error,
       );
       expect(authService.refreshAccessToken).toHaveBeenCalledWith(
-        refreshBody.userId,
         refreshBody.refreshToken,
       );
     });

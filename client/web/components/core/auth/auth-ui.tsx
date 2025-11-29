@@ -16,7 +16,7 @@ import { twMerge } from "tailwind-merge";
 import { toast } from "sonner";
 import { AxiosError } from "axios";
 
-import { SigninSchema, SignupSchema, type SigninFormData, type SignupFormData } from "@/lib/types/auth";
+import { SigninSchema, SignupSchema, type SigninFormData, type SignupFormData } from "@/lib/types/auth.types";
 import { AuthService } from "@/lib/api/auth.service";
 import { useAuthStore } from "@/lib/store/auth-store";
 
@@ -420,6 +420,13 @@ function SignUpForm() {
 }
 
 function AuthFormContainer({ isSignIn, onToggle }: { isSignIn: boolean; onToggle: () => void; }) {
+    const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+
+    const handleGoogleSignIn = () => {
+      setIsGoogleLoading(true);
+      AuthService.initiateGoogleOAuth();
+    };
+
     return (
         <div className="mx-auto grid w-[350px] gap-2">
             {isSignIn ? <SignInForm /> : <SignUpForm />}
@@ -432,9 +439,18 @@ function AuthFormContainer({ isSignIn, onToggle }: { isSignIn: boolean; onToggle
             <div className="relative text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t after:border-border">
                 <span className="relative z-10 bg-background px-2 text-muted-foreground">Or continue with</span>
             </div>
-            <Button variant="outline" type="button" onClick={() => console.log("UI: Google button clicked")}>
-                <Image src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google icon" width={16} height={16} className="mr-2" />
-                Continue with Google
+            <Button 
+              variant="outline" 
+              type="button" 
+              onClick={handleGoogleSignIn}
+              disabled={isGoogleLoading}
+            >
+                {isGoogleLoading ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <Image src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google icon" width={16} height={16} className="mr-2" />
+                )}
+                {isGoogleLoading ? "Redirecting..." : "Continue with Google"}
             </Button>
         </div>
     )

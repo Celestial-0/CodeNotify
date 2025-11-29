@@ -8,7 +8,11 @@ async function bootstrap() {
 
   // Enable CORS for frontend
   app.enableCors({
-    origin: ['http://localhost:3001', 'http://localhost:3000'],
+    origin: [
+      'http://localhost:3001',
+      'http://localhost:3000',
+      'https://code-notify.vercel.app',
+    ],
     credentials: true,
   });
 
@@ -19,7 +23,7 @@ async function bootstrap() {
   const reflector = app.get(Reflector);
   app.useGlobalGuards(new JwtAuthGuard(reflector));
 
-  await app.listen(process.env.PORT ?? 3000);
+  await app.listen(process.env.PORT ?? 8000);
 }
 
 bootstrap().catch((err) => {

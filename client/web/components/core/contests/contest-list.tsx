@@ -165,7 +165,7 @@ export function ContestList({
               variant={view === 'list' ? 'compact' : 'default'}
               onViewDetails={onContestClick}
               onAddToCalendar={onAddToCalendar}
-              showActions={view === 'grid'}
+              showActions={true}
             />
           ))}
         </div>

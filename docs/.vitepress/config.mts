@@ -1,12 +1,10 @@
 import { defineConfig } from 'vitepress'
-import { withMermaid } from 'vitepress-plugin-mermaid'
 
 // https://vitepress.dev/reference/site-config
-export default withMermaid(defineConfig({
+export default defineConfig({
   title: "CodeNotify",
   description: "Smart Contest Alert System - Multi-platform competitive programming notifications",
   base: '/CodeNotify/',
-  
 
 
   themeConfig: {
@@ -313,15 +311,10 @@ export default withMermaid(defineConfig({
       light: 'catppuccin-latte',
       dark: 'catppuccin-mocha',
     },
-    lineNumbers: true
+    lineNumbers: false
   },
 
   sitemap: {
     hostname: 'https://celestial-0.github.io/CodeNotify'
-  },
-
-  // Mermaid plugin configuration
-  mermaidPlugin: {
-    class: 'mermaid'
   }
-}))
+})

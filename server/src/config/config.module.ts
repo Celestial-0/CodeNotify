@@ -4,7 +4,7 @@ import { z } from 'zod';
 
 const envSchema = z.object({
   // Server Configuration
-  PORT: z.string().default('3000'),
+  PORT: z.string().default('8000'),
   NODE_ENV: z.enum(['dev', 'production', 'test']).default('dev'),
 
   // Database
@@ -12,10 +12,17 @@ const envSchema = z.object({
 
   // Authentication
   JWT_SECRET: z.string().min(10, 'JWT_SECRET must be at least 10 characters'),
+  JWT_REFRESH_SECRET: z.string().optional(),
+
+  // Google OAuth
+  GOOGLE_CLIENT_ID: z.string().optional(),
+  GOOGLE_CLIENT_SECRET: z.string().optional(),
+  GOOGLE_CALLBACK_URL: z.string().optional(),
+  FRONTEND_URL: z.string().optional(),
 
   // Contest Platform APIs
-  CODEFORCES_API: z.string().url().optional(),
-  LEETCODE_API: z.string().url().optional(),
+  CODEFORCES_API: z.url().optional(),
+  LEETCODE_API: z.url().optional(),
 
   // Email Notifications (Resend)
   RESEND_API_KEY: z.string().optional(),

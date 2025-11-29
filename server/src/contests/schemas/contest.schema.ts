@@ -186,23 +186,28 @@ ContestSchema.index({ lastSyncedAt: 1 });
 
 // Virtual fields setup
 ContestSchema.virtual('isUpcoming').get(function () {
+  if (!this.startTime) return false;
   return this.startTime > new Date();
 });
 
 ContestSchema.virtual('isRunning').get(function () {
+  if (!this.startTime || !this.endTime) return false;
   const now = new Date();
   return this.startTime <= now && this.endTime >= now;
 });
 
 ContestSchema.virtual('isFinished').get(function () {
+  if (!this.endTime) return false;
   return this.endTime < new Date();
 });
 
 ContestSchema.virtual('timeUntilStart').get(function () {
+  if (!this.startTime) return 0;
   return Math.max(0, this.startTime.getTime() - Date.now());
 });
 
 ContestSchema.virtual('timeUntilEnd').get(function () {
+  if (!this.endTime) return 0;
   return Math.max(0, this.endTime.getTime() - Date.now());
 });
 

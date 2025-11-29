@@ -5,7 +5,8 @@
 
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import { apiClient, SigninDto, SignupDto } from '@/lib/api/api-client';
+import { AuthService, httpClient } from '@/lib/api';
+import type { SigninFormData, SignupFormData } from '@/lib/types/auth.types';
 
 interface User {
   id: string;
@@ -25,8 +26,8 @@ interface AuthActions {
   setUser: (user: User | null) => void;
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
-  signin: (credentials: SigninDto) => Promise<void>;
-  signup: (data: SignupDto) => Promise<void>;
+  signin: (credentials: SigninFormData) => Promise<void>;
+  signup: (data: SignupFormData) => Promise<void>;
   signout: () => Promise<void>;
   clearError: () => void;
   initialize: () => void;
@@ -65,7 +66,7 @@ export const useAuthStore = create<AuthStore>()(
       signin: async (credentials) => {
         set({ isLoading: true, error: null });
         try {
-          const response = await apiClient.signin(credentials);
+          const response = await AuthService.signin(credentials);
           set({
             user: response.user,
             isAuthenticated: true,
@@ -87,7 +88,7 @@ export const useAuthStore = create<AuthStore>()(
       signup: async (data) => {
         set({ isLoading: true, error: null });
         try {
-          const response = await apiClient.signup(data);
+          const response = await AuthService.signup(data);
           set({
             user: response.user,
             isAuthenticated: true,
@@ -109,7 +110,7 @@ export const useAuthStore = create<AuthStore>()(
       signout: async () => {
         set({ isLoading: true, error: null });
         try {
-          await apiClient.signout();
+          await AuthService.signout();
           set({
             user: null,
             isAuthenticated: false,
@@ -130,8 +131,14 @@ export const useAuthStore = create<AuthStore>()(
 
       initialize: () => {
         // Check if user is authenticated on app load
-        const isAuth = apiClient.isAuthenticated();
-        set({ isAuthenticated: isAuth });
+        // The isAuthenticated check should match the persisted state
+        // which is already restored by zustand persist middleware
+        const isAuth = httpClient.isAuthenticated();
+        set((state) => ({ 
+          isAuthenticated: isAuth && !!state.user,
+          // If tokens exist but no user in state, clear the inconsistent state
+          user: isAuth ? state.user : null,
+        }));
       },
     }),
     {

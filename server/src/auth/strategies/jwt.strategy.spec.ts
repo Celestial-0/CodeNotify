@@ -4,12 +4,13 @@ import { UnauthorizedException } from '@nestjs/common';
 import { JwtStrategy } from './jwt.strategy';
 import { UsersService } from '../../users/users.service';
 import { AUTH } from '../../common/common.constants';
+import { UserDocument } from '../../users/schemas/user.schema';
 
 describe('JwtStrategy', () => {
   let strategy: JwtStrategy;
   let usersService: jest.Mocked<UsersService>;
 
-  const mockUser = {
+  const mockUser: Partial<UserDocument> = {
     id: '64f8a1b2c3d4e5f6a7b8c9d0',
     email: 'test@example.com',
     name: 'Test User',
@@ -22,13 +23,21 @@ describe('JwtStrategy', () => {
       alertFrequency: 'immediate',
       contestTypes: [],
     },
-    refreshToken: null,
-    lastLogin: null,
+    refreshToken: undefined,
+    lastLogin: undefined,
     createdAt: new Date(),
     updatedAt: new Date(),
   };
 
-  const mockJwtPayload = {
+  interface JwtPayload {
+    sub: string;
+    email: string;
+    role: string;
+    iat?: number;
+    exp?: number;
+  }
+
+  const mockJwtPayload: JwtPayload = {
     sub: '64f8a1b2c3d4e5f6a7b8c9d0',
     email: 'test@example.com',
     role: 'user',
@@ -84,8 +93,8 @@ describe('JwtStrategy', () => {
       // Act & Assert
       expect(() => {
         new JwtStrategy(
-          mockConfigServiceWithoutSecret as any,
-          usersService as any,
+          mockConfigServiceWithoutSecret as unknown as ConfigService,
+          usersService,
         );
       }).toThrow('JWT_SECRET is not defined in environment variables');
     });
@@ -101,8 +110,8 @@ describe('JwtStrategy', () => {
 
       // Act
       const strategyWithDefault = new JwtStrategy(
-        mockConfigServiceWithDefault as any,
-        usersService as any,
+        mockConfigServiceWithDefault as unknown as ConfigService,
+        usersService,
       );
 
       // Assert
@@ -117,7 +126,7 @@ describe('JwtStrategy', () => {
   describe('validate', () => {
     it('should return user if user exists and is active', async () => {
       // Arrange
-      usersService.getUserById.mockResolvedValue(mockUser as any);
+      usersService.getUserById.mockResolvedValue(mockUser as UserDocument);
 
       // Act
       const result = await strategy.validate(mockJwtPayload);
@@ -144,7 +153,7 @@ describe('JwtStrategy', () => {
     it('should throw UnauthorizedException if user is inactive', async () => {
       // Arrange
       const inactiveUser = { ...mockUser, isActive: false };
-      usersService.getUserById.mockResolvedValue(inactiveUser as any);
+      usersService.getUserById.mockResolvedValue(inactiveUser as UserDocument);
 
       // Act & Assert
       await expect(strategy.validate(mockJwtPayload)).rejects.toThrow(
@@ -160,7 +169,7 @@ describe('JwtStrategy', () => {
       // Arrange
       const adminUser = { ...mockUser, role: 'admin' };
       const adminPayload = { ...mockJwtPayload, role: 'admin' };
-      usersService.getUserById.mockResolvedValue(adminUser as any);
+      usersService.getUserById.mockResolvedValue(adminUser as UserDocument);
 
       // Act
       const result = await strategy.validate(adminPayload);
@@ -178,7 +187,7 @@ describe('JwtStrategy', () => {
         email: mockJwtPayload.email,
         role: mockJwtPayload.role,
       };
-      usersService.getUserById.mockResolvedValue(mockUser as any);
+      usersService.getUserById.mockResolvedValue(mockUser as UserDocument);
 
       // Act
       const result = await strategy.validate(payloadWithoutOptionalFields);

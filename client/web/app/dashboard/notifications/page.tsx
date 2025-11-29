@@ -13,6 +13,7 @@ import {
   useMarkAllAsRead,
   useRetryNotification,
 } from '@/lib/hooks/use-notifications';
+import { useProfile } from '@/lib/hooks/use-user';
 import {
   NotificationStatus,
   NotificationType,
@@ -25,24 +26,34 @@ export default function NotificationsPage() {
   const [status, setStatus] = useState<NotificationStatus | undefined>();
   const [type, setType] = useState<NotificationType | undefined>();
 
+  // Get user profile to fetch their notifications
+  const { data: profile } = useProfile();
+
   const {
     data: notificationsData,
     isLoading,
-  } = useNotifications({
-    page,
-    limit: 10,
-    status,
-    type,
-  });
+  } = useNotifications(
+    {
+      userId: profile?.id,
+      page,
+      limit: 10,
+      status,
+      type,
+    },
+    { enabled: !!profile?.id }
+  );
 
-  const { data: stats, isLoading: statsLoading } = useNotificationStats();
+  const { data: stats, isLoading: statsLoading } = useNotificationStats(
+    { userId: profile?.id },
+    { enabled: !!profile?.id }
+  );
   const markAsReadMutation = useMarkAsRead();
   const markAllAsReadMutation = useMarkAllAsRead();
   const retryMutation = useRetryNotification();
 
   const notifications = notificationsData?.notifications || [];
-  const hasMore = notificationsData
-    ? notificationsData.page < notificationsData.totalPages
+  const hasMore = notificationsData?.pagination
+    ? notificationsData.pagination.page < notificationsData.pagination.totalPages
     : false;
 
   const handleMarkAsRead = async (id: string) => {

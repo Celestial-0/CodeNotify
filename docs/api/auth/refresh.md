@@ -16,8 +16,7 @@ No authentication required (public endpoint).
 
 ```typescript
 {
-  userId: string;        // User's ID
-  refreshToken: string;  // Valid refresh token
+  refreshToken: string;  // Valid refresh token (contains user ID in payload)
 }
 ```
 
@@ -32,7 +31,7 @@ No authentication required (public endpoint).
 }
 ```
 
-**Important**: The refresh token returned is the **same** token you sent. Only the access token is regenerated.
+**Important**: Both access token and refresh token are regenerated (token rotation for enhanced security).
 
 ## Error Responses
 
@@ -52,23 +51,23 @@ No authentication required (public endpoint).
 
 ```javascript
 const refreshAccessToken = async () => {
-  const userId = localStorage.getItem('userId');
   const refreshToken = localStorage.getItem('refreshToken');
   
   const response = await fetch('http://localhost:3000/auth/refresh', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ userId, refreshToken })
+    body: JSON.stringify({ refreshToken })
   });
   
   if (!response.ok) {
-    // Refresh token expired, redirect to signin
+    // Refresh token expired or invalid, redirect to signin
     window.location.href = '/signin';
     return null;
   }
   
-  const { accessToken } = await response.json();
+  const { accessToken, refreshToken: newRefreshToken } = await response.json();
   localStorage.setItem('accessToken', accessToken);
+  localStorage.setItem('refreshToken', newRefreshToken); // Store new refresh token
   
   return accessToken;
 };
@@ -107,27 +106,37 @@ const apiCall = async (url, options = {}) => {
 ### Token Rotation Strategy
 
 **Correct Behavior** (as implemented):
-- Login/Register: Generate NEW access token (15min) + NEW refresh token (7 days)
-- /refresh-token: Generate NEW access token (15min) + return SAME refresh token
-- Access token expires: Client calls /refresh-token to get new access token
-- Refresh token expires (after 7 days): User must signin again
+- **Login/Register**: Generate NEW access token (15min) + NEW refresh token (7 days)
+- **POST /auth/refresh**: Generate NEW access token (15min) + NEW refresh token (7 days)
+  - Old refresh token is invalidated
+  - New refresh token extends session by another 7 days
+- **Access token expires**: Client calls /auth/refresh to get new tokens
+- **Refresh token expires** (after 7 days of inactivity): User must signin again
 
-### Why Same Refresh Token?
+### Why Token Rotation?
 
-This prevents refresh token rotation issues:
-- Simpler client-side logic
-- No race conditions with multiple tabs
-- Refresh token only changes on signin
-- 7-day session duration is maintained
+Modern JWT best practice uses refresh token rotation:
+- **Enhanced security**: Each refresh invalidates the old token
+- **Compromise detection**: If old token is reused, it indicates potential theft
+- **Extended sessions**: Active users get rolling 7-day sessions
+- **Auto-logout**: Inactive users (7+ days) must re-authenticate
 
 ### Security Verification
 
 ```typescript
-// Verify refresh token matches stored hash
-const refreshTokenMatches = await bcrypt.compare(
-  refreshToken,
-  user.refreshToken
-);
+// 1. Verify refresh token signature with JWT_REFRESH_SECRET
+const payload = await jwtService.verifyAsync(refreshToken, {
+  secret: JWT_REFRESH_SECRET
+});
+
+// 2. Verify token matches stored token (single-use)
+if (user.refreshToken !== refreshToken) {
+  throw new UnauthorizedException('Invalid refresh token');
+}
+
+// 3. Generate new tokens and update stored refresh token
+const newTokens = await generateTokens(user.id, user.email, user.role);
+await updateRefreshToken(user.id, newTokens.refreshToken);
 ```
 
 ## Best Practices

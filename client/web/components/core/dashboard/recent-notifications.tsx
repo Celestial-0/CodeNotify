@@ -84,13 +84,18 @@ export function RecentNotifications() {
   }
 
   return (
-    <Card>
+    <Card className="relative overflow-hidden border-border bg-card/80 shadow-sm backdrop-blur-xl">
+      <div className="absolute inset-0 -z-10 bg-linear-to-br from-primary/5 via-transparent to-transparent" />
+      
       <CardHeader className="flex flex-row items-center justify-between space-y-0">
         <div>
-          <CardTitle>Recent Notifications</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <Bell className="h-5 w-5 text-primary" />
+            Recent Notifications
+          </CardTitle>
           <CardDescription>Your latest {notifications.length} notifications</CardDescription>
         </div>
-        <Button asChild variant="ghost" size="sm">
+        <Button asChild variant="ghost" size="sm" className="hover:bg-primary/10">
           <Link href="/dashboard/notifications">
             View All
             <ArrowRight className="ml-2 h-4 w-4" />
@@ -98,18 +103,18 @@ export function RecentNotifications() {
         </Button>
       </CardHeader>
       <CardContent>
-        <div className="space-y-4">
+        <div className="space-y-3">
           {notifications.map((notification) => (
             <div
               key={notification.id}
-              className="flex items-start gap-3 p-3 rounded-lg border hover:bg-accent transition-colors"
+              className="group flex items-start gap-3 p-3 rounded-lg border border-border bg-background/50 transition-all hover:scale-[1.01] hover:border-primary/30 hover:shadow-md"
             >
               <div className="shrink-0 mt-1">
                 {getStatusIcon(notification.status)}
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-start justify-between gap-2 mb-1">
-                  <p className="text-sm font-medium truncate">
+                  <p className="text-sm font-medium text-foreground truncate">
                     {notification.title}
                   </p>
                   <Badge

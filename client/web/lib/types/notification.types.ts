@@ -42,6 +42,7 @@ export interface NotificationPayload {
 
 export interface Notification {
   id: string;
+  _id?: string; // MongoDB ObjectId (id is the virtual)
   userId: string;
   contestId?: string;
   type: NotificationType;
@@ -91,10 +92,12 @@ export interface NotificationQueryDto {
 
 export interface PaginatedNotificationsResponse {
   notifications: Notification[];
-  total: number;
-  page: number;
-  limit: number;
-  totalPages: number;
+  pagination: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  };
 }
 
 export interface NotificationStats {
@@ -103,13 +106,12 @@ export interface NotificationStats {
   failed: number;
   pending: number;
   successRate: number;
-  channelBreakdown: {
-    email: { sent: number; failed: number };
-    whatsapp: { sent: number; failed: number };
-    push: { sent: number; failed: number };
+  byChannel: {
+    email: number;
+    whatsapp: number;
+    push: number;
   };
-  typeBreakdown: Record<NotificationType, number>;
-  recentNotifications: Notification[];
+  byType: Record<string, number>;
 }
 
 export interface NotificationStatsQuery {

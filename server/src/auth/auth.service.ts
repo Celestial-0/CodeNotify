@@ -116,39 +116,39 @@ export class AuthService {
   }
 
   async refreshAccessToken(
-    userId: string,
     refreshToken: string,
   ): Promise<{ accessToken: string; refreshToken: string }> {
-    const user = await this.usersService.getUserById(userId);
+    // Verify the refresh token using JWT_REFRESH_SECRET
+    let payload: JwtPayload;
+    try {
+      payload = await this.jwtService.verifyAsync<JwtPayload>(refreshToken, {
+        secret: this.configService.get<string>(
+          'JWT_REFRESH_SECRET',
+          AUTH.JWT_REFRESH_SECRET,
+        ),
+      });
+    } catch {
+      throw new UnauthorizedException('Invalid refresh token');
+    }
+
+    // Get user and verify they still exist and are active
+    const user = await this.usersService.getUserById(payload.sub);
     if (!user || !user.refreshToken) {
       throw new UnauthorizedException('Access denied');
     }
 
-    const refreshTokenMatches = await bcrypt.compare(
-      refreshToken,
-      user.refreshToken,
-    );
-    if (!refreshTokenMatches) {
-      throw new UnauthorizedException('Access denied');
+    // Verify the refresh token matches the one stored in database
+    if (user.refreshToken !== refreshToken) {
+      throw new UnauthorizedException('Invalid refresh token');
     }
 
-    // Only generate a new access token, keep the same refresh token
-    const payload: JwtPayload = {
-      sub: user.id,
-      email: user.email,
-      role: user.role,
-    };
+    // Generate new tokens (token rotation for better security)
+    const tokens = await this.generateTokens(user.id, user.email, user.role);
 
-    const accessToken = await this.jwtService.signAsync(payload, {
-      secret: this.configService.get<string>('JWT_SECRET', AUTH.JWT_SECRET),
-      expiresIn: '15m',
-    });
+    // Update the stored refresh token
+    await this.usersService.updateRefreshToken(user.id, tokens.refreshToken);
 
-    // Return new access token with the SAME refresh token
-    return {
-      accessToken,
-      refreshToken, // Return the same refresh token that was passed in
-    };
+    return tokens;
   }
 
   private async generateTokens(
@@ -204,5 +204,60 @@ export class AuthService {
       return result;
     }
     return null;
+  }
+
+  async validateOAuthUser(
+    email: string,
+    name: string,
+  ): Promise<{
+    id: string;
+    email: string;
+    name: string;
+    phoneNumber?: string;
+    role: string;
+    accessToken: string;
+    refreshToken: string;
+  }> {
+    // Check if user already exists
+    let user = await this.usersService.findByEmail(email);
+
+    if (!user) {
+      // Create new user for OAuth
+      user = await this.usersService.createUser({
+        email,
+        name,
+        password: '', // No password for OAuth users
+        phoneNumber: undefined,
+      });
+    }
+
+    // Check if user is active
+    if (!user.isActive) {
+      throw new UnauthorizedException('Account is deactivated');
+    }
+
+    // Generate tokens
+    const tokens = await this.generateTokens(user.id, user.email, user.role);
+
+    // Update user with refresh token and last login
+    await this.usersService.updateRefreshToken(user.id, tokens.refreshToken);
+    await this.usersService.updateLastLogin(user.id);
+
+    return {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      phoneNumber: user.phoneNumber,
+      role: user.role,
+      accessToken: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
+    };
+  }
+
+  getFrontendUrl(): string {
+    return this.configService.get<string>(
+      'FRONTEND_URL',
+      'http://localhost:3000',
+    );
   }
 }

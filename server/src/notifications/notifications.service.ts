@@ -395,6 +395,19 @@ export class NotificationsService {
   ) {
     const { page = 1, limit = 20, status, type, startDate, endDate } = options;
 
+    // Validate userId to prevent MongoDB CastError
+    if (!userId || userId.trim() === '') {
+      return {
+        notifications: [],
+        pagination: {
+          page,
+          limit,
+          total: 0,
+          totalPages: 0,
+        },
+      };
+    }
+
     const query: NotificationQuery = { userId };
 
     if (status) {
@@ -486,7 +499,8 @@ export class NotificationsService {
   ) {
     const query: NotificationQuery = {};
 
-    if (userId) {
+    // Only add userId to query if it's a valid non-empty string
+    if (userId && userId.trim() !== '') {
       query.userId = userId;
     }
     if (startDate || endDate) {

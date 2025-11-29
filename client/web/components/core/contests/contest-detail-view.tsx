@@ -18,8 +18,18 @@ import { ContestResponseDto, PHASE_CONFIG } from '@/lib/types/contest.types';
 import { PlatformBadge } from './platform-badge';
 import { DifficultyBadge } from './difficulty-badge';
 import { ContestCountdown } from './contest-countdown';
-import { format } from 'date-fns';
-import { cn } from '@/lib/utils';
+import { format, isValid } from 'date-fns';
+import { cn, parseDescription } from '@/lib/utils';
+
+// Helper function to safely format dates
+const formatDate = (date: Date | string | undefined, formatStr: string, fallback = 'TBD'): string => {
+  if (!date) return fallback;
+  const dateObj = typeof date === 'string' ? new Date(date) : date;
+  return isValid(dateObj) ? format(dateObj, formatStr) : fallback;
+};
+
+// Default phase config for unknown phases
+const DEFAULT_PHASE_CONFIG = { color: 'bg-gray-500', label: 'Unknown' };
 
 interface ContestDetailViewProps {
   contest: ContestResponseDto;
@@ -34,7 +44,7 @@ export function ContestDetailView({
   onBack,
   className,
 }: ContestDetailViewProps) {
-  const phaseConfig = PHASE_CONFIG[contest.phase];
+  const phaseConfig = PHASE_CONFIG[contest.phase] ?? DEFAULT_PHASE_CONFIG;
   const startDate = new Date(contest.startTime);
   const endDate = new Date(contest.endTime);
 
@@ -74,9 +84,9 @@ export function ContestDetailView({
 
               <CardTitle className="text-3xl">{contest.name}</CardTitle>
 
-              {contest.description && (
+              {parseDescription(contest.description) && (
                 <CardDescription className="text-base">
-                  {contest.description}
+                  {parseDescription(contest.description)}
                 </CardDescription>
               )}
             </div>
@@ -136,10 +146,10 @@ export function ContestDetailView({
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Start Time</p>
                 <p className="text-base font-semibold">
-                  {format(startDate, 'PPP')}
+                  {formatDate(startDate, 'PPP')}
                 </p>
                 <p className="text-sm text-muted-foreground">
-                  {format(startDate, 'HH:mm:ss')} (Local Time)
+                  {formatDate(startDate, 'HH:mm:ss')} (Local Time)
                 </p>
               </div>
             </div>
@@ -152,10 +162,10 @@ export function ContestDetailView({
               <div>
                 <p className="text-sm font-medium text-muted-foreground">End Time</p>
                 <p className="text-base font-semibold">
-                  {format(endDate, 'PPP')}
+                  {formatDate(endDate, 'PPP')}
                 </p>
                 <p className="text-sm text-muted-foreground">
-                  {format(endDate, 'HH:mm:ss')} (Local Time)
+                  {formatDate(endDate, 'HH:mm:ss')} (Local Time)
                 </p>
               </div>
             </div>
@@ -175,35 +185,7 @@ export function ContestDetailView({
               </div>
             </div>
 
-            {/* Participants */}
-            {contest.participantCount && contest.participantCount > 0 && (
-              <div className="flex items-start gap-3">
-                <div className="rounded-lg bg-primary/10 p-2">
-                  <Users className="h-5 w-5 text-primary" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">
-                    Participants
-                  </p>
-                  <p className="text-base font-semibold">
-                    {contest.participantCount.toLocaleString()}
-                  </p>
-                </div>
-              </div>
-            )}
 
-            {/* Problems */}
-            {contest.problemCount && contest.problemCount > 0 && (
-              <div className="flex items-start gap-3">
-                <div className="rounded-lg bg-primary/10 p-2">
-                  <FileText className="h-5 w-5 text-primary" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Problems</p>
-                  <p className="text-base font-semibold">{contest.problemCount}</p>
-                </div>
-              </div>
-            )}
 
             {/* Prepared By */}
             {contest.preparedBy && (
@@ -311,7 +293,7 @@ export function ContestDetailView({
           {contest.lastSyncedAt && (
             <div className="flex justify-between">
               <span>Last Synced:</span>
-              <span>{format(new Date(contest.lastSyncedAt), 'PPp')}</span>
+              <span>{formatDate(contest.lastSyncedAt, 'PPp')}</span>
             </div>
           )}
           <div className="flex justify-between">

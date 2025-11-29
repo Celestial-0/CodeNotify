@@ -2,6 +2,13 @@ import { Badge } from '@/components/ui/badge';
 import { DifficultyLevel, DIFFICULTY_CONFIG } from '@/lib/types/contest.types';
 import { cn } from '@/lib/utils';
 
+// Default config for unknown difficulty levels
+const DEFAULT_DIFFICULTY_CONFIG = {
+  color: 'bg-gray-500',
+  textColor: 'text-gray-500',
+  label: 'Unknown',
+};
+
 interface DifficultyBadgeProps {
   difficulty: DifficultyLevel;
   variant?: 'default' | 'outline';
@@ -15,7 +22,7 @@ export function DifficultyBadge({
   size = 'md',
   className,
 }: DifficultyBadgeProps) {
-  const config = DIFFICULTY_CONFIG[difficulty];
+  const config = DIFFICULTY_CONFIG[difficulty] ?? DEFAULT_DIFFICULTY_CONFIG;
 
   const sizeClasses = {
     sm: 'text-xs px-1.5 py-0.5',

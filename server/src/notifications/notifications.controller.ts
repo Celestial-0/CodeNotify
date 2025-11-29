@@ -233,6 +233,34 @@ export class NotificationsController {
   }
 
   /**
+   * Get notification statistics
+   * GET /notifications/notifications/stats?userId=xxx&startDate=xxx&endDate=xxx
+   * NOTE: This route MUST be defined BEFORE the :id route to avoid "stats" being captured as an ID
+   */
+  @Get('notifications/stats')
+  async getNotificationStats(@Query() query: Record<string, unknown>) {
+    const validated = NotificationStatsSchema.parse(query);
+    const { userId, startDate, endDate } = validated;
+
+    return await this.notificationsService.getNotificationStats(
+      userId,
+      startDate ? new Date(startDate) : undefined,
+      endDate ? new Date(endDate) : undefined,
+    );
+  }
+
+  /**
+   * Cleanup old notifications
+   * DELETE /notifications/notifications/cleanup?daysOld=90
+   * NOTE: This route MUST be defined BEFORE the :id route to avoid "cleanup" being captured as an ID
+   */
+  @Delete('notifications/cleanup')
+  async cleanupNotifications(@Query('daysOld') daysOld?: string) {
+    const days = daysOld ? parseInt(daysOld, 10) : 90;
+    return await this.notificationsService.cleanupOldNotifications(days);
+  }
+
+  /**
    * Get notification by ID
    * GET /notifications/notifications/:id
    */
@@ -277,22 +305,6 @@ export class NotificationsController {
   }
 
   /**
-   * Get notification statistics
-   * GET /notifications/notifications/stats?userId=xxx&startDate=xxx&endDate=xxx
-   */
-  @Get('notifications/stats')
-  async getNotificationStats(@Query() query: Record<string, unknown>) {
-    const validated = NotificationStatsSchema.parse(query);
-    const { userId, startDate, endDate } = validated;
-
-    return await this.notificationsService.getNotificationStats(
-      userId,
-      startDate ? new Date(startDate) : undefined,
-      endDate ? new Date(endDate) : undefined,
-    );
-  }
-
-  /**
    * Retry failed notification
    * POST /notifications/notifications/:id/retry
    */
@@ -311,15 +323,5 @@ export class NotificationsController {
         error: error instanceof Error ? error.message : 'Unknown error',
       };
     }
-  }
-
-  /**
-   * Cleanup old notifications
-   * DELETE /notifications/notifications/cleanup?daysOld=90
-   */
-  @Delete('notifications/cleanup')
-  async cleanupNotifications(@Query('daysOld') daysOld?: string) {
-    const days = daysOld ? parseInt(daysOld, 10) : 90;
-    return await this.notificationsService.cleanupOldNotifications(days);
   }
 }

@@ -7,6 +7,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { CheckCircle2, XCircle, Clock, TrendingUp } from 'lucide-react';
 import type { NotificationStats } from '@/lib/types/notification.types';
 import {
+  NotificationChannel,
   NOTIFICATION_CHANNEL_LABELS,
   NOTIFICATION_TYPE_LABELS,
 } from '@/lib/types/notification.types';
@@ -113,37 +114,30 @@ export function NotificationStatsDisplay({
       <Card>
         <CardHeader>
           <CardTitle>Channel Breakdown</CardTitle>
-          <CardDescription>Performance by delivery channel</CardDescription>
+          <CardDescription>Notifications by delivery channel</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {Object.entries(stats.channelBreakdown).map(([channel, data]) => (
-              <div key={channel} className="space-y-2">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="font-medium capitalize">
-                    {NOTIFICATION_CHANNEL_LABELS[channel as keyof typeof NOTIFICATION_CHANNEL_LABELS]}
-                  </span>
-                  <div className="flex gap-2">
-                    <Badge variant="outline" className="bg-green-500/10 text-green-700">
-                      {data.sent} sent
+            {stats.byChannel && Object.entries(stats.byChannel).map(([channel, count]) => {
+              const total = Object.values(stats.byChannel).reduce((a, b) => a + b, 0);
+              const percentage = total > 0 ? (count / total) * 100 : 0;
+              return (
+                <div key={channel} className="space-y-2">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="font-medium capitalize">
+                      {NOTIFICATION_CHANNEL_LABELS[channel as NotificationChannel] || channel}
+                    </span>
+                    <Badge variant="outline">
+                      {count} notifications
                     </Badge>
-                    {data.failed > 0 && (
-                      <Badge variant="outline" className="bg-red-500/10 text-red-700">
-                        {data.failed} failed
-                      </Badge>
-                    )}
                   </div>
+                  <Progress value={percentage} className="h-1.5" />
                 </div>
-                <Progress
-                  value={
-                    data.sent + data.failed > 0
-                      ? (data.sent / (data.sent + data.failed)) * 100
-                      : 0
-                  }
-                  className="h-1.5"
-                />
-              </div>
-            ))}
+              );
+            })}
+            {(!stats.byChannel || Object.keys(stats.byChannel).length === 0) && (
+              <p className="text-sm text-muted-foreground">No channel data available</p>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -156,14 +150,17 @@ export function NotificationStatsDisplay({
         </CardHeader>
         <CardContent>
           <div className="space-y-2">
-            {Object.entries(stats.typeBreakdown).map(([type, count]) => (
+            {stats.byType && Object.entries(stats.byType).map(([type, count]) => (
               <div key={type} className="flex items-center justify-between">
                 <span className="text-sm">
-                  {NOTIFICATION_TYPE_LABELS[type as keyof typeof NOTIFICATION_TYPE_LABELS]}
+                  {NOTIFICATION_TYPE_LABELS[type as keyof typeof NOTIFICATION_TYPE_LABELS] || type}
                 </span>
                 <Badge variant="secondary">{count}</Badge>
               </div>
             ))}
+            {(!stats.byType || Object.keys(stats.byType).length === 0) && (
+              <p className="text-sm text-muted-foreground">No type data available</p>
+            )}
           </div>
         </CardContent>
       </Card>

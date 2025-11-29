@@ -15,7 +15,8 @@ import type {
   DifficultyLevel,
 } from '@/lib/types/contest.types';
 import { useUIStore } from '@/lib/store/ui-store';
-import { cn } from '@/lib/utils';
+import { cn, downloadContestICS } from '@/lib/utils';
+import { ContestResponseDto } from '@/lib/types/contest.types';
 
 export default function ContestsPage() {
   const [showFilters, setShowFilters] = useState(false);
@@ -95,9 +96,9 @@ export default function ContestsPage() {
   ].filter(Boolean).length;
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="bg-background">
       {/* Header */}
-      <div className="border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60 sticky top-0 z-40">
+      <div className="border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60 sticky top-16 z-30">
         <div className="container mx-auto px-4 py-6">
           <div className="flex flex-col gap-4">
             <div className="flex items-center justify-between">
@@ -158,7 +159,7 @@ export default function ContestsPage() {
               showFilters ? 'block' : 'hidden'
             )}
           >
-            <div className="sticky top-24">
+            <div className="sticky top-40">
               <ContestFilters
                 filters={{
                   platform: query.platform as ContestPlatform | undefined,
@@ -193,6 +194,7 @@ export default function ContestsPage() {
                 onViewChange={handleViewChange}
                 pagination={contestsData?.pagination}
                 onPageChange={(offset) => handlePageChange(Math.floor(offset / (query.limit || 20)) + 1)}
+                onAddToCalendar={(contest: ContestResponseDto) => downloadContestICS(contest)}
               />
             )}
           </main>

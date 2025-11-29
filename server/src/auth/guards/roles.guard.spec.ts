@@ -16,7 +16,7 @@ describe('RolesGuard', () => {
       get: jest.fn(),
       getAll: jest.fn(),
       getAllAndMerge: jest.fn(),
-    } as unknown as Reflector;
+    } as Reflector;
 
     guard = new RolesGuard(reflector);
   });

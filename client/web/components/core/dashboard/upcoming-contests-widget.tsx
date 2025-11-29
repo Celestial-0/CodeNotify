@@ -57,13 +57,19 @@ export function UpcomingContestsWidget({ limit = 5 }: UpcomingContestsWidgetProp
   }
 
   return (
-    <Card>
+    <Card className="relative overflow-hidden border-border bg-card/80 shadow-sm backdrop-blur-xl">
+      {/* Subtle gradient */}
+      <div className="absolute inset-0 -z-10 bg-linear-to-br from-primary/5 via-transparent to-transparent" />
+      
       <CardHeader className="flex flex-row items-center justify-between space-y-0">
         <div>
-          <CardTitle>Upcoming Contests</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <Calendar className="h-5 w-5 text-primary" />
+            Upcoming Contests
+          </CardTitle>
           <CardDescription>Your next {displayContests.length} contests</CardDescription>
         </div>
-        <Button asChild variant="ghost" size="sm">
+        <Button asChild variant="ghost" size="sm" className="hover:bg-primary/10">
           <Link href="/contests">
             View All
             <ArrowRight className="ml-2 h-4 w-4" />
@@ -76,9 +82,11 @@ export function UpcomingContestsWidget({ limit = 5 }: UpcomingContestsWidgetProp
             key={contest.id}
             contest={contest}
             variant="compact"
+            flexType="flex-col"
           />
         ))}
       </CardContent>
     </Card>
   );
 }
+

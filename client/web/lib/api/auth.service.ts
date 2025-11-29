@@ -3,24 +3,27 @@
  * API calls for authentication operations
  */
 
-import { api, apiClient } from './client';
-import type { 
-  SigninFormData, 
-  SignupFormData, 
+import { httpClient } from './http.client';
+import type {
+  SigninFormData,
+  SignupFormData,
   AuthResponse,
-  ForgotPasswordFormData 
-} from '@/lib/types/auth';
+  ForgotPasswordFormData,
+} from '@/lib/types/auth.types';
+
+// Re-export types for convenience
+export type { SigninFormData, SignupFormData, AuthResponse };
+
+// API base URL for OAuth redirects
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
 export class AuthService {
   /**
    * Sign in with email and password
    */
   static async signin(data: SigninFormData): Promise<AuthResponse> {
-    const response = await api.post<AuthResponse>('/auth/signin', data);
-    
-    // Store tokens in client
-    apiClient.storeAuthData(response.data);
-    
+    const response = await httpClient.api.post<AuthResponse>('/auth/signin', data);
+    httpClient.storeTokens(response.data.accessToken, response.data.refreshToken);
     return response.data;
   }
 
@@ -28,11 +31,8 @@ export class AuthService {
    * Sign up with email, password, and name
    */
   static async signup(data: SignupFormData): Promise<AuthResponse> {
-    const response = await api.post<AuthResponse>('/auth/signup', data);
-    
-    // Store tokens in client
-    apiClient.storeAuthData(response.data);
-    
+    const response = await httpClient.api.post<AuthResponse>('/auth/signup', data);
+    httpClient.storeTokens(response.data.accessToken, response.data.refreshToken);
     return response.data;
   }
 
@@ -41,10 +41,9 @@ export class AuthService {
    */
   static async signout(): Promise<void> {
     try {
-      await api.post('/auth/signout');
+      await httpClient.api.post('/auth/signout');
     } finally {
-      // Clear tokens regardless of API response
-      apiClient.clearAuth();
+      httpClient.clearTokens();
     }
   }
 
@@ -52,7 +51,10 @@ export class AuthService {
    * Request password reset
    */
   static async forgotPassword(data: ForgotPasswordFormData): Promise<{ message: string }> {
-    const response = await api.post<{ message: string }>('/auth/forgot-password', data);
+    const response = await httpClient.api.post<{ message: string }>(
+      '/auth/forgot-password',
+      data
+    );
     return response.data;
   }
 
@@ -60,10 +62,10 @@ export class AuthService {
    * Reset password with token
    */
   static async resetPassword(token: string, password: string): Promise<{ message: string }> {
-    const response = await api.post<{ message: string }>('/auth/reset-password', {
-      token,
-      password,
-    });
+    const response = await httpClient.api.post<{ message: string }>(
+      '/auth/reset-password',
+      { token, password }
+    );
     return response.data;
   }
 
@@ -71,6 +73,52 @@ export class AuthService {
    * Check if user is currently authenticated
    */
   static isAuthenticated(): boolean {
-    return apiClient.isAuthenticated();
+    return httpClient.isAuthenticated();
+  }
+
+  /**
+   * Initiate Google OAuth flow
+   * Redirects user to Google's OAuth consent screen
+   */
+  static initiateGoogleOAuth(): void {
+    window.location.href = `${API_BASE_URL}/auth/google`;
+  }
+
+  /**
+   * Handle Google OAuth callback
+   * Extracts tokens from URL and stores them
+   */
+  static handleOAuthCallback(): {
+    success: boolean;
+    userId?: string;
+    error?: string;
+  } {
+    if (typeof window === 'undefined') {
+      return { success: false, error: 'Not in browser environment' };
+    }
+
+    const params = new URLSearchParams(window.location.search);
+    const accessToken = params.get('access_token');
+    const refreshToken = params.get('refresh_token');
+    const userId = params.get('user_id');
+    const error = params.get('error');
+
+    if (error) {
+      return { success: false, error: decodeURIComponent(error) };
+    }
+
+    if (accessToken && refreshToken && userId) {
+      httpClient.storeTokens(accessToken, refreshToken);
+      return { success: true, userId };
+    }
+
+    return { success: false, error: 'Missing authentication tokens' };
+  }
+
+  /**
+   * Get the Google OAuth URL for the button
+   */
+  static getGoogleOAuthUrl(): string {
+    return `${API_BASE_URL}/auth/google`;
   }
 }

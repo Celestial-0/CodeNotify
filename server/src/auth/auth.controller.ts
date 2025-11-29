@@ -1,5 +1,16 @@
-import { Controller, Post, Body, HttpCode, HttpStatus } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  HttpCode,
+  HttpStatus,
+  Get,
+  UseGuards,
+  Res,
+  Req,
+} from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
+import type { Response, Request } from 'express';
 import { AuthService } from './auth.service';
 import { Public } from '../common/decorators/public.decorator';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
@@ -9,6 +20,12 @@ import {
   type AuthResponse,
 } from '../common/dto/auth.dto';
 import type { UserDocument } from '../users/schemas/user.schema';
+import { GoogleUser } from './strategies/google.strategy';
+import { GoogleAuthGuard } from './guards/google-auth.guard';
+
+interface GoogleOAuthRequest extends Request {
+  user: GoogleUser;
+}
 
 @Controller('auth')
 export class AuthController {
@@ -42,11 +59,28 @@ export class AuthController {
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
   async refreshAccessToken(
-    @Body() body: { refreshToken: string; userId: string },
+    @Body() body: { refreshToken: string },
   ): Promise<{ accessToken: string; refreshToken: string }> {
-    return await this.authService.refreshAccessToken(
-      body.userId,
-      body.refreshToken,
-    );
+    return await this.authService.refreshAccessToken(body.refreshToken);
+  }
+
+  @Public()
+  @Get('google')
+  @UseGuards(GoogleAuthGuard)
+  googleAuth(): void {
+    // Guard handles the redirect to Google
+  }
+
+  @Public()
+  @Get('google/callback')
+  @UseGuards(GoogleAuthGuard)
+  googleCallback(@Req() req: GoogleOAuthRequest, @Res() res: Response): void {
+    const user: GoogleUser = req.user;
+
+    // Redirect to frontend with tokens
+    const frontendUrl = this.authService.getFrontendUrl();
+    const redirectUrl = `${frontendUrl}/auth/callback?access_token=${user.accessToken}&refresh_token=${user.refreshToken}&user_id=${user.id}`;
+
+    res.redirect(redirectUrl);
   }
 }

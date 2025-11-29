@@ -19,7 +19,10 @@ export default function DashboardPage() {
   const isLoading = profileLoading || notifStatsLoading || contestStatsLoading;
 
   return (
-    <div className="space-y-6">
+    <div className="relative space-y-6">
+      {/* Background effects */}
+      <div className="fixed inset-0 -z-10 h-full w-full bg-background bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-size-[24px_24px]" />
+      
       {/* Welcome Banner */}
       <WelcomeBanner />
 

@@ -82,6 +82,7 @@ export class UsersController {
     email: string;
     name: string;
     phoneNumber?: string;
+    role: 'user' | 'admin';
     preferences: UserPreferences;
     isActive: boolean;
     createdAt: Date;

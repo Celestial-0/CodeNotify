@@ -2,6 +2,14 @@ import { Badge } from '@/components/ui/badge';
 import { ContestPlatform, PLATFORM_CONFIG } from '@/lib/types/contest.types';
 import { cn } from '@/lib/utils';
 
+// Default config for unknown platforms
+const DEFAULT_PLATFORM_CONFIG = {
+  name: 'Unknown',
+  color: 'bg-gray-500',
+  textColor: 'text-gray-500',
+  icon: '?',
+};
+
 interface PlatformBadgeProps {
   platform: ContestPlatform;
   variant?: 'default' | 'outline';
@@ -17,7 +25,7 @@ export function PlatformBadge({
   showIcon = true,
   className,
 }: PlatformBadgeProps) {
-  const config = PLATFORM_CONFIG[platform];
+  const config = PLATFORM_CONFIG[platform] ?? DEFAULT_PLATFORM_CONFIG;
 
   const sizeClasses = {
     sm: 'text-xs px-1.5 py-0.5',

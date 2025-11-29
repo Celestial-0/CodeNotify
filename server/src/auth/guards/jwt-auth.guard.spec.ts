@@ -15,7 +15,7 @@ describe('JwtAuthGuard', () => {
       get: jest.fn(),
       getAll: jest.fn(),
       getAllAndMerge: jest.fn(),
-    } as unknown as Reflector;
+    } as Reflector;
 
     guard = new JwtAuthGuard(reflector);
   });
@@ -170,5 +170,5 @@ function createMockExecutionContext(): ExecutionContext {
     getType: jest.fn().mockReturnValue('http'),
     getArgs: jest.fn(),
     getArgByIndex: jest.fn(),
-  } as unknown as ExecutionContext;
+  } as ExecutionContext;
 }

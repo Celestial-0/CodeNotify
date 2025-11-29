@@ -73,6 +73,7 @@ describe('UsersService', () => {
     name: 'Test User',
     password: 'hashedPassword',
     phoneNumber: '+1234567890',
+    role: 'user',
     isActive: true,
     preferences: {
       platforms: ['codeforces', 'leetcode'],
@@ -299,12 +300,10 @@ describe('UsersService', () => {
   });
 
   describe('updateRefreshToken', () => {
-    it('should update refresh token with hashed value', async () => {
+    it('should update refresh token with plain value (no hashing)', async () => {
       // Arrange
       const userId = '64f8a1b2c3d4e5f6a7b8c9d0';
       const refreshToken = 'refresh-token';
-      const hashedToken = 'hashed-refresh-token';
-      mockedBcrypt.hash.mockResolvedValue(hashedToken as never);
       userModel.findByIdAndUpdate.mockReturnValue({
         exec: jest.fn().mockResolvedValue(mockUser),
       } as MockQuery<UserDocument | null>);
@@ -313,9 +312,9 @@ describe('UsersService', () => {
       await service.updateRefreshToken(userId, refreshToken);
 
       // Assert
-      expect(mockedBcrypt.hash).toHaveBeenCalledWith(refreshToken, 12);
+      expect(mockedBcrypt.hash).not.toHaveBeenCalled(); // No hashing for JWT tokens
       expect(userModel.findByIdAndUpdate).toHaveBeenCalledWith(userId, {
-        refreshToken: hashedToken,
+        refreshToken: refreshToken, // Store plain token
       });
     });
 
@@ -671,6 +670,7 @@ describe('UsersService', () => {
         email: mockUser.email,
         name: mockUser.name,
         phoneNumber: mockUser.phoneNumber,
+        role: mockUser.role,
         preferences: mockUser.preferences,
         isActive: mockUser.isActive,
         createdAt: mockUser.createdAt,
@@ -685,6 +685,7 @@ describe('UsersService', () => {
         id: '64f8a1b2c3d4e5f6a7b8c9d0',
         email: 'test@example.com',
         name: 'Test User',
+        role: 'user',
         preferences: {
           platforms: ['codeforces' as const],
           alertFrequency: 'immediate' as const,
@@ -701,6 +702,7 @@ describe('UsersService', () => {
       // Assert
       expect(result.phoneNumber).toBeUndefined();
       expect(result.lastLogin).toBeUndefined();
+      expect(result.role).toBe('user'); // Default role
     });
   });
 
