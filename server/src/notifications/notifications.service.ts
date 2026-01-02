@@ -71,13 +71,17 @@ export class NotificationsService {
     // 1. Have this platform in their preferences
     // 2. Want to be notified this many hours before (or more)
     // 3. Are active
+    // 4. Have verified their email (premium feature)
+    // 5. Have alertFrequency set to 'immediate' (digest users get batched emails)
     // FIXED: Changed $gte to $lte - users should be notified if their notifyBefore
     // window includes the current time (notifyBefore >= hoursUntilStart)
     const users = await this.userModel
       .find({
         isActive: true,
+        isEmailVerified: true,
         'preferences.platforms': contest.platform,
         'preferences.notifyBefore': { $gte: Math.floor(hoursUntilStart) },
+        'preferences.alertFrequency': 'immediate',
       })
       .exec();
 
@@ -293,6 +297,11 @@ export class NotificationsService {
    * Notify all relevant users about upcoming contests
    */
   async notifyUpcomingContests(contests: ContestDocument[]): Promise<void> {
+    if (!contests || contests.length === 0) {
+      this.logger.log('No contests to notify about');
+      return;
+    }
+
     this.logger.log(`Processing ${contests.length} upcoming contests`);
 
     for (const contest of contests) {
@@ -339,6 +348,146 @@ export class NotificationsService {
       startTime: contest.startTime,
       hoursUntilStart,
     };
+  }
+
+  /**
+   * Get upcoming contests for a specific user based on their preferences
+   */
+  async getUpcomingContestsForUser(
+    user: UserDocument,
+    hoursAhead: number,
+  ): Promise<ContestDocument[]> {
+    const now = new Date();
+    const endTime = new Date(now.getTime() + hoursAhead * 60 * 60 * 1000);
+
+    // Get contests matching user's platforms and within timeframe
+    const contests = await this.contestModel
+      .find({
+        platform: { $in: user.preferences.platforms },
+        startTime: { $gte: now, $lte: endTime },
+        phase: 'BEFORE',
+        isActive: true,
+      })
+      .sort({ startTime: 1 })
+      .exec();
+
+    // Filter contests based on user's notifyBefore preference
+    const hoursUntilStart = (contest: ContestDocument) =>
+      (contest.startTime.getTime() - now.getTime()) / (1000 * 60 * 60);
+
+    const notifyBefore = user.preferences.notifyBefore || 24; // Default to 24 hours
+
+    return contests.filter(
+      (contest) => notifyBefore >= hoursUntilStart(contest),
+    );
+  }
+
+  /**
+   * Get users who should receive digest notifications
+   */
+  async getUsersForDigest(
+    frequency: 'daily' | 'weekly',
+  ): Promise<UserDocument[]> {
+    return this.userModel
+      .find({
+        isActive: true,
+        isEmailVerified: true,
+        'preferences.alertFrequency': frequency,
+      })
+      .exec();
+  }
+
+  /**
+   * Send digest notification to a user
+   */
+  async sendDigestNotification(
+    user: UserDocument,
+    contests: ContestDocument[],
+    frequency: 'daily' | 'weekly',
+  ): Promise<void> {
+    if (contests.length === 0) {
+      this.logger.debug(
+        `No contests for ${frequency} digest for user ${user.email}`,
+      );
+      return;
+    }
+
+    // Format contests for digest email
+    const contestsData = contests.map((contest) => {
+      const now = new Date();
+      const hoursUntilStart = Math.round(
+        (contest.startTime.getTime() - now.getTime()) / (1000 * 60 * 60),
+      );
+
+      return {
+        name: contest.name,
+        platform: contest.platform,
+        startTime: contest.startTime,
+        hoursUntilStart,
+        websiteUrl: contest.websiteUrl,
+      };
+    });
+
+    // Send digest email
+    try {
+      const result = await this.emailService.sendDigestEmail(
+        user.email,
+        contestsData,
+        frequency,
+      );
+
+      // Create notification record
+      const notificationType =
+        frequency === 'daily'
+          ? NotificationType.DAILY_DIGEST
+          : NotificationType.WEEKLY_DIGEST;
+
+      const notification = new this.notificationModel({
+        userId: String(user._id),
+        type: notificationType,
+        title: `${frequency === 'daily' ? 'Daily' : 'Weekly'} Contest Digest`,
+        message: `${contests.length} upcoming contest${contests.length > 1 ? 's' : ''}`,
+        payload: {
+          contests: contestsData,
+          frequency,
+        },
+        channels: [NotificationChannel.EMAIL],
+        deliveryStatus: [
+          {
+            channel: NotificationChannel.EMAIL,
+            status: result.success
+              ? NotificationStatus.SENT
+              : NotificationStatus.FAILED,
+            sentAt: result.success ? new Date() : undefined,
+            failedAt: result.success ? undefined : new Date(),
+            error: result.error,
+            retryCount: 0,
+          },
+        ],
+        status: result.success
+          ? NotificationStatus.SENT
+          : NotificationStatus.FAILED,
+        scheduledAt: new Date(),
+        sentAt: result.success ? new Date() : undefined,
+        failedAt: result.success ? undefined : new Date(),
+      });
+
+      await notification.save();
+
+      if (result.success) {
+        this.logger.log(
+          `Sent ${frequency} digest to ${user.email} with ${contests.length} contests`,
+        );
+      } else {
+        this.logger.error(
+          `Failed to send ${frequency} digest to ${user.email}: ${result.error}`,
+        );
+      }
+    } catch (error) {
+      this.logger.error(
+        `Error sending ${frequency} digest to ${user.email}: ${error instanceof Error ? error.message : String(error)}`,
+      );
+    }
   }
 
   /**

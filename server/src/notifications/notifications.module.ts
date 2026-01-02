@@ -29,6 +29,6 @@ import {
     AdminEmailService,
   ],
   controllers: [NotificationsController],
-  exports: [NotificationsService],
+  exports: [NotificationsService, EmailNotificationService],
 })
 export class NotificationsModule {}

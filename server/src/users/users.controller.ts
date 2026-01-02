@@ -13,8 +13,8 @@ import {
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { RolesGuard } from '../auth/guards/roles.guard';
-import { Roles } from '../auth/decorators/roles.decorator';
+import { RolesGuard } from '../common/guards';
+import { Roles } from '../common/decorators';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import {
   UpdateUserDto,
@@ -24,7 +24,7 @@ import {
   UpdateUserRoleDto,
   UpdateUserRoleBodyDto,
   DeleteUserDto,
-} from '../common/dto/user.dto';
+} from './dto/user.dto';
 import type { UserDocument } from './schemas/user.schema';
 
 @Controller('users')

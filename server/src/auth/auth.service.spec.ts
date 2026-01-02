@@ -6,7 +6,7 @@ import * as bcrypt from 'bcrypt';
 import { Types } from 'mongoose';
 import { AuthService } from './auth.service';
 import { UsersService } from '../users/users.service';
-import { CreateUserDto, SigninDto } from '../common/dto/auth.dto';
+import { CreateUserDto, SigninDto } from './dto/auth.dto';
 import type { UserDocument } from '../users/schemas/user.schema';
 
 // Mock bcrypt

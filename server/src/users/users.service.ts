@@ -1,10 +1,10 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import * as bcrypt from 'bcrypt';
 import { User, UserDocument } from './schemas/user.schema';
-import { CreateUserDto } from '../common/dto/auth.dto';
-import { UpdateUserDto, UserPreferences } from '../common/dto/user.dto';
+
+import { CreateUserDto } from '../auth/dto/auth.dto';
+import { UpdateUserDto, UserPreferences } from './dto/user.dto';
 
 @Injectable()
 export class UsersService {
@@ -52,6 +52,15 @@ export class UsersService {
   async updateLastLogin(id: string): Promise<void> {
     await this.userModel
       .findByIdAndUpdate(id, { lastLogin: new Date() })
+      .exec();
+  }
+
+  async updateEmailVerification(
+    id: string,
+    isVerified: boolean,
+  ): Promise<void> {
+    await this.userModel
+      .findByIdAndUpdate(id, { isEmailVerified: isVerified })
       .exec();
   }
 
@@ -143,6 +152,7 @@ export class UsersService {
     role: 'user' | 'admin';
     preferences: UserPreferences;
     isActive: boolean;
+    isEmailVerified: boolean;
     createdAt: Date;
     updatedAt: Date;
     lastLogin?: Date;
@@ -155,6 +165,7 @@ export class UsersService {
       role: user.role,
       preferences: user.preferences,
       isActive: user.isActive,
+      isEmailVerified: user.isEmailVerified,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
       lastLogin: user.lastLogin,
@@ -188,6 +199,7 @@ export class UsersService {
     phoneNumber?: string;
     preferences: UserPreferences;
     isActive: boolean;
+    isEmailVerified: boolean;
     createdAt: Date;
     updatedAt: Date;
   }> {
@@ -203,6 +215,7 @@ export class UsersService {
       phoneNumber: user.phoneNumber,
       preferences: user.preferences,
       isActive: user.isActive,
+      isEmailVerified: user.isEmailVerified,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
     };

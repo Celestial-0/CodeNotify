@@ -1,6 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
-import type { UserPreferences } from '../../common/dto/user.dto';
+import type { UserPreferences } from '../dto/user.dto';
 
 // Define the document type with proper id typing
 export interface UserDocument extends Document {
@@ -13,6 +13,7 @@ export interface UserDocument extends Document {
   role: 'user' | 'admin';
   preferences: UserPreferences;
   isActive: boolean;
+  isEmailVerified: boolean;
   refreshToken?: string;
   lastLogin?: Date;
   createdAt: Date;
@@ -80,6 +81,9 @@ export class User {
 
   @Prop({ default: true })
   isActive: boolean;
+
+  @Prop({ default: false })
+  isEmailVerified: boolean;
 
   @Prop()
   refreshToken?: string;

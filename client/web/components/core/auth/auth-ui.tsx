@@ -94,7 +94,7 @@ const labelVariants = cva(
 const Label = React.forwardRef<
   React.ElementRef<typeof LabelPrimitive.Root>,
   React.ComponentPropsWithoutRef<typeof LabelPrimitive.Root> &
-    VariantProps<typeof labelVariants>
+  VariantProps<typeof labelVariants>
 >(({ className, ...props }, ref) => (
   <LabelPrimitive.Root
     ref={ref}
@@ -158,7 +158,7 @@ const Input = React.forwardRef<HTMLInputElement, React.ComponentProps<"input">>(
 Input.displayName = "Input";
 
 export interface PasswordInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
-    label?: string;
+  label?: string;
 }
 const PasswordInput = React.forwardRef<HTMLInputElement, PasswordInputProps>(
   ({ className, label, ...props }, ref) => {
@@ -197,23 +197,23 @@ function SignInForm() {
     try {
       setError(null);
       const response = await AuthService.signin(data);
-      
+
       setUser(response.user);
       toast.success("Welcome back!", {
         description: `Signed in as ${response.user.email}`,
       });
-      
+
       router.push("/dashboard");
     } catch (error) {
       console.error("Sign in error:", error);
-      
+
       let errorMessage = "Failed to sign in. Please try again.";
       if (error instanceof AxiosError) {
         errorMessage = error.response?.data?.message || errorMessage;
       } else if (error instanceof Error) {
         errorMessage = error.message;
       }
-      
+
       setError(errorMessage);
       toast.error("Sign in failed", {
         description: errorMessage,
@@ -305,23 +305,24 @@ function SignUpForm() {
     try {
       setError(null);
       const response = await AuthService.signup(data);
-      
-      setUser(response.user);
+
+      // Don't auto-login - require email verification first
       toast.success("Account created successfully!", {
-        description: `Welcome, ${response.user.name}!`,
+        description: "Please check your email to verify your account.",
       });
-      
-      router.push("/dashboard");
+
+      // Redirect to email verification page
+      router.push(`/auth/verify-email?email=${encodeURIComponent(data.email)}`);
     } catch (error) {
       console.error("Sign up error:", error);
-      
+
       let errorMessage = "Failed to create account. Please try again.";
       if (error instanceof AxiosError) {
         errorMessage = error.response?.data?.message || errorMessage;
       } else if (error instanceof Error) {
         errorMessage = error.message;
       }
-      
+
       setError(errorMessage);
       toast.error("Sign up failed", {
         description: errorMessage,
@@ -420,78 +421,78 @@ function SignUpForm() {
 }
 
 function AuthFormContainer({ isSignIn, onToggle }: { isSignIn: boolean; onToggle: () => void; }) {
-    const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
-    const handleGoogleSignIn = () => {
-      setIsGoogleLoading(true);
-      AuthService.initiateGoogleOAuth();
-    };
+  const handleGoogleSignIn = () => {
+    setIsGoogleLoading(true);
+    AuthService.initiateGoogleOAuth();
+  };
 
-    return (
-        <div className="mx-auto grid w-[350px] gap-2">
-            {isSignIn ? <SignInForm /> : <SignUpForm />}
-            <div className="text-center text-sm">
-                {isSignIn ? "Don't have an account?" : "Already have an account?"}{" "}
-                <Button variant="link" className="pl-1 text-foreground" onClick={onToggle}>
-                    {isSignIn ? "Sign up" : "Sign in"}
-                </Button>
-            </div>
-            <div className="relative text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t after:border-border">
-                <span className="relative z-10 bg-background px-2 text-muted-foreground">Or continue with</span>
-            </div>
-            <Button 
-              variant="outline" 
-              type="button" 
-              onClick={handleGoogleSignIn}
-              disabled={isGoogleLoading}
-            >
-                {isGoogleLoading ? (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                ) : (
-                  <Image src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google icon" width={16} height={16} className="mr-2" />
-                )}
-                {isGoogleLoading ? "Redirecting..." : "Continue with Google"}
-            </Button>
-        </div>
-    )
+  return (
+    <div className="mx-auto grid w-[350px] gap-2">
+      {isSignIn ? <SignInForm /> : <SignUpForm />}
+      <div className="text-center text-sm">
+        {isSignIn ? "Don't have an account?" : "Already have an account?"}{" "}
+        <Button variant="link" className="pl-1 text-foreground" onClick={onToggle}>
+          {isSignIn ? "Sign up" : "Sign in"}
+        </Button>
+      </div>
+      <div className="relative text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t after:border-border">
+        <span className="relative z-10 bg-background px-2 text-muted-foreground">Or continue with</span>
+      </div>
+      <Button
+        variant="outline"
+        type="button"
+        onClick={handleGoogleSignIn}
+        disabled={isGoogleLoading}
+      >
+        {isGoogleLoading ? (
+          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+        ) : (
+          <Image src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google icon" width={16} height={16} className="mr-2" />
+        )}
+        {isGoogleLoading ? "Redirecting..." : "Continue with Google"}
+      </Button>
+    </div>
+  )
 }
 
 interface AuthContentProps {
-    image?: {
-        src: string;
-        alt: string;
-    };
-    quote?: {
-        text: string;
-        author: string;
-    }
+  image?: {
+    src: string;
+    alt: string;
+  };
+  quote?: {
+    text: string;
+    author: string;
+  }
 }
 
 interface AuthUIProps {
-    signInContent?: AuthContentProps;
-    signUpContent?: AuthContentProps;
+  signInContent?: AuthContentProps;
+  signUpContent?: AuthContentProps;
 }
 
 const defaultSignInContent = {
-    image: {
-        src: "https://i.ibb.co/XrkdGrrv/original-ccdd6d6195fff2386a31b684b7abdd2e-removebg-preview.png",
-        alt: "A beautiful interior design for sign-in"
-    },
-    quote: {
-        text: "Welcome Back! The journey continues.",
-        author: "EaseMize UI"
-    }
+  image: {
+    src: "https://i.ibb.co/XrkdGrrv/original-ccdd6d6195fff2386a31b684b7abdd2e-removebg-preview.png",
+    alt: "A beautiful interior design for sign-in"
+  },
+  quote: {
+    text: "Welcome Back! The journey continues.",
+    author: "EaseMize UI"
+  }
 };
 
 const defaultSignUpContent = {
-    image: {
-        src: "https://i.ibb.co/HTZ6DPsS/original-33b8479c324a5448d6145b3cad7c51e7-removebg-preview.png",
-        alt: "A vibrant, modern space for new beginnings"
-    },
-    quote: {
-        text: "Create an account. A new chapter awaits.",
-        author: "EaseMize UI"
-    }
+  image: {
+    src: "https://i.ibb.co/HTZ6DPsS/original-33b8479c324a5448d6145b3cad7c51e7-removebg-preview.png",
+    alt: "A vibrant, modern space for new beginnings"
+  },
+  quote: {
+    text: "Create an account. A new chapter awaits.",
+    author: "EaseMize UI"
+  }
 };
 
 export function AuthUI({ signInContent = {}, signUpContent = {} }: AuthUIProps) {
@@ -499,12 +500,12 @@ export function AuthUI({ signInContent = {}, signUpContent = {} }: AuthUIProps) 
   const toggleForm = () => setIsSignIn((prev) => !prev);
 
   const finalSignInContent = {
-      image: { ...defaultSignInContent.image, ...signInContent.image },
-      quote: { ...defaultSignInContent.quote, ...signInContent.quote },
+    image: { ...defaultSignInContent.image, ...signInContent.image },
+    quote: { ...defaultSignInContent.quote, ...signInContent.quote },
   };
   const finalSignUpContent = {
-      image: { ...defaultSignUpContent.image, ...signUpContent.image },
-      quote: { ...defaultSignUpContent.quote, ...signUpContent.quote },
+    image: { ...defaultSignUpContent.image, ...signUpContent.image },
+    quote: { ...defaultSignUpContent.quote, ...signUpContent.quote },
   };
 
   const currentContent = isSignIn ? finalSignInContent : finalSignUpContent;
@@ -528,20 +529,20 @@ export function AuthUI({ signInContent = {}, signUpContent = {} }: AuthUIProps) 
       >
 
         <div className="absolute inset-x-0 bottom-0 h-[100px] bg-linear-to-t from-background to-transparent" />
-        
+
         <div className="relative z-10 flex h-full flex-col items-center justify-end p-2 pb-6">
-            <blockquote className="space-y-2 text-center text-foreground">
-              <p className="text-lg font-medium">
-                &ldquo;<Typewriter
-                    key={currentContent.quote.text}
-                    text={currentContent.quote.text}
-                    speed={60}
-                  />&rdquo;
-              </p>
-              <cite className="block text-sm font-light text-muted-foreground not-italic">
-                  — {currentContent.quote.author}
-              </cite>
-            </blockquote>
+          <blockquote className="space-y-2 text-center text-foreground">
+            <p className="text-lg font-medium">
+              &ldquo;<Typewriter
+                key={currentContent.quote.text}
+                text={currentContent.quote.text}
+                speed={60}
+              />&rdquo;
+            </p>
+            <cite className="block text-sm font-light text-muted-foreground not-italic">
+              — {currentContent.quote.author}
+            </cite>
+          </blockquote>
         </div>
       </div>
     </div>

@@ -12,8 +12,8 @@ import {
   HttpStatus,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { RolesGuard } from '../auth/guards/roles.guard';
-import { Roles } from '../auth/decorators/roles.decorator';
+import { RolesGuard, EmailVerifiedGuard } from '../common/guards';
+import { Roles } from '../common/decorators';
 import { NotificationsService } from './notifications.service';
 import { EmailNotificationService } from './services/email-notification.service';
 import { WhatsAppNotificationService } from './services/whatsapp-notification.service';
@@ -37,6 +37,7 @@ import {
 } from './dto/notification.dto';
 
 @Controller('notifications')
+@UseGuards(JwtAuthGuard, EmailVerifiedGuard)
 export class NotificationsController {
   constructor(
     private readonly notificationsService: NotificationsService,

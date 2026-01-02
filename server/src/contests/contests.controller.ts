@@ -34,8 +34,8 @@ import {
 import { EnumValidationPipe } from '../common/pipes/enum-validation.pipe';
 import { Public } from '../common/decorators/public.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { RolesGuard } from '../auth/guards/roles.guard';
-import { Roles } from '../auth/decorators/roles.decorator';
+import { RolesGuard } from '../common/guards';
+import { Roles } from '../common/decorators';
 
 @Controller('contests')
 export class ContestsController {

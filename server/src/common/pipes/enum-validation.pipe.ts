@@ -1,9 +1,9 @@
 import { PipeTransform, Injectable, BadRequestException } from '@nestjs/common';
 
 @Injectable()
-export class EnumValidationPipe<T extends Record<string, string>>
-  implements PipeTransform
-{
+export class EnumValidationPipe<
+  T extends Record<string, string>,
+> implements PipeTransform {
   constructor(
     private readonly enumType: T,
     private readonly enumName: string,

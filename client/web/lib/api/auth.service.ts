@@ -121,4 +121,37 @@ export class AuthService {
   static getGoogleOAuthUrl(): string {
     return `${API_BASE_URL}/auth/google`;
   }
+
+  /**
+   * Request OTP for email verification
+   */
+  static async requestOtp(email: string): Promise<{ message: string; expiresIn?: number }> {
+    const response = await httpClient.api.post<{ message: string; expiresIn?: number }>(
+      '/auth/otp/request',
+      { email }
+    );
+    return response.data;
+  }
+
+  /**
+   * Verify OTP code for email
+   */
+  static async verifyOtp(email: string, code: string): Promise<{ message: string; isEmailVerified: boolean }> {
+    const response = await httpClient.api.post<{ message: string; isEmailVerified: boolean }>(
+      '/auth/otp/verify',
+      { email, code }
+    );
+    return response.data;
+  }
+
+  /**
+   * Resend OTP to email
+   */
+  static async resendOtp(email: string): Promise<{ message: string; expiresIn?: number }> {
+    const response = await httpClient.api.post<{ message: string; expiresIn?: number }>(
+      '/auth/otp/resend',
+      { email }
+    );
+    return response.data;
+  }
 }

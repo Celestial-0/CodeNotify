@@ -27,11 +27,30 @@ export const ResetPasswordSchema = z.object({
   password: z.string().min(6, { message: 'Password must be at least 6 characters long' }),
 });
 
+// OTP verification schemas
+export const OtpRequestSchema = z.object({
+  email: z.string().email({ message: 'Invalid email format' }),
+});
+
+export const OtpVerifySchema = z.object({
+  email: z.string().email({ message: 'Invalid email format' }),
+  code: z.string()
+    .length(6, { message: 'OTP code must be exactly 6 digits' })
+    .regex(/^\d{6}$/, { message: 'OTP code must contain only digits' }),
+});
+
+export const OtpResendSchema = z.object({
+  email: z.string().email({ message: 'Invalid email format' }),
+});
+
 // TypeScript types from schemas
 export type SigninFormData = z.infer<typeof SigninSchema>;
 export type SignupFormData = z.infer<typeof SignupSchema>;
 export type ForgotPasswordFormData = z.infer<typeof ForgotPasswordSchema>;
 export type ResetPasswordFormData = z.infer<typeof ResetPasswordSchema>;
+export type OtpRequestData = z.infer<typeof OtpRequestSchema>;
+export type OtpVerifyData = z.infer<typeof OtpVerifySchema>;
+export type OtpResendData = z.infer<typeof OtpResendSchema>;
 
 // Response types matching server
 export interface User {
@@ -40,6 +59,7 @@ export interface User {
   name: string;
   phoneNumber?: string;
   role: string;
+  isEmailVerified: boolean;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -59,4 +79,15 @@ export interface ApiError {
   message: string;
   statusCode: number;
   error?: string;
+}
+
+// OTP response types
+export interface OtpResponse {
+  message: string;
+  expiresIn?: number; // seconds until expiry
+}
+
+export interface VerifyOtpResponse {
+  message: string;
+  isEmailVerified: boolean;
 }

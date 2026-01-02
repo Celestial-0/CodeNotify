@@ -5,6 +5,7 @@ import {
   NotificationPayload,
   NotificationResult,
 } from '../interfaces/notification.interface';
+import { formatWhatsAppMessage } from '../templates/whatsapp-message.template';
 
 @Injectable()
 export class WhatsAppNotificationService implements INotificationService {
@@ -83,8 +84,9 @@ export class WhatsAppNotificationService implements INotificationService {
       // );
 
       // STUB IMPLEMENTATION - Remove when implementing actual service
+      const message = formatWhatsAppMessage(payload);
       this.logger.warn(
-        `[WHATSAPP STUB] Contest "${payload.contestName}" on ${payload.platform} starts in ${payload.hoursUntilStart} hours`,
+        `[WHATSAPP STUB] Would send message to ${phoneNumber}:\n${message}`,
       );
 
       // Simulate async operation
@@ -128,22 +130,5 @@ export class WhatsAppNotificationService implements INotificationService {
     }
   }
 
-  /**
-   * Format WhatsApp message (plain text)
-   */
-  private formatWhatsAppMessage(payload: NotificationPayload): string {
-    return `
-🚨 *Contest Alert*
 
-*${payload.contestName}*
-
-📱 Platform: ${payload.platform.toUpperCase()}
-⏰ Starts in: *${payload.hoursUntilStart} hours*
-📅 Start Time: ${payload.startTime.toLocaleString()}
-
-Good luck! 🎯
-
-Manage your preferences: https://codenotify.com/preferences
-    `.trim();
-  }
 }

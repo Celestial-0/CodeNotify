@@ -3,7 +3,7 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 import { ConfigService } from '@nestjs/config';
 import { ContestsService } from './contests.service';
 import { NotificationsService } from '../notifications/notifications.service';
-import { SCHEDULER, NOTIFICATIONS } from '../common/common.constants';
+import { SCHEDULER, NOTIFICATIONS } from '../common/constants';
 
 @Injectable()
 export class ContestSchedulerService {
@@ -178,6 +178,131 @@ export class ContestSchedulerService {
     } catch (error) {
       this.logger.error(
         `Failed to check upcoming contests: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      );
+    }
+  }
+
+  /**
+   * Send daily digest emails to users
+   * Runs daily at 8 AM UTC
+   */
+  @Cron('0 8 * * *', {
+    name: 'daily-digest',
+    timeZone: 'UTC',
+  })
+  async handleDailyDigest() {
+    const notificationsEnabled = this.configService.get<boolean>(
+      'NOTIFICATIONS_ENABLED',
+      NOTIFICATIONS.ENABLED,
+    );
+
+    if (!notificationsEnabled) {
+      this.logger.debug('Notifications are disabled via configuration');
+      return;
+    }
+
+    this.logger.log('Starting daily digest processing');
+
+    try {
+      const users = await this.notificationsService.getUsersForDigest('daily');
+      this.logger.log(`Found ${users.length} users for daily digest`);
+
+      let sentCount = 0;
+      let failedCount = 0;
+
+      for (const user of users) {
+        try {
+          const contests =
+            await this.notificationsService.getUpcomingContestsForUser(
+              user,
+              24, // next 24 hours
+            );
+
+          if (contests.length > 0) {
+            await this.notificationsService.sendDigestNotification(
+              user,
+              contests,
+              'daily',
+            );
+            sentCount++;
+          }
+        } catch (error) {
+          failedCount++;
+          this.logger.error(
+            `Failed to send daily digest to ${user.email}: ${error instanceof Error ? error.message : String(error)}`,
+          );
+        }
+      }
+
+      this.logger.log(
+        `Daily digest completed - Sent: ${sentCount}, Failed: ${failedCount}`,
+      );
+    } catch (error) {
+      this.logger.error(
+        `Daily digest processing failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      );
+    }
+  }
+
+  /**
+   * Send weekly digest emails to users
+   * Runs every Monday at 8 AM UTC
+   */
+  @Cron('0 8 * * 1', {
+    name: 'weekly-digest',
+    timeZone: 'UTC',
+  })
+  async handleWeeklyDigest() {
+    const notificationsEnabled = this.configService.get<boolean>(
+      'NOTIFICATIONS_ENABLED',
+      NOTIFICATIONS.ENABLED,
+    );
+
+    if (!notificationsEnabled) {
+      this.logger.debug('Notifications are disabled via configuration');
+      return;
+    }
+
+    this.logger.log('Starting weekly digest processing');
+
+    try {
+      const users =
+        await this.notificationsService.getUsersForDigest('weekly');
+      this.logger.log(`Found ${users.length} users for weekly digest`);
+
+      let sentCount = 0;
+      let failedCount = 0;
+
+      for (const user of users) {
+        try {
+          const contests =
+            await this.notificationsService.getUpcomingContestsForUser(
+              user,
+              168, // next 7 days
+            );
+
+          if (contests.length > 0) {
+            await this.notificationsService.sendDigestNotification(
+              user,
+              contests,
+              'weekly',
+            );
+            sentCount++;
+          }
+        } catch (error) {
+          failedCount++;
+          this.logger.error(
+            `Failed to send weekly digest to ${user.email}: ${error instanceof Error ? error.message : String(error)}`,
+          );
+        }
+      }
+
+      this.logger.log(
+        `Weekly digest completed - Sent: ${sentCount}, Failed: ${failedCount}`,
+      );
+    } catch (error) {
+      this.logger.error(
+        `Weekly digest processing failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
       );
     }
   }

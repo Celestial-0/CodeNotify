@@ -12,13 +12,8 @@ import {
 import { Throttle } from '@nestjs/throttler';
 import type { Response, Request } from 'express';
 import { AuthService } from './auth.service';
-import { Public } from '../common/decorators/public.decorator';
-import { CurrentUser } from '../common/decorators/current-user.decorator';
-import {
-  CreateUserDto,
-  SigninDto,
-  type AuthResponse,
-} from '../common/dto/auth.dto';
+import { Public, CurrentUser } from '../common/decorators';
+import { CreateUserDto, SigninDto, type AuthResponse } from './dto/auth.dto';
 import type { UserDocument } from '../users/schemas/user.schema';
 import { GoogleUser } from './strategies/google.strategy';
 import { GoogleAuthGuard } from './guards/google-auth.guard';

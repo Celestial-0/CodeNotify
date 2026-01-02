@@ -37,7 +37,7 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
   ) {
     const clientID = configService.get<string>('GOOGLE_CLIENT_ID');
     const clientSecret = configService.get<string>('GOOGLE_CLIENT_SECRET');
-    
+
     // Use placeholder values if not configured (strategy will fail at runtime if used)
     super({
       clientID: clientID || 'not-configured',

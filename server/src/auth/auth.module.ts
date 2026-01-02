@@ -6,13 +6,17 @@ import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { GoogleStrategy } from './strategies/google.strategy';
+import { PasswordService } from './services/password.service';
+import { TokenService } from './services/token.service';
 import { UsersModule } from '../users/users.module';
-import { AUTH } from '../common/common.constants';
+import { AUTH } from '../common/constants';
+import { OtpModule } from './otp/otp.module';
 
 @Module({
   imports: [
     UsersModule,
     PassportModule,
+    OtpModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => ({
@@ -22,8 +26,14 @@ import { AUTH } from '../common/common.constants';
       inject: [ConfigService],
     }),
   ],
-  providers: [AuthService, JwtStrategy, GoogleStrategy],
+  providers: [
+    AuthService,
+    PasswordService,
+    TokenService,
+    JwtStrategy,
+    GoogleStrategy,
+  ],
   controllers: [AuthController],
-  exports: [AuthService],
+  exports: [AuthService, PasswordService, TokenService],
 })
 export class AuthModule {}

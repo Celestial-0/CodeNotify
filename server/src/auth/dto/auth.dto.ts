@@ -29,6 +29,7 @@ export interface AuthResponse {
     name: string;
     phoneNumber?: string;
     role: string;
+    isEmailVerified: boolean;
   };
   accessToken: string;
   refreshToken: string;
@@ -40,6 +41,7 @@ export interface UserResponse {
   name: string;
   phoneNumber?: string;
   role: string;
+  isEmailVerified: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
