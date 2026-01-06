@@ -496,8 +496,17 @@ const defaultSignUpContent = {
 };
 
 export function AuthUI({ signInContent = {}, signUpContent = {} }: AuthUIProps) {
-  const [isSignIn, setIsSignIn] = useState(true);
-  const toggleForm = () => setIsSignIn((prev) => !prev);
+  const router = useRouter();
+  const pathname = typeof window !== 'undefined' ? window.location.pathname : '/auth/signin';
+  const isSignIn = pathname.includes('/signin');
+
+  const toggleForm = () => {
+    if (isSignIn) {
+      router.push('/auth/signup');
+    } else {
+      router.push('/auth/signin');
+    }
+  };
 
   const finalSignInContent = {
     image: { ...defaultSignInContent.image, ...signInContent.image },

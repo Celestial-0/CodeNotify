@@ -17,3 +17,6 @@ export * from './notification.constants';
 
 // Scheduler constants
 export * from './scheduler.constants';
+
+// Version constants
+export * from './version';

@@ -9,7 +9,7 @@ export * from './auth.service';
 export * from './auth.controller';
 
 // DTOs
-export * from './dto';
+
 
 // Services (explicitly export to avoid conflicts)
 export { PasswordService } from './services/password.service';

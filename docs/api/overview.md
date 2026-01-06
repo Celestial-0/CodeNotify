@@ -303,9 +303,8 @@ Subscribe to real-time events:
 
 ## Changelog
 
-### v0.0.1 (2025-01-01)
-- Initial API release
-- Multi-platform contest aggregation
-- JWT authentication
-- Multi-channel notifications
-- Advanced filtering and search
+### v0.1.0-beta (2026-01-06)
+- Initial beta release
+- Auto-login after email verification
+- Centralized version management
+- Dynamic GitHub-based changelog

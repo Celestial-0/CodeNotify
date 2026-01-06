@@ -19,9 +19,9 @@ export const ResendOtpSchema = z.object({
 });
 
 // Create DTO classes using nestjs-zod
-export class RequestOtpDto extends createZodDto(RequestOtpSchema) {}
-export class VerifyOtpDto extends createZodDto(VerifyOtpSchema) {}
-export class ResendOtpDto extends createZodDto(ResendOtpSchema) {}
+export class RequestOtpDto extends createZodDto(RequestOtpSchema) { }
+export class VerifyOtpDto extends createZodDto(VerifyOtpSchema) { }
+export class ResendOtpDto extends createZodDto(ResendOtpSchema) { }
 
 // Response DTOs
 export interface OtpResponse {
@@ -29,17 +29,19 @@ export interface OtpResponse {
   expiresIn?: number; // seconds until expiry
 }
 
-export interface VerifyOtpResponse {
+export class UserResponse {
+  id: string;
+  email: string;
+  name: string;
+  phoneNumber?: string;
+  role: string;
+  isEmailVerified: boolean;
+}
+
+export class VerifyOtpResponse {
   message: string;
   isEmailVerified: boolean;
-  user: {
-    id: string;
-    email: string;
-    name: string;
-    phoneNumber?: string;
-    role: string;
-    isEmailVerified: boolean;
-  };
+  user: UserResponse;
   accessToken: string;
   refreshToken: string;
 }

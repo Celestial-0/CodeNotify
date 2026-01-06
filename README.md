@@ -1,9 +1,11 @@
 # CodeNotify
 
+![Version](https://img.shields.io/badge/version-0.1.0--beta-blue)
+
 > **Smart Contest Alert System**  
 > Never miss a competitive programming contest again. Get personalized notifications from Codeforces, LeetCode, CodeChef, and AtCoder.
 
-![CodeNotify Banner](https://v8sn4u5d65xaovfn.public.blob.vercel-storage.com/CodeNotify%20light.png)
+![CodeNotify Banner](https://github.com/Celestial-0/CodeNotify/blob/main/client/web/assets/public/icon.png?raw=true)
 
 ## 📚 Documentation
 

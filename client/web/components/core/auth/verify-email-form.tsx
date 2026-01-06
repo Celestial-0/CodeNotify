@@ -23,7 +23,7 @@ export function VerifyEmailForm() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const email = searchParams.get("email") || "";
-    const { setUser } = useAuthStore();
+    const { setUser, isAuthenticated } = useAuthStore();
 
     const [code, setCode] = useState("");
     const [isLoading, setIsLoading] = useState(false);
@@ -60,6 +60,15 @@ export function VerifyEmailForm() {
             return () => clearTimeout(timer);
         }
     }, [expiresIn]);
+
+    // Handle redirect when authentication is confirmed
+    useEffect(() => {
+        // Only redirect when we have success AND the auth store confirms authentication
+        // This ensures the auth state is properly persisted before navigation
+        if (success && isAuthenticated) {
+            router.replace("/dashboard");
+        }
+    }, [success, isAuthenticated, router]);
 
     const requestOtp = async () => {
         try {
@@ -109,9 +118,14 @@ export function VerifyEmailForm() {
 
         try {
             const response = await AuthService.verifyOtp(email, code);
-            setSuccess(true);
 
-            // Store user data in auth store (tokens are already stored by AuthService)
+            // Validate response has user data
+            if (!response.user) {
+                throw new Error("Invalid response from server - missing user data");
+            }
+
+            // Store user data in auth store FIRST (tokens are already stored by AuthService)
+            // This allows Zustand persist to start saving to localStorage immediately
             setUser(response.user);
 
             // Show success toast
@@ -119,10 +133,8 @@ export function VerifyEmailForm() {
                 description: `Welcome ${response.user.name}! You're now logged in.`,
             });
 
-            // Redirect to dashboard after 2 seconds
-            setTimeout(() => {
-                router.push("/dashboard");
-            }, 2000);
+            // Set success state - redirect will happen when isAuthenticated becomes true
+            setSuccess(true);
         } catch (err: unknown) {
             const errorMessage = err instanceof Error ? err.message : "Verification failed";
             setError(errorMessage);

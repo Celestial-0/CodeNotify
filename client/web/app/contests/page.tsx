@@ -16,7 +16,7 @@ import type {
   DifficultyLevel,
 } from '@/lib/types/contest.types';
 import { useUIStore } from '@/lib/store/ui-store';
-import { cn, downloadContestICS } from '@/lib/utils';
+import { downloadContestICS } from '@/lib/utils';
 import { ContestResponseDto } from '@/lib/types/contest.types';
 
 export default function ContestsPage() {

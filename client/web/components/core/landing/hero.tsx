@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Bell, Code2, Terminal, Trophy, Zap } from "lucide-react";
+import { APP_VERSION_DISPLAY } from "@/lib/constants/version";
 
 // --- Types ---
 
@@ -87,7 +88,7 @@ export function Hero() {
           <Badge>
             <Bell className="mr-1 h-3 w-3 text-primary animate-pulse" />
             <span className="bg-linear-to-r from-primary to-primary/60 bg-clip-text text-transparent font-semibold">
-              v1.0 is live
+              {APP_VERSION_DISPLAY}
             </span>
             <span className="mx-1 text-muted-foreground/50">|</span>
             Never miss a contest
@@ -107,7 +108,7 @@ export function Hero() {
           </h1>
 
           <p className={`mx-auto mt-6 max-w-2xl text-lg text-muted-foreground sm:text-xl transition-all duration-1000 delay-200 ${mounted ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0"}`}>
-            Sync schedules from <span className="font-semibold text-foreground">Codeforces, LeetCode, & AtCoder</span> directly to your calendar. Get WhatsApp & Discord notifications instantly.
+            Sync schedules from <span className="font-semibold text-foreground">Codeforces, LeetCode, CodeChef & AtCoder</span> directly to your calendar. Get WhatsApp & Discord notifications instantly.
           </p>
         </div>
 

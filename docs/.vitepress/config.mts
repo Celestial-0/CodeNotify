@@ -14,11 +14,11 @@ export default defineConfig({
       dark: 'https://v8sn4u5d65xaovfn.public.blob.vercel-storage.com/CodeNotify%20dark.png',
     },
     siteTitle: 'CodeNotify',
-    
+
     nav: [
       { text: 'Home', link: '/' },
       { text: 'Guide', link: '/guide/introduction' },
-      { 
+      {
         text: 'API Reference',
         items: [
           { text: 'Overview', link: '/api/overview' },
@@ -29,7 +29,7 @@ export default defineConfig({
           { text: 'Notifications', link: '/api/notifications' }
         ]
       },
-      { 
+      {
         text: 'Server',
         items: [
           { text: 'Architecture', link: '/server/architecture' },
@@ -39,7 +39,7 @@ export default defineConfig({
         ]
       },
       {
-        text: 'v0.0.1',
+        text: 'v0.1.0-beta',
         items: [
           { text: 'Changelog', link: '/changelog' },
           { text: 'Contributing', link: '/contributing' }
@@ -294,7 +294,7 @@ export default defineConfig({
   },
 
   head: [
-    ['link', { rel: 'icon', type: 'image/png', href: 'https://v8sn4u5d65xaovfn.public.blob.vercel-storage.com/CodeNotify%20dark.png'   }],
+    ['link', { rel: 'icon', type: 'image/png', href: 'https://v8sn4u5d65xaovfn.public.blob.vercel-storage.com/CodeNotify%20dark.png' }],
     ['meta', { name: 'theme-color', content: '#1e1e2e' }],
     ['meta', { name: 'viewport', content: 'width=device-width, initial-scale=1.0' }],
     ['meta', { property: 'og:type', content: 'website' }],

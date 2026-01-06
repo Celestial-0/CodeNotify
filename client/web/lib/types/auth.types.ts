@@ -90,4 +90,8 @@ export interface OtpResponse {
 export interface VerifyOtpResponse {
   message: string;
   isEmailVerified: boolean;
+  user: User;
+  accessToken: string;
+  refreshToken: string;
 }
+

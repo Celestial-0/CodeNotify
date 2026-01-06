@@ -1,6 +1,6 @@
 {
   "name": "codenotify-docs",
-  "version": "0.0.1",
+  "version": "0.1.0-beta",
   "description": "CodeNotify Documentation - VitePress",
   "type": "module",
   "scripts": {
