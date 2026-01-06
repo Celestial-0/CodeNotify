@@ -28,7 +28,7 @@ export function NotificationCard({
 }: NotificationCardProps) {
   // Handle both id and _id from MongoDB
   const notificationId = notification.id || notification._id || '';
-  
+
   const getStatusIcon = (status: NotificationStatus) => {
     switch (status) {
       case NotificationStatus.SENT:
@@ -43,15 +43,15 @@ export function NotificationCard({
   };
 
   return (
-    <Card className={`p-4 ${notification.isRead ? 'opacity-70' : ''}`}>
-      <div className="flex items-start gap-4">
+    <Card className={`p-4 sm:p-6 ${notification.isRead ? 'opacity-70' : ''}`}>
+      <div className="flex items-start gap-3 sm:gap-4">
         {/* Status Icon */}
         <div className="shrink-0 mt-1">{getStatusIcon(notification.status)}</div>
 
         {/* Content */}
         <div className="flex-1 min-w-0">
           {/* Header */}
-          <div className="flex items-start justify-between gap-2 mb-2">
+          <div className="flex items-start justify-between gap-2 mb-2 flex-wrap">
             <h3 className="text-sm font-semibold">{notification.title}</h3>
             <Badge
               variant="secondary"
@@ -112,7 +112,7 @@ export function NotificationCard({
 
           {/* Actions */}
           {showActions && (
-            <div className="flex gap-2">
+            <div className="flex flex-col sm:flex-row gap-2">
               {!notification.isRead && onMarkAsRead && (
                 <Button
                   size="sm"

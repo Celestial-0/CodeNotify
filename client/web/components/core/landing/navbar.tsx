@@ -30,7 +30,7 @@ export function Navbar() {
 
   return (
     <nav className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/80 backdrop-blur-md">
-      <div className="max-w-7xl mx-auto px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <Link 
@@ -44,7 +44,7 @@ export function Navbar() {
           </Link>
 
           {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center gap-8">
+          <div className="hidden md:flex items-center gap-6 lg:gap-8">
             <Link
               href="/contests"
               className="text-[14px] font-medium text-muted-foreground hover:text-foreground transition-colors"
@@ -78,7 +78,7 @@ export function Navbar() {
           </div>
 
           {/* Desktop Right Section (Auth-aware) */}
-          <div className="hidden md:flex items-center gap-3">
+          <div className="hidden md:flex items-center gap-2 sm:gap-3">
             <AnimatedThemeToggler className="h-9 w-9 rounded-md border-0" />
             {isLoading ? (
               <div className="flex items-center gap-2 text-muted-foreground">
@@ -160,7 +160,7 @@ export function Navbar() {
       {/* Mobile Menu */}
       {isOpen && (
         <div className="md:hidden border-t border-border/40 bg-background/95 backdrop-blur-md">
-          <div className="px-6 py-4 space-y-1">
+          <div className="px-3 sm:px-6 py-4 space-y-1">
             {/* Mobile user info when authenticated */}
             {isAuthenticated && !isLoading && (
               <div className="flex items-center gap-3 px-3 py-3 mb-2 rounded-lg bg-accent/50">
@@ -215,7 +215,7 @@ export function Navbar() {
             >
               Docs
             </Link>
-            <div className="pt-3 space-y-2">
+            <div className="pt-3 space-y-2 flex flex-col">
               {isLoading ? (
                 <div className="flex items-center gap-2 text-muted-foreground px-3">
                   <Activity>Loading…</Activity>

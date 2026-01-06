@@ -8,6 +8,8 @@ import {
 } from '@nestjs/common';
 import { OtpService } from './otp.service';
 import { EmailNotificationService } from '../../notifications/services/email-notification.service';
+import { TokenService } from '../services/token.service';
+import { UsersService } from '../../users/users.service';
 import {
   RequestOtpDto,
   VerifyOtpDto,
@@ -24,7 +26,9 @@ export class OtpController {
   constructor(
     private readonly otpService: OtpService,
     private readonly emailService: EmailNotificationService,
-  ) {}
+    private readonly tokenService: TokenService,
+    private readonly usersService: UsersService,
+  ) { }
 
   /**
    * Request OTP for email verification
@@ -67,13 +71,34 @@ export class OtpController {
   @HttpCode(HttpStatus.OK)
   async verifyOtp(@Body() dto: VerifyOtpDto): Promise<VerifyOtpResponse> {
     try {
-      await this.otpService.verifyOtp(dto.email, dto.code);
+      const user = await this.otpService.verifyOtp(dto.email, dto.code);
+
+      // Generate authentication tokens
+      const tokens = await this.tokenService.generateTokens(
+        user.id,
+        user.email,
+        user.role,
+      );
+
+      // Update user with refresh token and last login
+      await this.usersService.updateRefreshToken(user.id, tokens.refreshToken);
+      await this.usersService.updateLastLogin(user.id);
 
       this.logger.log(`Email verified successfully: ${dto.email}`);
 
       return {
         message: 'Email verified successfully',
         isEmailVerified: true,
+        user: {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          phoneNumber: user.phoneNumber,
+          role: user.role,
+          isEmailVerified: user.isEmailVerified,
+        },
+        accessToken: tokens.accessToken,
+        refreshToken: tokens.refreshToken,
       };
     } catch (error) {
       const errorMessage =

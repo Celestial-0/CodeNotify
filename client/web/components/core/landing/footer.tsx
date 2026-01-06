@@ -63,27 +63,27 @@ export function Footer() {
 
   return (
     <footer className="relative border-t border-border bg-background">
-        {/* Decorative background grid (subtle) */}
-        <div className="absolute inset-0 -z-10 h-full w-full bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-size-[14px_24px] mask-[radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)]" />
+      {/* Decorative background grid (subtle) */}
+      <div className="absolute inset-0 -z-10 h-full w-full bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-size-[14px_24px] mask-[radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)]" />
 
       <div className="mx-auto max-w-7xl px-6 py-16 lg:px-8">
         <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-4 lg:gap-12">
-          
+
           {/* Brand Column */}
           <div className="flex flex-col gap-6">
             <div className="flex items-center gap-2">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-                    <Code2 className="h-5 w-5" />
-                </div>
-                <span className="text-xl font-bold tracking-tight">CodeNotify</span>
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+                <Code2 className="h-5 w-5" />
+              </div>
+              <span className="text-xl font-bold tracking-tight">CodeNotify</span>
             </div>
             <p className="text-sm leading-relaxed text-muted-foreground max-w-xs">
               The ultimate contest tracking platform for competitive programmers. Never miss a round again.
             </p>
             <div className="flex gap-3">
-              <SocialButton href="https://github.com" iconPath={siGithub.path} label="GitHub" />
-              <SocialButton href="https://twitter.com" iconPath={siX.path} label="X (Twitter)" />
-              <EmailButton href="mailto:contact@codenotify.dev" label="Email" />
+              <SocialButton href="https://github.com/celestial-0/CodeNotify" iconPath={siGithub.path} label="GitHub" />
+              <SocialButton href="https://x.com/Celestial_Yash" iconPath={siX.path} label="X (Twitter)" />
+              <EmailButton href="mailto:yashkumarsingh@ieee.org" label="Email" />
             </div>
           </div>
 
@@ -101,7 +101,7 @@ export function Footer() {
             <FooterLink href="/auth/signin">Sign In</FooterLink>
             <FooterLink href="/auth/signup">Get Started</FooterLink>
             <FooterLink href="https://celestial-0.github.io/CodeNotify/">Documentation</FooterLink>
-            <FooterLink href="/api">API Reference</FooterLink>
+            <FooterLink href="https://celestial-0.github.io/CodeNotify/api/overview.html">API Reference</FooterLink>
             <FooterLink href="/community">Community</FooterLink>
           </FooterSection>
 
@@ -109,22 +109,22 @@ export function Footer() {
           <div className="flex flex-col gap-4">
             <h4 className="font-semibold tracking-tight text-foreground">Integrations</h4>
             <div className="flex flex-wrap gap-2">
-                {['Codeforces', 'LeetCode', 'CodeChef', 'AtCoder'].map((platform) => (
-                    <span key={platform} className="inline-flex items-center rounded-md border border-border bg-secondary/50 px-2 py-1 text-xs font-medium text-secondary-foreground transition-colors hover:bg-secondary">
-                        {platform}
-                    </span>
-                ))}
+              {['Codeforces', 'LeetCode', 'CodeChef', 'AtCoder'].map((platform) => (
+                <span key={platform} className="inline-flex items-center rounded-md border border-border bg-secondary/50 px-2 py-1 text-xs font-medium text-secondary-foreground transition-colors hover:bg-secondary">
+                  {platform}
+                </span>
+              ))}
             </div>
             {/* Status Widget */}
             <div className="mt-4 rounded-xl border border-border bg-card p-4 shadow-xs">
-                 <p className="text-xs text-muted-foreground mb-2">System Status</p>
-                 <div className="flex items-center gap-2">
-                    <span className="relative flex h-2 w-2">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                        <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                    </span>
-                    <span className="text-sm font-medium text-foreground">All systems operational</span>
-                 </div>
+              <p className="text-xs text-muted-foreground mb-2">System Status</p>
+              <div className="flex items-center gap-2">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                </span>
+                <span className="text-sm font-medium text-foreground">All systems operational</span>
+              </div>
             </div>
           </div>
 
@@ -137,8 +137,8 @@ export function Footer() {
             &copy; {currentYear} CodeNotify Inc. All rights reserved.
           </p>
           <div className="flex gap-6 text-sm font-medium text-muted-foreground">
-             <a href="/privacy" className="hover:text-primary transition-colors">Privacy Policy</a>
-             <a href="/terms" className="hover:text-primary transition-colors">Terms of Service</a>
+            <a href="/privacy" className="hover:text-primary transition-colors">Privacy Policy</a>
+            <a href="/terms" className="hover:text-primary transition-colors">Terms of Service</a>
           </div>
         </div>
       </div>

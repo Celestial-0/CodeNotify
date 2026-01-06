@@ -29,15 +29,15 @@ export function StatsCard({
     <Card className={cn('group relative overflow-hidden border-border bg-card/80 shadow-sm backdrop-blur-xl transition-all hover:scale-[1.02] hover:shadow-lg hover:border-primary/30', className)}>
       {/* Gradient glow on hover */}
       <div className="absolute inset-0 -z-10 bg-linear-to-br from-primary/5 via-transparent to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
-      
+
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <CardTitle className="text-sm font-medium text-foreground">{title}</CardTitle>
         <div className="rounded-full bg-primary/10 p-2 transition-colors group-hover:bg-primary/20">
-          <Icon className="h-4 w-4 text-primary" />
+          <Icon className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary" />
         </div>
       </CardHeader>
       <CardContent>
-        <div className="text-3xl font-bold text-foreground">{value}</div>
+        <div className="text-2xl sm:text-3xl font-bold text-foreground">{value}</div>
         {description && (
           <p className="text-xs text-muted-foreground mt-1">{description}</p>
         )}

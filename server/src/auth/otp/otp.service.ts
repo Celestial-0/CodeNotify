@@ -8,6 +8,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import * as bcrypt from 'bcrypt';
 import { Otp, OtpDocument } from './schemas/otp.schema';
+import { User, UserDocument } from '../../users/schemas/user.schema';
 import { UsersService } from '../../users/users.service';
 import { generateOtp } from '../../common/utils/crypto.util';
 import { OTP } from '../../common/constants';
@@ -19,7 +20,7 @@ export class OtpService {
   constructor(
     @InjectModel(Otp.name) private otpModel: Model<OtpDocument>,
     private usersService: UsersService,
-  ) {}
+  ) { }
 
   /**
    * Generate a secure 6-digit OTP code
@@ -92,7 +93,7 @@ export class OtpService {
    * Verify OTP code for email
    * Handles rate limiting and marks user as verified on success
    */
-  async verifyOtp(email: string, code: string): Promise<void> {
+  async verifyOtp(email: string, code: string): Promise<UserDocument> {
     // Find OTP record
     const otpRecord = await this.otpModel.findOne({ email }).exec();
 
@@ -154,6 +155,9 @@ export class OtpService {
     await this.otpModel.deleteOne({ email }).exec();
 
     this.logger.log(`Email verified successfully for: ${email}`);
+
+    // Return the verified user
+    return user;
   }
 
   /**

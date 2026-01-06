@@ -10,12 +10,22 @@ import { Users, Calendar, Bell, Activity, CheckCircle2, XCircle, Mail } from 'lu
 import { Badge } from '@/components/ui/badge';
 
 export default function AdminOverviewPage() {
-  const { data: profile } = useProfile();
+  const { data: profile, isLoading: profileLoading } = useProfile();
   const { data: contestStats, isLoading: contestLoading } = useContestStats();
   const { data: notificationStats, isLoading: notifLoading } = useNotificationStats();
   const { data: serviceStatus, isLoading: serviceLoading } = useServiceStatus();
 
-  if (profile?.role !== 'admin') {
+  // Wait for profile to load
+  if (profileLoading || !profile) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="text-muted-foreground">Loading...</div>
+      </div>
+    );
+  }
+
+  // Check admin role
+  if (profile.role !== 'admin') {
     return (
       <div className="flex items-center justify-center py-12">
         <Card className="max-w-md">

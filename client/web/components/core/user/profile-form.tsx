@@ -67,7 +67,7 @@ export function ProfileForm() {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-3 sm:space-y-4">
           {/* Email (Read-only) */}
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
@@ -137,9 +137,8 @@ export function ProfileForm() {
             <Label>Account Status</Label>
             <div className="flex items-center gap-2">
               <div
-                className={`h-2 w-2 rounded-full ${
-                  profile?.isActive ? 'bg-green-500' : 'bg-red-500'
-                }`}
+                className={`h-2 w-2 rounded-full ${profile?.isActive ? 'bg-green-500' : 'bg-red-500'
+                  }`}
               />
               <span className="text-sm">
                 {profile?.isActive ? 'Active' : 'Inactive'}
@@ -148,7 +147,7 @@ export function ProfileForm() {
           </div>
 
           {/* Action Buttons */}
-          <div className="flex gap-2 pt-4">
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 pt-4">
             {!isEditing ? (
               <Button type="button" onClick={() => setIsEditing(true)}>
                 Edit Profile

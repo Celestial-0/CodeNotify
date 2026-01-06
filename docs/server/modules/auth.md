@@ -116,9 +116,9 @@ JwtModule.registerAsync({
 2. Check if email already exists (409 Conflict)
 3. Hash password with bcrypt (12 salt rounds)
 4. Create user in database
-5. Generate access + refresh tokens
-6. Hash and store refresh token
-7. Return user data and tokens
+5. Generate email verification OTP
+6. Send verification email
+7. Return user data (isEmailVerified: false)
 
 ### 2. Sign In
 
@@ -145,7 +145,36 @@ JwtModule.registerAsync({
 6. Update lastLogin timestamp
 7. Return user data and tokens
 
-### 3. Sign Out
+### 3. Verify Email
+
+**Endpoint**: `POST /auth/verify-email`  
+**Access**: Public  
+**Status Code**: 200 OK
+
+**Request**:
+```typescript
+{
+  email: string;
+  otp: string; 
+}
+```
+
+**Response**:
+```typescript
+{
+  message: "Email verified successfully",
+  user: UserProfile
+}
+```
+
+**Process**:
+1. Find user by email (404 if not found)
+2. Verify OTP code against stored session/redis
+3. Check if OTP is expired
+4. Update user `isEmailVerified` to true
+5. Return success message
+
+### 4. Sign Out
 
 **Endpoint**: `POST /auth/signout`  
 **Access**: Protected (JWT required)  

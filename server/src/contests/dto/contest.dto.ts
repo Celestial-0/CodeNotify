@@ -145,20 +145,19 @@ export const BulkCreateContestSchema = z.object({
 
 // Sync Request Schema
 export const SyncRequestSchema = z.object({
-  platform: z.enum(ContestPlatform),
-  forceSync: z.boolean().default(false),
-});
+  forceSync: z.boolean().optional().default(false),
+}).optional().default({ forceSync: false });
 
 // Create DTO classes using nestjs-zod
-export class CreateContestDto extends createZodDto(CreateContestSchema) {}
-export class UpdateContestDto extends createZodDto(UpdateContestSchema) {}
-export class ContestQueryDto extends createZodDto(ContestQuerySchema) {}
-export class ContestStatsDto extends createZodDto(ContestStatsSchema) {}
-export class PlatformStatsDto extends createZodDto(PlatformStatsSchema) {}
+export class CreateContestDto extends createZodDto(CreateContestSchema) { }
+export class UpdateContestDto extends createZodDto(UpdateContestSchema) { }
+export class ContestQueryDto extends createZodDto(ContestQuerySchema) { }
+export class ContestStatsDto extends createZodDto(ContestStatsSchema) { }
+export class PlatformStatsDto extends createZodDto(PlatformStatsSchema) { }
 export class BulkCreateContestDto extends createZodDto(
   BulkCreateContestSchema,
-) {}
-export class SyncRequestDto extends createZodDto(SyncRequestSchema) {}
+) { }
+export class SyncRequestDto extends createZodDto(SyncRequestSchema) { }
 
 // Response DTOs
 export interface ContestResponseDto {

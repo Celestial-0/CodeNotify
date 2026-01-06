@@ -42,7 +42,7 @@ export function SignInForm() {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
             <Input
@@ -105,7 +105,7 @@ export function SignInForm() {
             </div>
           </div>
 
-          <div className="mt-6 grid grid-cols-2 gap-4">
+          <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             <Button variant="outline" type="button">
               <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
                 <path

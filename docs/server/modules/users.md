@@ -105,6 +105,7 @@ export class User {
 | `role` | enum | Yes | 'user' | User role ('user' or 'admin') |
 | `preferences` | object | Yes | Default prefs | Notification preferences |
 | `isActive` | boolean | Yes | true | Account active status |
+| `isEmailVerified` | boolean | Yes | false | Email verification status |
 | `refreshToken` | string | No | - | Hashed refresh token |
 | `lastLogin` | Date | No | - | Last login timestamp |
 | `createdAt` | Date | Auto | - | Account creation (auto) |
@@ -202,6 +203,7 @@ preferences: z.object({
   phoneNumber?: string;
   preferences: UserPreferences;
   isActive: boolean;
+  isEmailVerified: boolean;
   createdAt: Date;
   updatedAt: Date;
   lastLogin?: Date;

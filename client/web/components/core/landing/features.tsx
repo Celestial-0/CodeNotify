@@ -85,11 +85,11 @@ const BackgroundGrid = () => (
 const FeatureCard = ({ icon: Icon, title, description, index }: FeatureProps) => {
   return (
     <div
-      className="group relative overflow-hidden rounded-2xl border border-border bg-card text-card-foreground p-6 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-md"
-      style={{ 
+      className="group relative overflow-hidden rounded-2xl border border-border bg-card text-card-foreground p-4 sm:p-6 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-md"
+      style={{
         animation: `fade-in-up 0.5s ease-out forwards`,
         animationDelay: `${index * 100}ms`,
-        opacity: 0 
+        opacity: 0
       }}
     >
       {/* Decorative Gradient Blob on Hover */}
@@ -97,12 +97,12 @@ const FeatureCard = ({ icon: Icon, title, description, index }: FeatureProps) =>
 
       <div className="relative z-10 flex flex-col gap-4">
         {/* Icon Container with Fill Animation */}
-        <div className="inline-flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary transition-all duration-300 group-hover:bg-primary group-hover:text-primary-foreground">
-          <Icon className="h-6 w-6" />
+        <div className="inline-flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-lg bg-primary/10 text-primary transition-all duration-300 group-hover:bg-primary group-hover:text-primary-foreground">
+          <Icon className="h-5 w-5 sm:h-6 sm:w-6" />
         </div>
-        
+
         <div>
-          <h3 className="mb-2 text-lg font-semibold leading-tight text-foreground">
+          <h3 className="mb-2 text-base sm:text-lg font-semibold leading-tight text-foreground">
             {title}
           </h3>
           <p className="text-sm leading-relaxed text-muted-foreground">
@@ -120,24 +120,24 @@ export function Features() {
   return (
     <section id="features" className="relative overflow-hidden py-24 sm:py-32">
       <BackgroundGrid />
-      
+
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
         <div className="mx-auto mb-16 max-w-2xl text-center">
-            {/* Pill Badge */}
-             <div className="mb-6 inline-flex items-center rounded-full border border-primary/20 bg-primary/5 px-3 py-1 text-sm font-medium text-primary">
-                <span className="mr-2 flex h-2 w-2 animate-pulse rounded-full bg-primary"></span>
-                Robust Features
-            </div>
-            
+          {/* Pill Badge */}
+          <div className="mb-6 inline-flex items-center rounded-full border border-primary/20 bg-primary/5 px-3 py-1 text-sm font-medium text-primary">
+            <span className="mr-2 flex h-2 w-2 animate-pulse rounded-full bg-primary"></span>
+            Robust Features
+          </div>
+
           <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-5xl">
             Everything you need to <span className="bg-linear-to-r from-primary via-primary/80 to-primary/60 bg-clip-text text-transparent">stay ahead</span>
           </h2>
           <p className="mt-6 text-lg leading-8 text-muted-foreground">
-             Powerful features designed to help competitive programmers never miss an opportunity to compete.
+            Powerful features designed to help competitive programmers never miss an opportunity to compete.
           </p>
         </div>
 
-        <div className="mx-auto grid max-w-2xl grid-cols-1 gap-6 sm:grid-cols-2 lg:mx-0 lg:max-w-none lg:grid-cols-4 lg:gap-8">
+        <div className="mx-auto grid max-w-2xl grid-cols-1 gap-4 sm:gap-6 sm:grid-cols-2 lg:mx-0 lg:max-w-none lg:grid-cols-4 lg:gap-8">
           {features.map((feature, index) => (
             <FeatureCard key={index} {...feature} index={index} />
           ))}

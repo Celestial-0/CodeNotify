@@ -130,6 +130,7 @@ export class CodeforcesAdapter extends BasePlatformAdapter {
       startTime,
       endTime,
       durationMinutes: Math.floor(cfContest.durationSeconds / 60),
+      websiteUrl: `https://codeforces.com/contest/${cfContest.id}`,
       isActive: cfContest.phase === 'BEFORE' || cfContest.phase === 'CODING',
       platformMetadata: {
         frozen: cfContest.frozen,

@@ -68,9 +68,9 @@ export function ContestCard({
         )}
         onClick={handleViewDetails}
       >
-        <div className="flex items-center gap-4 p-4">
+        <div className="flex items-center gap-3 sm:gap-4 p-4">
           {/* Left: Platform & Phase */}
-          <div className={`flex items-center ${flexType} gap-2 shrink-0`}>
+          <div className={`flex items-center ${flexType} gap-2 shrink-0 flex-wrap`}>
             <PlatformBadge platform={contest.platform} size="sm" />
             <Badge
               variant="outline"
@@ -88,7 +88,7 @@ export function ContestCard({
             <CardTitle className="text-base line-clamp-1 mb-1">
               {contest.name}
             </CardTitle>
-            <div className="flex items-center gap-4 text-sm text-muted-foreground">
+            <div className="flex items-center gap-2 sm:gap-4 text-sm text-muted-foreground flex-wrap">
               <div className="flex items-center gap-1">
                 <CalendarPlus className="h-3.5 w-3.5" />
                 <span>{formatDate(startDate, 'MMM dd, HH:mm')}</span>
@@ -108,12 +108,12 @@ export function ContestCard({
           </div>
 
           {/* Right: Countdown & Actions */}
-          <div className="flex items-center gap-3 shrink-0">
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
             <div className="hidden sm:block">
-              <ContestCountdown 
-                startTime={contest.startTime} 
-                endTime={contest.endTime} 
-                compact 
+              <ContestCountdown
+                startTime={contest.startTime}
+                endTime={contest.endTime}
+                compact
               />
             </div>
             {showActions && (
@@ -147,7 +147,7 @@ export function ContestCard({
   return (
     <Card
       className={cn(
-        'cursor-pointer transition-all hover:shadow-lg hover:scale-[1.02] overflow-hidden',
+        'cursor-pointer transition-all hover:shadow-lg hover:scale-[1.02] overflow-hidden p-4 sm:p-6',
         className
       )}
       onClick={handleViewDetails}
@@ -164,7 +164,7 @@ export function ContestCard({
                 <DifficultyBadge difficulty={contest.difficulty} size="sm" />
               )}
             </div>
-            <CardTitle className="text-xl line-clamp-2 mb-2">
+            <CardTitle className="text-lg sm:text-xl line-clamp-2 mb-2">
               {contest.name}
             </CardTitle>
             {parseDescription(contest.description) && (
@@ -181,22 +181,26 @@ export function ContestCard({
         <ContestCountdown startTime={contest.startTime} endTime={contest.endTime} />
 
         {/* Contest Info Grid */}
-        <div className="grid grid-cols-2 gap-3 text-sm">
-          <div className="flex items-center gap-2 text-muted-foreground min-w-0">
-            <CalendarPlus className="h-4 w-4 shrink-0" />
-            <span className="font-medium shrink-0">Start:</span>
-            <span className="truncate">{formatDate(startDate, 'MMM dd, HH:mm')}</span>
+        <div className="space-y-2 text-sm">
+          <div className="flex items-start gap-2 text-muted-foreground">
+            <CalendarPlus className="h-4 w-4 shrink-0 mt-0.5" />
+            <div className="flex-1 min-w-0">
+              <span className="font-medium block">Start Time</span>
+              <span className="block">{formatDate(startDate, 'MMM dd, yyyy')}</span>
+              <span className="block text-xs">{formatDate(startDate, 'HH:mm')}</span>
+            </div>
           </div>
-          <div className="flex items-center gap-2 text-muted-foreground min-w-0">
-            <Clock className="h-4 w-4 shrink-0" />
-            <span className="font-medium shrink-0">Duration:</span>
-            <span className="truncate">
-              {contest.durationMinutes >= 60
-                ? `${Math.floor(contest.durationMinutes / 60)}h ${contest.durationMinutes % 60}m`
-                : `${contest.durationMinutes}m`}
-            </span>
+          <div className="flex items-start gap-2 text-muted-foreground">
+            <Clock className="h-4 w-4 shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <span className="font-medium block">Duration</span>
+              <span className="block">
+                {contest.durationMinutes >= 60
+                  ? `${Math.floor(contest.durationMinutes / 60)}h ${contest.durationMinutes % 60}m`
+                  : `${contest.durationMinutes}m`}
+              </span>
+            </div>
           </div>
-
         </div>
 
         {/* Location */}
@@ -225,7 +229,7 @@ export function ContestCard({
       </CardContent>
 
       {showActions && (
-        <CardFooter className="flex gap-2">
+        <CardFooter className="flex gap-2 sm:gap-3">
           <Button
             variant="default"
             size="sm"

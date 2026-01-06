@@ -54,11 +54,29 @@ CodeNotify uses **JWT (JSON Web Tokens)** for stateless authentication with a re
 1. Validate input (email format, password strength)
 2. Check if email already exists
 3. Hash password with bcrypt
-4. Create user in database
-5. Generate access + refresh tokens
-6. Return user data and tokens
+4. Create user in database (isEmailVerified: false)
+5. Generate OTP and send email
+6. Return user data (no tokens yet)
 
-### 2. Sign In
+### 2. Verify Email
+
+**Endpoint**: `POST /auth/verify-email`
+
+**Request**:
+```json
+{
+  "email": "user@example.com",
+  "otp": "123456"
+}
+```
+
+**Process**:
+1. Validate OTP
+2. Set isEmailVerified = true
+3. Return user data
+4. User can now sign in
+
+### 3. Sign In
 
 **Endpoint**: `POST /auth/signin`
 
@@ -75,7 +93,7 @@ CodeNotify uses **JWT (JSON Web Tokens)** for stateless authentication with a re
 **Process**:
 1. Find user by email
 2. Verify password with bcrypt
-3. Check if account is active
+3. Check if account is active AND email is verified
 4. Generate new tokens
 5. Update lastLogin timestamp
 6. Return user data and tokens

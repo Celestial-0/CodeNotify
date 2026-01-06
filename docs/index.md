@@ -284,6 +284,13 @@ graph TB
 - **[JWT Authentication](/server/security/jwt)** - JWT tokens and authentication flow
 - **[Security Guards](/server/security/guards)** - Route protection and RBAC
 
+### 💻 Client Architecture
+- **[Client Overview](/client/README)** - Next.js App Router structure
+- **[Authentication](/client/auth)** - Auth flows & Verify Email
+- **[Admin Dashboard](/client/admin)** - Management panels
+- **[API Integration](/client/api-integration)** - Axios & React Query architecture
+- **[State Management](/client/state-management)** - Zustand stores
+
 </div>
 
 <style>

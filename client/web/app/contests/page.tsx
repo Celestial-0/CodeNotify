@@ -5,7 +5,8 @@ import { ContestList } from '@/components/core/contests/contest-list';
 import { ContestFilters } from '@/components/core/contests/contest-filters';
 import { ContestSearch } from '@/components/core/contests/contest-search';
 import { Button } from '@/components/ui/button';
-import { Filter, X } from 'lucide-react';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { Filter, X, Trophy } from 'lucide-react';
 import { useContests } from '@/lib/hooks/use-contests';
 import type {
   ContestQueryDto,
@@ -96,36 +97,63 @@ export default function ContestsPage() {
   ].filter(Boolean).length;
 
   return (
-    <div className="bg-background">
+    <div className="min-h-screen bg-background">
       {/* Header */}
       <div className="border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60 sticky top-16 z-30">
-        <div className="container mx-auto px-4 py-6">
-          <div className="flex flex-col gap-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <h1 className="text-3xl font-bold tracking-tight">
-                  Programming Contests
-                </h1>
-                <p className="text-muted-foreground mt-1">
+        <div className="container mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6">
+          <div className="flex flex-col gap-3 sm:gap-4">
+            {/* Title and Mobile Filter */}
+            <div className="flex items-start sm:items-center justify-between gap-3">
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-1">
+                  <Trophy className="h-6 w-6 sm:h-7 sm:w-7 text-primary shrink-0" />
+                  <h1 className="text-2xl sm:text-3xl font-bold tracking-tight truncate">
+                    Contests
+                  </h1>
+                </div>
+                <p className="text-sm sm:text-base text-muted-foreground">
                   Track contests across multiple platforms
                 </p>
               </div>
 
               {/* Mobile filter toggle */}
-              <Button
-                variant="outline"
-                size="sm"
-                className="lg:hidden"
-                onClick={() => setShowFilters(!showFilters)}
-              >
-                <Filter className="h-4 w-4 mr-2" />
-                Filters
-                {activeFiltersCount > 0 && (
-                  <span className="ml-2 px-1.5 py-0.5 text-xs bg-primary text-primary-foreground rounded-full">
-                    {activeFiltersCount}
-                  </span>
-                )}
-              </Button>
+              <Sheet open={showFilters} onOpenChange={setShowFilters}>
+                <SheetTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="lg:hidden shrink-0 h-9"
+                  >
+                    <Filter className="h-4 w-4 mr-2" />
+                    <span className="hidden xs:inline">Filters</span>
+                    {activeFiltersCount > 0 && (
+                      <span className="ml-2 px-1.5 py-0.5 text-xs bg-primary text-primary-foreground rounded-full">
+                        {activeFiltersCount}
+                      </span>
+                    )}
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="left" className="w-full sm:w-80 overflow-y-auto">
+                  <SheetHeader>
+                    <SheetTitle>Filters</SheetTitle>
+                  </SheetHeader>
+                  <div className="mt-6">
+                    <ContestFilters
+                      filters={{
+                        platform: query.platform as ContestPlatform | undefined,
+                        phase: query.phase as ContestPhase | undefined,
+                        type: query.type as ContestType | undefined,
+                        difficulty: query.difficulty as DifficultyLevel | undefined,
+                        startDate: query.startDate,
+                        endDate: query.endDate,
+                      }}
+                      onFilterChange={handleFilterChange}
+                      onReset={handleClearFilters}
+                      className="border-0 p-0"
+                    />
+                  </div>
+                </SheetContent>
+              </Sheet>
             </div>
 
             {/* Search Bar */}
@@ -138,10 +166,10 @@ export default function ContestsPage() {
                   variant="ghost"
                   size="sm"
                   onClick={handleClearFilters}
-                  className="shrink-0"
+                  className="shrink-0 hidden sm:flex"
                 >
                   <X className="h-4 w-4 mr-2" />
-                  Clear filters
+                  Clear
                 </Button>
               )}
             </div>
@@ -150,15 +178,10 @@ export default function ContestsPage() {
       </div>
 
       {/* Main Content */}
-      <div className="container mx-auto px-4 py-6">
+      <div className="container mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6">
         <div className="flex gap-6">
           {/* Desktop Filters Sidebar */}
-          <aside
-            className={cn(
-              'lg:block lg:w-72 shrink-0',
-              showFilters ? 'block' : 'hidden'
-            )}
-          >
+          <aside className="hidden lg:block lg:w-72 shrink-0">
             <div className="sticky top-40">
               <ContestFilters
                 filters={{
@@ -178,11 +201,14 @@ export default function ContestsPage() {
           {/* Contest List */}
           <main className="flex-1 min-w-0">
             {isError ? (
-              <div className="flex flex-col items-center justify-center py-12 text-center">
-                <p className="text-lg font-semibold text-destructive mb-2">
+              <div className="flex flex-col items-center justify-center py-12 sm:py-16 text-center">
+                <div className="rounded-full bg-destructive/10 p-4 sm:p-6 mb-4">
+                  <X className="h-8 w-8 sm:h-12 sm:w-12 text-destructive" />
+                </div>
+                <h3 className="text-lg sm:text-xl font-semibold text-destructive mb-2">
                   Failed to load contests
-                </p>
-                <p className="text-sm text-muted-foreground">
+                </h3>
+                <p className="text-sm text-muted-foreground max-w-md">
                   {error?.message || 'An unknown error occurred'}
                 </p>
               </div>

@@ -11,14 +11,14 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { 
-  Menu, 
-  X, 
-  Home, 
-  Trophy, 
-  Bell, 
-  User, 
-  Settings, 
+import {
+  Menu,
+  X,
+  Home,
+  Trophy,
+  Bell,
+  User,
+  Settings,
   LogOut,
   Activity
 } from "lucide-react";
@@ -81,7 +81,7 @@ export function DashboardNavbar() {
 
   return (
     <nav className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/80 backdrop-blur-md">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2 group">
@@ -119,7 +119,7 @@ export function DashboardNavbar() {
           </div>
 
           {/* Desktop Right Section */}
-          <div className="hidden md:flex items-center gap-3">
+          <div className="hidden md:flex items-center gap-2 sm:gap-3">
             <NotificationBadge />
 
             <AnimatedThemeToggler className="h-9 w-9 rounded-full border-0" />
@@ -204,7 +204,7 @@ export function DashboardNavbar() {
       {/* Mobile Menu */}
       {isOpen && (
         <div className="md:hidden border-t border-border/40 bg-background/95 backdrop-blur-md">
-          <div className="px-4 py-4 space-y-1">
+          <div className="px-3 sm:px-4 py-4 space-y-1">
             {/* User Info */}
             <div className="flex items-center gap-3 px-3 py-3 mb-2 rounded-lg bg-accent/50">
               <Avatar className="h-10 w-10">

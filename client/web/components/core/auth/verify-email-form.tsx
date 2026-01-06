@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useAuthStore } from "@/lib/store/auth-store";
 import { Button } from "@/components/ui/button";
 import {
     Card,
@@ -16,11 +17,13 @@ import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AuthService } from "@/lib/api/auth.service";
 import { Loader2, Mail, CheckCircle2, AlertCircle } from "lucide-react";
+import { toast } from "sonner";
 
 export function VerifyEmailForm() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const email = searchParams.get("email") || "";
+    const { setUser } = useAuthStore();
 
     const [code, setCode] = useState("");
     const [isLoading, setIsLoading] = useState(false);
@@ -40,7 +43,6 @@ export function VerifyEmailForm() {
         } else if (!email) {
             setError("Email address is required. Please sign up again.");
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     // Countdown timer for resend button
@@ -106,8 +108,16 @@ export function VerifyEmailForm() {
         setError("");
 
         try {
-            await AuthService.verifyOtp(email, code);
+            const response = await AuthService.verifyOtp(email, code);
             setSuccess(true);
+
+            // Store user data in auth store (tokens are already stored by AuthService)
+            setUser(response.user);
+
+            // Show success toast
+            toast.success("Email verified successfully!", {
+                description: `Welcome ${response.user.name}! You're now logged in.`,
+            });
 
             // Redirect to dashboard after 2 seconds
             setTimeout(() => {

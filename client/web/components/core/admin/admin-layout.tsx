@@ -2,11 +2,14 @@
 
 import { ReactNode } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { Shield, Users, Calendar, Mail, BarChart3, Settings } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
+import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { useProfile } from '@/lib/hooks/use-user';
+import { useEffect } from 'react';
 
 interface AdminLayoutProps {
   children: ReactNode;
@@ -22,11 +25,45 @@ const navigation = [
 
 export function AdminLayout({ children }: AdminLayoutProps) {
   const pathname = usePathname();
+  const router = useRouter();
+  const { data: profile, isLoading } = useProfile();
+
+  // Redirect non-admins (only when we have profile data and user is NOT admin)
+  useEffect(() => {
+    if (!isLoading && profile && profile.role !== 'admin') {
+      router.push('/dashboard');
+    }
+  }, [profile, isLoading, router]);
+
+  // Show loading state while checking auth
+  if (isLoading || !profile) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="text-muted-foreground">Loading...</div>
+      </div>
+    );
+  }
+
+  // Show access denied for confirmed non-admins
+  if (profile.role !== 'admin') {
+    return (
+      <div className="flex min-h-screen items-center justify-center p-4">
+        <Card className="max-w-md w-full">
+          <CardHeader>
+            <CardTitle className="text-destructive">Access Denied</CardTitle>
+            <CardDescription>
+              You do not have permission to access the admin panel.
+            </CardDescription>
+          </CardHeader>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen">
       {/* Sidebar */}
-      <aside className="w-64 border-r bg-muted/10">
+      <aside className="hidden lg:block w-64 border-r bg-muted/10">
         <div className="flex h-16 items-center gap-2 border-b px-6">
           <Shield className="h-6 w-6" />
           <span className="font-semibold text-lg">Admin Panel</span>
@@ -70,7 +107,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
 
       {/* Main content */}
       <main className="flex-1 overflow-y-auto">
-        <div className="container mx-auto p-6 max-w-7xl">
+        <div className="container mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6 max-w-7xl">
           {children}
         </div>
       </main>

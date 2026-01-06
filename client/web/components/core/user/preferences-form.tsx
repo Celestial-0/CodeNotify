@@ -105,7 +105,7 @@ export function PreferencesForm() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Platform Selection */}
       <Card>
         <CardHeader>
@@ -196,7 +196,7 @@ export function PreferencesForm() {
       </Card>
 
       {/* Action Buttons */}
-      <div className="flex gap-2">
+      <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
         <Button
           onClick={handleSave}
           disabled={updatePreferences.isPending}

@@ -136,11 +136,13 @@ export class AuthService {
   /**
    * Verify OTP code for email
    */
-  static async verifyOtp(email: string, code: string): Promise<{ message: string; isEmailVerified: boolean }> {
-    const response = await httpClient.api.post<{ message: string; isEmailVerified: boolean }>(
+  static async verifyOtp(email: string, code: string): Promise<AuthResponse> {
+    const response = await httpClient.api.post<AuthResponse>(
       '/auth/otp/verify',
       { email, code }
     );
+    // Store the authentication tokens
+    httpClient.storeTokens(response.data.accessToken, response.data.refreshToken);
     return response.data;
   }
 

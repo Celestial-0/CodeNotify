@@ -29,6 +29,7 @@ CodeNotify provides a robust notification system that:
 - **Status**: ✅ Fully Implemented
 - **Configuration**: `RESEND_API_KEY`, `EMAIL_FROM`
 - **Features**: HTML templates, retry logic, delivery tracking
+- **Requirement**: User `isEmailVerified` must be `true`
 
 ### 2. WhatsApp
 - **Provider**: Custom/Twilio

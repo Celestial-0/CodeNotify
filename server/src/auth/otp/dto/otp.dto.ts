@@ -32,4 +32,14 @@ export interface OtpResponse {
 export interface VerifyOtpResponse {
   message: string;
   isEmailVerified: boolean;
+  user: {
+    id: string;
+    email: string;
+    name: string;
+    phoneNumber?: string;
+    role: string;
+    isEmailVerified: boolean;
+  };
+  accessToken: string;
+  refreshToken: string;
 }

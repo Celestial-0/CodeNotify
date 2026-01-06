@@ -9,7 +9,7 @@ export function QuickActions() {
   const actions = [
     {
       title: 'Update Preferences',
-      description: 'Manage platforms and notification settings',
+      description: 'Manage platforms and notification',
       icon: Settings,
       href: '/dashboard/profile',
       color: 'text-blue-500',
