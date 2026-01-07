@@ -2,14 +2,19 @@
  * Professional minimal OTP email template
  * Palette adapted from provided design tokens
  */
-export function formatOtpEmail(otpCode: string): string {
+export function formatOtpEmail(otpCode: string, isPasswordReset = false): string {
+  const title = isPasswordReset ? 'Reset your password' : 'Verify your email';
+  const description = isPasswordReset
+    ? 'Use the verification code below to reset your password.'
+    : 'Use the verification code below to complete your sign-in.';
+
   return `
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Email Verification</title>
+  <title>${isPasswordReset ? 'Password Reset' : 'Email Verification'}</title>
 </head>
 
 <body style="
@@ -58,7 +63,7 @@ export function formatOtpEmail(otpCode: string): string {
               font-weight:600;
               color:#0f172a;
             ">
-              Verify your email
+              ${title}
             </h2>
 
             <p style="
@@ -67,7 +72,7 @@ export function formatOtpEmail(otpCode: string): string {
               line-height:1.6;
               color:#64748b;
             ">
-              Use the verification code below to complete your sign-in.
+              ${description}
             </p>
 
             <!-- OTP BOX -->
@@ -115,7 +120,7 @@ export function formatOtpEmail(otpCode: string): string {
               line-height:1.6;
               color:#94a3b8;
             ">
-              If you didn’t request this email, you can safely ignore it.
+              If you didn't request this email, you can safely ignore it.
             </p>
 
           </td>

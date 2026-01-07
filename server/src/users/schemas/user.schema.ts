@@ -7,7 +7,7 @@ export interface UserDocument extends Document {
   _id: Types.ObjectId;
   id: string;
   email: string;
-  password: string;
+  password?: string;
   name: string;
   phoneNumber?: string;
   role: 'user' | 'admin';
@@ -25,8 +25,8 @@ export class User {
   @Prop({ required: true, unique: true })
   email: string;
 
-  @Prop({ required: true })
-  password: string;
+  @Prop()
+  password?: string;
 
   @Prop({ required: true })
   name: string;

@@ -19,7 +19,7 @@ export default function ContestsLayout({
   const { isAuthenticated } = useAuthStore();
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">
+    <div className="flex flex-col min-h-screen bg-background">
       {isAuthenticated ? <DashboardNavbar /> : <Navbar />}
       <ContestsNav />
       <main className="flex-1">

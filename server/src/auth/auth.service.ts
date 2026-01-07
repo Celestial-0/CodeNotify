@@ -2,13 +2,20 @@ import {
   Injectable,
   ConflictException,
   UnauthorizedException,
+  BadRequestException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { UsersService } from '../users/users.service';
 import { CreateUserDto, SigninDto, AuthResponse } from './dto/auth.dto';
+import {
+  RequestPasswordResetDto,
+  ResetPasswordDto,
+  PasswordResetResponse,
+} from './dto/reset-password.dto';
 import type { UserPreferences } from '../users/dto/user.dto';
 import { PasswordService } from './services/password.service';
 import { TokenService, JwtPayload } from './services/token.service';
+import { OtpService } from './otp/otp.service';
 
 @Injectable()
 export class AuthService {
@@ -17,7 +24,8 @@ export class AuthService {
     private passwordService: PasswordService,
     private tokenService: TokenService,
     private configService: ConfigService,
-  ) {}
+    private otpService: OtpService,
+  ) { }
 
   async signup(createUserDto: CreateUserDto): Promise<AuthResponse> {
     // Check if email already exists
@@ -26,6 +34,11 @@ export class AuthService {
     );
     if (existingUser) {
       throw new ConflictException('User with this email already exists');
+    }
+
+    // Validate password is provided for email-based signup
+    if (!createUserDto.password) {
+      throw new ConflictException('Password is required for email-based signup');
     }
 
     // Hash the password
@@ -73,6 +86,14 @@ export class AuthService {
     // Check if user is active
     if (!user.isActive) {
       throw new UnauthorizedException('Account is deactivated');
+    }
+
+    // Check if user has a password
+    // OAuth users who haven't set a password yet must use OAuth login
+    if (!user.password) {
+      throw new UnauthorizedException(
+        'No password set for this account. Please use Google sign-in or reset your password to create one.',
+      );
     }
 
     // Verify password
@@ -175,6 +196,7 @@ export class AuthService {
     const user = await this.usersService.findByEmail(email);
     if (
       user &&
+      user.password &&
       (await this.passwordService.verifyPassword(password, user.password))
     ) {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -201,13 +223,13 @@ export class AuthService {
     let user = await this.usersService.findByEmail(email);
 
     if (!user) {
-      // Create new user for OAuth
+      // Create new user for OAuth (no password needed)
       user = await this.usersService.createUser({
         email,
         name,
-        password: '', // No password for OAuth users
+        // OAuth users don't have passwords
         phoneNumber: undefined,
-      });
+      } as CreateUserDto);
     }
 
     // Check if user is active
@@ -240,6 +262,94 @@ export class AuthService {
       isEmailVerified: true, // OAuth users are pre-verified
       accessToken: tokens.accessToken,
       refreshToken: tokens.refreshToken,
+    };
+  }
+
+  /**
+   * Request password reset OTP
+   * Works for both regular users and OAuth users
+   */
+  async requestPasswordReset(
+    dto: RequestPasswordResetDto,
+  ): Promise<PasswordResetResponse> {
+    const { code, expiresAt } =
+      await this.otpService.createPasswordResetOtp(dto.email);
+
+    // Return the OTP code and expiry time
+    // The controller will handle sending the email
+    const expiresIn = Math.floor((expiresAt.getTime() - Date.now()) / 1000);
+
+    return {
+      message: 'Password reset OTP sent to your email',
+      expiresIn,
+      code, // This will be used by the controller to send email
+    } as PasswordResetResponse & { code: string };
+  }
+
+  /**
+   * Reset password with OTP verification
+   * Allows OAuth users to set a password for the first time
+   */
+  async resetPassword(dto: ResetPasswordDto): Promise<{ message: string }> {
+    // Verify OTP
+    const user = await this.otpService.verifyPasswordResetOtp(
+      dto.email,
+      dto.code,
+    );
+
+    // Hash the new password
+    const hashedPassword = await this.passwordService.hashPassword(
+      dto.newPassword,
+    );
+
+    // Update user's password
+    await this.usersService.updatePassword(user.id, hashedPassword);
+
+    return {
+      message: 'Password reset successfully. You can now sign in with your new password.',
+    };
+  }
+
+  /**
+   * Change password with current password verification (no OTP required)
+   */
+  async changePassword(
+    userId: string,
+    email: string,
+    currentPassword: string,
+    newPassword: string,
+  ): Promise<{ message: string }> {
+    // Get user by email (we'll pass email from the authenticated user)
+    const user = await this.usersService.findByEmail(email);
+    if (!user || user.id !== userId) {
+      throw new UnauthorizedException('User not found');
+    }
+
+    // Verify user has a password (not OAuth-only user)
+    if (!user.password) {
+      throw new BadRequestException(
+        'Cannot change password for OAuth-only accounts. Please use the forgot password flow to create a password first.',
+      );
+    }
+
+    // Verify current password
+    const isPasswordValid = await this.passwordService.verifyPassword(
+      currentPassword,
+      user.password,
+    );
+
+    if (!isPasswordValid) {
+      throw new UnauthorizedException('Current password is incorrect');
+    }
+
+    // Hash new password
+    const hashedPassword = await this.passwordService.hashPassword(newPassword);
+
+    // Update password
+    await this.usersService.updatePassword(user.id, hashedPassword);
+
+    return {
+      message: 'Password changed successfully',
     };
   }
 

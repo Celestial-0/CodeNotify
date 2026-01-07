@@ -1,6 +1,6 @@
 'use client';
 
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { CalendarPlus, ExternalLink, MapPin, Clock } from 'lucide-react';
@@ -9,7 +9,7 @@ import { PlatformBadge } from './platform-badge';
 import { DifficultyBadge } from './difficulty-badge';
 import { ContestCountdown } from './contest-countdown';
 import { format, isValid } from 'date-fns';
-import { cn, parseDescription } from '@/lib/utils';
+import { cn } from '@/lib/utils';
 
 // Default phase config for unknown phases
 const DEFAULT_PHASE_CONFIG = { color: 'bg-gray-500', label: 'Unknown' };
@@ -85,9 +85,11 @@ export function ContestCard({
 
           {/* Center: Contest Info */}
           <div className="flex-1 min-w-0">
-            <CardTitle className="text-base line-clamp-1 mb-1">
-              {contest.name}
-            </CardTitle>
+            <div className="h-12 flex items-center mb-1">
+              <CardTitle className="text-base line-clamp-2 leading-6">
+                {contest.name}
+              </CardTitle>
+            </div>
             <div className="flex items-center gap-2 sm:gap-4 text-sm text-muted-foreground flex-wrap">
               <div className="flex items-center gap-1">
                 <CalendarPlus className="h-3.5 w-3.5" />
@@ -100,8 +102,8 @@ export function ContestCard({
                     ? `${Math.floor(contest.durationMinutes / 60)}h ${contest.durationMinutes % 60}m`
                     : `${contest.durationMinutes}m`}
                 </span>
-              </div>
-              <Badge variant="secondary" className="text-xs">
+              </div >
+              <Badge variant="secondary" className="text-xs justify-center">
                 {contest.type}
               </Badge>
             </div>
@@ -147,54 +149,58 @@ export function ContestCard({
   return (
     <Card
       className={cn(
-        'cursor-pointer transition-all hover:shadow-lg hover:scale-[1.02] overflow-hidden p-4 sm:p-6',
+        'cursor-pointer transition-all hover:shadow-lg hover:scale-[1.02] overflow-hidden p-4 sm:p-6 gap-0',
         className
       )}
       onClick={handleViewDetails}
     >
       <CardHeader>
-        <div className="flex items-start justify-between gap-2">
+        <div className="flex items-start justify-between ">
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-2 flex-wrap">
+            <div className="flex items-center gap-2 mb-2 flex-wrap justify-center lg:justify-start">
               <PlatformBadge platform={contest.platform} />
-              <Badge variant="outline" className={phaseConfig.color}>
-                {phaseConfig.label}
-              </Badge>
-              {contest.difficulty && (
-                <DifficultyBadge difficulty={contest.difficulty} size="sm" />
-              )}
+              <div className="flex items-center gap-2 justify-center">
+                <Badge variant="outline" className={phaseConfig.color + ' justify-center'}>
+                  {phaseConfig.label}
+                </Badge>
+                {contest.difficulty && (
+                  <DifficultyBadge difficulty={contest.difficulty} size="sm" className="justify-center" />
+                )}
+              </div>
+
             </div>
-            <CardTitle className="text-lg sm:text-xl line-clamp-2 mb-2">
-              {contest.name}
-            </CardTitle>
-            {parseDescription(contest.description) && (
+            <div className="h-14 flex items-center w-full">
+              <CardTitle className="text-lg sm:text-xl line-clamp-2 leading-7 text-left">
+                {contest.name}
+              </CardTitle>
+            </div>
+            {/* {parseDescription(contest.description) && (
               <CardDescription className="line-clamp-2">
                 {parseDescription(contest.description)}
               </CardDescription>
-            )}
+            )} */}
           </div>
         </div>
       </CardHeader>
 
-      <CardContent className="space-y-3">
+      <CardContent className="space-y-2 ">
         {/* Countdown */}
         <ContestCountdown startTime={contest.startTime} endTime={contest.endTime} />
 
         {/* Contest Info Grid */}
-        <div className="space-y-2 text-sm">
+        <div className="space-y-2 text-sm ">
           <div className="flex items-start gap-2 text-muted-foreground">
             <CalendarPlus className="h-4 w-4 shrink-0 mt-0.5" />
             <div className="flex-1 min-w-0">
-              <span className="font-medium block">Start Time</span>
-              <span className="block">{formatDate(startDate, 'MMM dd, yyyy')}</span>
-              <span className="block text-xs">{formatDate(startDate, 'HH:mm')}</span>
+              <span className="font-medium hidden md:inline">Start Time: </span>
+              <span className="">{formatDate(startDate, 'MMM dd, yyyy')} {formatDate(startDate, 'HH:mm')}</span>
             </div>
           </div>
           <div className="flex items-start gap-2 text-muted-foreground">
             <Clock className="h-4 w-4 shrink-0 mt-0.5" />
             <div className="flex-1">
-              <span className="font-medium block">Duration</span>
-              <span className="block">
+              <span className="font-medium ">Duration: </span>
+              <span className="">
                 {contest.durationMinutes >= 60
                   ? `${Math.floor(contest.durationMinutes / 60)}h ${contest.durationMinutes % 60}m`
                   : `${contest.durationMinutes}m`}
@@ -216,7 +222,7 @@ export function ContestCard({
         )}
 
         {/* Type and Prepared By */}
-        <div className="flex items-center gap-2 flex-wrap min-w-0">
+        <div className="flex items-center gap-2 flex-wrap min-w-0 justify-center p-4">
           <Badge variant="secondary" className="text-xs shrink-0">
             {contest.type}
           </Badge>

@@ -4,6 +4,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ProfileForm } from '@/components/core/user/profile-form';
 import { PreferencesForm } from '@/components/core/user/preferences-form';
+import { PasswordManagementCard } from '@/components/core/user/password-management-card';
 import { AccountDeletionDialog } from '@/components/core/user/account-deletion-dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -69,47 +70,7 @@ export default function ProfilePage() {
         </TabsContent>
 
         <TabsContent value="security" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Change Password</CardTitle>
-              <CardDescription>
-                Update your password to keep your account secure
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="current-password">Current Password</Label>
-                <Input
-                  id="current-password"
-                  type="password"
-                  placeholder="Enter current password"
-                  disabled
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="new-password">New Password</Label>
-                <Input
-                  id="new-password"
-                  type="password"
-                  placeholder="Enter new password"
-                  disabled
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="confirm-password">Confirm New Password</Label>
-                <Input
-                  id="confirm-password"
-                  type="password"
-                  placeholder="Confirm new password"
-                  disabled
-                />
-              </div>
-              <Button disabled>Update Password</Button>
-              <p className="text-sm text-muted-foreground">
-                Password management coming soon
-              </p>
-            </CardContent>
-          </Card>
+          <PasswordManagementCard />
 
           <Card className="border-destructive">
             <CardHeader>

@@ -169,6 +169,119 @@ export class OtpService {
   }
 
   /**
+   * Create OTP for password reset
+   * Similar to createOtp but doesn't check if email is already verified
+   * Allows OAuth users (who may not have passwords) to set one
+   */
+  async createPasswordResetOtp(
+    email: string,
+  ): Promise<{ code: string; expiresAt: Date }> {
+    // Check if user exists
+    const user = await this.usersService.findByEmail(email);
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    // Delete any existing OTP for this email
+    await this.otpModel.deleteMany({ email }).exec();
+
+    // Generate new OTP
+    const code = this.generateOtp();
+    const hashedCode = await this.hashOtp(code);
+
+    // Calculate expiry time
+    const expiresAt = new Date();
+    expiresAt.setMinutes(expiresAt.getMinutes() + OTP.EXPIRY_MINUTES);
+
+    // Create OTP record
+    const otpRecord = new this.otpModel({
+      email,
+      code: hashedCode,
+      expiresAt,
+      attempts: 0,
+      verified: false,
+    });
+
+    await otpRecord.save();
+
+    this.logger.log(`Password reset OTP created for email: ${email}`);
+
+    return { code, expiresAt };
+  }
+
+  /**
+   * Verify OTP for password reset
+   * Similar to verifyOtp but doesn't mark email as verified
+   * Returns the user without modifying email verification status
+   */
+  async verifyPasswordResetOtp(
+    email: string,
+    code: string,
+  ): Promise<UserDocument> {
+    // Find OTP record
+    const otpRecord = await this.otpModel.findOne({ email }).exec();
+
+    if (!otpRecord) {
+      throw new BadRequestException('No OTP found. Please request a new one.');
+    }
+
+    // Check if already verified
+    if (otpRecord.verified) {
+      throw new BadRequestException(
+        'OTP already used. Please request a new one.',
+      );
+    }
+
+    // Check if expired
+    if (new Date() > otpRecord.expiresAt) {
+      await this.otpModel.deleteOne({ email }).exec();
+      throw new BadRequestException(
+        'OTP has expired. Please request a new one.',
+      );
+    }
+
+    // Check attempts limit
+    if (otpRecord.attempts >= OTP.MAX_ATTEMPTS) {
+      await this.otpModel.deleteOne({ email }).exec();
+      throw new BadRequestException(
+        'Maximum verification attempts exceeded. Please request a new OTP.',
+      );
+    }
+
+    // Verify the code
+    const isValid = await this.verifyOtpCode(code, otpRecord.code);
+
+    if (!isValid) {
+      // Increment attempts
+      otpRecord.attempts += 1;
+      await otpRecord.save();
+
+      const remainingAttempts = OTP.MAX_ATTEMPTS - otpRecord.attempts;
+      throw new BadRequestException(
+        `Invalid OTP code. ${remainingAttempts} attempt(s) remaining.`,
+      );
+    }
+
+    // Mark OTP as verified
+    otpRecord.verified = true;
+    await otpRecord.save();
+
+    // Get user
+    const user = await this.usersService.findByEmail(email);
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    // Delete the OTP record after successful verification
+    await this.otpModel.deleteOne({ email }).exec();
+
+    this.logger.log(`Password reset OTP verified for: ${email}`);
+
+    // Return the user without modifying email verification
+    return user;
+  }
+
+  /**
    * Delete OTP record for email
    */
   async deleteOtp(email: string): Promise<void> {

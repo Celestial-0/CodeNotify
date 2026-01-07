@@ -37,12 +37,12 @@ export function ContestsNav() {
 
   return (
     <div className="border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
-      <div className="container mx-auto px-4">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <nav className="flex items-center gap-1 overflow-x-auto py-2 scrollbar-hide">
           {contestNavItems.map((item) => {
             const Icon = item.icon;
             const active = isActive(item.href, item.exact);
-            
+
             return (
               <Link
                 key={item.href}
@@ -59,7 +59,7 @@ export function ContestsNav() {
                 {item.badge === 'live' && (
                   <span className={cn(
                     'flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-semibold',
-                    active 
+                    active
                       ? 'bg-primary-foreground/20 text-primary-foreground'
                       : 'bg-green-500/10 text-green-600'
                   )}>

@@ -8,7 +8,7 @@ import { UpdateUserDto, UserPreferences } from './dto/user.dto';
 
 @Injectable()
 export class UsersService {
-  constructor(@InjectModel(User.name) private userModel: Model<UserDocument>) {}
+  constructor(@InjectModel(User.name) private userModel: Model<UserDocument>) { }
 
   async createUser(createUserDto: CreateUserDto): Promise<UserDocument> {
     const createdUser = new this.userModel(createUserDto);
@@ -61,6 +61,16 @@ export class UsersService {
   ): Promise<void> {
     await this.userModel
       .findByIdAndUpdate(id, { isEmailVerified: isVerified })
+      .exec();
+  }
+
+  async updatePassword(id: string, hashedPassword: string): Promise<void> {
+    await this.userModel
+      .findByIdAndUpdate(
+        id,
+        { password: hashedPassword },
+        { new: true } // Return updated document and ensure update is applied
+      )
       .exec();
   }
 

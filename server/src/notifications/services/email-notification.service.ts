@@ -145,6 +145,41 @@ export class EmailNotificationService implements INotificationService {
   }
 
   /**
+   * Send password reset OTP email
+   */
+  async sendPasswordResetEmail(email: string, otpCode: string): Promise<void> {
+    if (!this.enabled || !this.resend) {
+      throw new Error('Email service not configured');
+    }
+
+    this.logger.log(`[EMAIL] Sending password reset OTP to ${email}`);
+
+    try {
+      const { data, error } = await this.resend.emails.send({
+        from: this.fromEmail,
+        to: email,
+        subject: 'Reset Your Password - CodeNotify',
+        html: formatOtpEmail(otpCode, true), // Pass true to indicate password reset
+      });
+
+      if (error) {
+        throw new Error(`Resend API error: ${error.message}`);
+      }
+
+      this.logger.log(
+        `[EMAIL SUCCESS] Password reset OTP sent to ${email}, Message ID: ${data?.id}`,
+      );
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      this.logger.error(
+        `[EMAIL FAILED] Failed to send password reset OTP to ${email}: ${errorMessage}`,
+      );
+      throw error;
+    }
+  }
+
+  /**
    * Send digest email with multiple contests
    */
   async sendDigestEmail(

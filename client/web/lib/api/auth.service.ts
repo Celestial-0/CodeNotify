@@ -48,23 +48,41 @@ export class AuthService {
   }
 
   /**
-   * Request password reset
+   * Request password reset OTP
    */
-  static async forgotPassword(data: ForgotPasswordFormData): Promise<{ message: string }> {
-    const response = await httpClient.api.post<{ message: string }>(
-      '/auth/forgot-password',
-      data
+  static async requestPasswordResetOtp(email: string): Promise<{ message: string; expiresIn?: number }> {
+    const response = await httpClient.api.post<{ message: string; expiresIn?: number }>(
+      '/auth/password/reset/request',
+      { email }
     );
     return response.data;
   }
 
   /**
-   * Reset password with token
+   * Verify password reset OTP and set new password
    */
-  static async resetPassword(token: string, password: string): Promise<{ message: string }> {
+  static async verifyPasswordResetOtp(
+    email: string,
+    code: string,
+    newPassword: string
+  ): Promise<{ message: string }> {
     const response = await httpClient.api.post<{ message: string }>(
-      '/auth/reset-password',
-      { token, password }
+      '/auth/password/reset/verify',
+      { email, code, newPassword }
+    );
+    return response.data;
+  }
+
+  /**
+   * Change password with current password verification (no OTP required)
+   */
+  static async changePassword(
+    currentPassword: string,
+    newPassword: string
+  ): Promise<{ message: string }> {
+    const response = await httpClient.api.post<{ message: string }>(
+      '/auth/password/change',
+      { currentPassword, newPassword }
     );
     return response.data;
   }

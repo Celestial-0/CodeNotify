@@ -14,9 +14,15 @@ import type { Response, Request } from 'express';
 import { AuthService } from './auth.service';
 import { Public, CurrentUser } from '../common/decorators';
 import { CreateUserDto, SigninDto, type AuthResponse } from './dto/auth.dto';
+import {
+  RequestPasswordResetDto,
+  ResetPasswordDto,
+  PasswordResetResponse,
+} from './dto/reset-password.dto';
 import type { UserDocument } from '../users/schemas/user.schema';
 import { GoogleUser } from './strategies/google.strategy';
 import { GoogleAuthGuard } from './guards/google-auth.guard';
+import { EmailNotificationService } from '../notifications/services/email-notification.service';
 
 interface GoogleOAuthRequest extends Request {
   user: GoogleUser;
@@ -24,7 +30,10 @@ interface GoogleOAuthRequest extends Request {
 
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly emailService: EmailNotificationService,
+  ) { }
 
   @Public()
   @Throttle({ short: { limit: 50, ttl: 60000 } }) // 50 requests per minute
@@ -77,5 +86,53 @@ export class AuthController {
     const redirectUrl = `${frontendUrl}/auth/callback?access_token=${user.accessToken}&refresh_token=${user.refreshToken}&user_id=${user.id}`;
 
     res.redirect(redirectUrl);
+  }
+
+  @Public()
+  @Throttle({ short: { limit: 10, ttl: 60000 } }) // 10 requests per minute
+  @Post('password/reset/request')
+  @HttpCode(HttpStatus.OK)
+  async requestPasswordReset(
+    @Body() dto: RequestPasswordResetDto,
+  ): Promise<PasswordResetResponse> {
+    const result = (await this.authService.requestPasswordReset(dto)) as
+      | PasswordResetResponse
+      | (PasswordResetResponse & { code: string });
+
+    // Send password reset email
+    if ('code' in result) {
+      await this.emailService.sendPasswordResetEmail(dto.email, result.code);
+    }
+
+    // Return response without the code
+    return {
+      message: result.message,
+      expiresIn: result.expiresIn,
+    };
+  }
+
+  @Public()
+  @Throttle({ short: { limit: 10, ttl: 60000 } }) // 10 requests per minute
+  @Post('password/reset/verify')
+  @HttpCode(HttpStatus.OK)
+  async resetPassword(
+    @Body() dto: ResetPasswordDto,
+  ): Promise<{ message: string }> {
+    return await this.authService.resetPassword(dto);
+  }
+
+  @Post('password/change')
+  @HttpCode(HttpStatus.OK)
+  @Throttle({ short: { limit: 5, ttl: 60000 } }) // 5 requests per minute
+  async changePassword(
+    @CurrentUser() user: UserDocument,
+    @Body() dto: { currentPassword: string; newPassword: string },
+  ): Promise<{ message: string }> {
+    return this.authService.changePassword(
+      user.id,
+      user.email,
+      dto.currentPassword,
+      dto.newPassword,
+    );
   }
 }

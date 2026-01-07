@@ -4,7 +4,7 @@ import { createZodDto } from 'nestjs-zod';
 // Zod schemas for validation
 export const CreateUserSchema = z.object({
   email: z.email({ message: 'Invalid email format' }),
-  password: z.string().min(6, 'Password must be at least 6 characters long'),
+  password: z.string().min(6, 'Password must be at least 6 characters long').optional(),
   name: z.string().min(2, 'Name must be at least 2 characters long'),
   phoneNumber: z.string().optional(),
 });
@@ -17,9 +17,9 @@ export const SigninSchema = z.object({
 export const SignoutSchema = z.object({});
 
 // Create DTO classes using nestjs-zod
-export class CreateUserDto extends createZodDto(CreateUserSchema) {}
-export class SigninDto extends createZodDto(SigninSchema) {}
-export class SignoutDto extends createZodDto(SignoutSchema) {}
+export class CreateUserDto extends createZodDto(CreateUserSchema) { }
+export class SigninDto extends createZodDto(SigninSchema) { }
+export class SignoutDto extends createZodDto(SignoutSchema) { }
 
 // Response DTOs
 export interface AuthResponse {

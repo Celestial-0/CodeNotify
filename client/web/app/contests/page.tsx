@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useState } from 'react';
+import { useCallback, useState, useRef, useEffect, Activity } from 'react';
 import { ContestList } from '@/components/core/contests/contest-list';
 import { ContestFilters } from '@/components/core/contests/contest-filters';
 import { ContestSearch } from '@/components/core/contests/contest-search';
@@ -21,6 +21,7 @@ import { ContestResponseDto } from '@/lib/types/contest.types';
 
 export default function ContestsPage() {
   const [showFilters, setShowFilters] = useState(false);
+  const filterRef = useRef<HTMLDivElement>(null);
   const { contestView } = useUIStore();
 
   // Query state
@@ -28,8 +29,24 @@ export default function ContestsPage() {
     limit: 20,
     offset: 0,
     sortBy: 'startTime',
-    sortOrder: 'asc',
+    sortOrder: 'desc',
   });
+
+  // Handle click outside to close filters
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (filterRef.current && !filterRef.current.contains(event.target as Node)) {
+        setShowFilters(false);
+      }
+    }
+
+    if (showFilters) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showFilters]);
 
   // Fetch contests with React Query
   const {
@@ -81,7 +98,7 @@ export default function ContestsPage() {
       limit: 20,
       offset: 0,
       sortBy: 'startTime',
-      sortOrder: 'asc',
+      sortOrder: 'desc',
     });
   }, []);
 
@@ -97,10 +114,10 @@ export default function ContestsPage() {
   ].filter(Boolean).length;
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="bg-background">
       {/* Header */}
       <div className="border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60 sticky top-16 z-30">
-        <div className="container mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
           <div className="flex flex-col gap-3 sm:gap-4">
             {/* Title and Mobile Filter */}
             <div className="flex items-start sm:items-center justify-between gap-3">
@@ -116,8 +133,8 @@ export default function ContestsPage() {
                 </p>
               </div>
 
-              {/* Mobile filter toggle */}
-              <Sheet open={showFilters} onOpenChange={setShowFilters}>
+              {/* Mobile filter toggle (Sheet) */}
+              <Sheet>
                 <SheetTrigger asChild>
                   <Button
                     variant="outline"
@@ -134,10 +151,8 @@ export default function ContestsPage() {
                   </Button>
                 </SheetTrigger>
                 <SheetContent side="left" className="w-full sm:w-80 overflow-y-auto">
-                  <SheetHeader>
-                    <SheetTitle>Filters</SheetTitle>
-                  </SheetHeader>
-                  <div className="mt-6">
+
+                  <div className="mt-0">
                     <ContestFilters
                       filters={{
                         platform: query.platform as ContestPlatform | undefined,
@@ -146,21 +161,65 @@ export default function ContestsPage() {
                         difficulty: query.difficulty as DifficultyLevel | undefined,
                         startDate: query.startDate,
                         endDate: query.endDate,
+                        sortBy: query.sortBy,
+                        sortOrder: query.sortOrder,
                       }}
                       onFilterChange={handleFilterChange}
                       onReset={handleClearFilters}
-                      className="border-0 p-0"
+                      className="border-0 p-6"
                     />
                   </div>
                 </SheetContent>
               </Sheet>
             </div>
 
-            {/* Search Bar */}
-            <div className="flex items-center gap-2">
+            {/* Search Bar and Desktop Filters */}
+            <div className="flex items-center gap-2 relative">
               <div className="flex-1">
                 <ContestSearch onSearch={handleSearch} />
               </div>
+
+              {/* Desktop Filter Toggle */}
+              <div className="hidden lg:block relative" ref={filterRef}>
+                <Button
+                  variant={showFilters ? "secondary" : "outline"}
+                  size="default"
+                  className="shrink-0"
+                  onClick={() => setShowFilters(!showFilters)}
+                >
+                  <Filter className="h-4 w-4 mr-2" />
+                  Filters
+                  {activeFiltersCount > 0 && (
+                    <span className="ml-2 px-1.5 py-0.5 text-xs bg-primary text-primary-foreground rounded-full">
+                      {activeFiltersCount}
+                    </span>
+                  )}
+                </Button>
+
+                {/* Activity-based Filter Dropdown */}
+                <div className="absolute right-0 top-full mt-2 z-50 w-80 bg-background rounded-lg border shadow-lg ring-1 ring-black/5">
+                  <Activity mode={showFilters ? 'visible' : 'hidden'}>
+                    <div className="max-h-[70vh] overflow-y-auto p-4">
+                      <ContestFilters
+                        filters={{
+                          platform: query.platform as ContestPlatform | undefined,
+                          phase: query.phase as ContestPhase | undefined,
+                          type: query.type as ContestType | undefined,
+                          difficulty: query.difficulty as DifficultyLevel | undefined,
+                          startDate: query.startDate,
+                          endDate: query.endDate,
+                          sortBy: query.sortBy,
+                          sortOrder: query.sortOrder,
+                        }}
+                        onFilterChange={handleFilterChange}
+                        onReset={handleClearFilters}
+                        className="border-0 p-0 shadow-none"
+                      />
+                    </div>
+                  </Activity>
+                </div>
+              </div>
+
               {activeFiltersCount > 0 && (
                 <Button
                   variant="ghost"
@@ -178,27 +237,9 @@ export default function ContestsPage() {
       </div>
 
       {/* Main Content */}
-      <div className="container mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex gap-6">
-          {/* Desktop Filters Sidebar */}
-          <aside className="hidden lg:block lg:w-72 shrink-0">
-            <div className="sticky top-40">
-              <ContestFilters
-                filters={{
-                  platform: query.platform as ContestPlatform | undefined,
-                  phase: query.phase as ContestPhase | undefined,
-                  type: query.type as ContestType | undefined,
-                  difficulty: query.difficulty as DifficultyLevel | undefined,
-                  startDate: query.startDate,
-                  endDate: query.endDate,
-                }}
-                onFilterChange={handleFilterChange}
-                onReset={handleClearFilters}
-              />
-            </div>
-          </aside>
-
-          {/* Contest List */}
+          {/* Contest List (Full Width) */}
           <main className="flex-1 min-w-0">
             {isError ? (
               <div className="flex flex-col items-center justify-center py-12 sm:py-16 text-center">

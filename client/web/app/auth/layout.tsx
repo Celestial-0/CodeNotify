@@ -3,11 +3,12 @@
 import { ReactNode, useEffect } from "react";
 import { Activity } from "react";
 import { useAuthStore } from "@/lib/store/auth-store";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 
 export default function AuthLayoutPage({ children }: { children: ReactNode }) {
   const { isAuthenticated, isLoading, initialize } = useAuthStore();
   const router = useRouter();
+  const pathname = usePathname();
 
   useEffect(() => {
     // ensure store initializes auth state on mount
@@ -15,23 +16,29 @@ export default function AuthLayoutPage({ children }: { children: ReactNode }) {
   }, [initialize]);
 
   useEffect(() => {
-    if (!isLoading && isAuthenticated) {
+    // Allow authenticated users to access password reset pages (for OAuth password creation)
+    const isPasswordResetFlow = pathname === '/auth/forgot-password' || pathname === '/auth/reset-password';
+
+    if (!isLoading && isAuthenticated && !isPasswordResetFlow) {
       router.replace("/dashboard");
     }
-  }, [isAuthenticated, isLoading, router]);
+  }, [isAuthenticated, isLoading, router, pathname]);
 
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="flex items-center gap-2 text-muted-foreground">
           <Activity>Checking your session…</Activity>
-        </div>  
+        </div>
       </div>
     );
   }
 
-  if (isAuthenticated) {
-    // Render nothing while redirecting
+  // Allow authenticated users to access password reset pages
+  const isPasswordResetFlow = pathname === '/auth/forgot-password' || pathname === '/auth/reset-password';
+
+  if (isAuthenticated && !isPasswordResetFlow) {
+    // Render nothing while redirecting to dashboard
     return null;
   }
 

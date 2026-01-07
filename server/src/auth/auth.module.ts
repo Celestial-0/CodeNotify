@@ -11,12 +11,14 @@ import { TokenService } from './services/token.service';
 import { UsersModule } from '../users/users.module';
 import { AUTH } from '../common/constants';
 import { OtpModule } from './otp/otp.module';
+import { NotificationsModule } from '../notifications/notifications.module';
 
 @Module({
   imports: [
     UsersModule,
     PassportModule,
     OtpModule,
+    NotificationsModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => ({
@@ -36,4 +38,4 @@ import { OtpModule } from './otp/otp.module';
   controllers: [AuthController],
   exports: [AuthService, PasswordService, TokenService],
 })
-export class AuthModule {}
+export class AuthModule { }

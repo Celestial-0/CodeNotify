@@ -28,6 +28,7 @@ export interface UserProfile {
   role: UserRole;
   preferences: UserPreferences;
   isActive: boolean;
+  isEmailVerified: boolean;
   createdAt: Date;
   updatedAt: Date;
   lastLogin?: Date;

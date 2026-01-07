@@ -80,8 +80,7 @@ export function ContestFilters({
     filters.endDate;
 
   return (
-    <div className={cn('space-y-6 rounded-lg border bg-card p-6', className)}>
-      {/* Header */}
+    <div className={cn('space-y-6', className)}>
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <SlidersHorizontal className="h-5 w-5" />
