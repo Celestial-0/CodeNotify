@@ -1,4 +1,4 @@
-import { Controller, Get, Header } from '@nestjs/common';
+import { Controller, Get } from '@nestjs/common';
 import { AppService } from './app.service';
 import { Public } from './common/decorators/public.decorator';
 
@@ -8,8 +8,13 @@ export class AppController {
 
   @Public()
   @Get()
-  @Header('Content-Type', 'text/html')
   gethome(): string {
     return this.appService.gethome();
+  }
+
+  @Public()
+  @Get('health')
+  health() {
+    return this.appService.health();
   }
 }

@@ -1,0 +1,35 @@
+name: Server CI/CD
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'server/**'
+      - '.github/workflows/deploy-server.yml'
+
+jobs:
+  deploy:
+    name: Deploy to EC2
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.2.4
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            set -e
+            cd ~/projects/CodeNotify/server
+            git fetch origin main
+            git reset --hard origin/main
+            docker compose down --remove-orphans || true
+            docker rm -f codenotify-server || true
+            docker compose up -d --build
+            docker compose ps
+            sleep 30
+            docker compose logs --tail=50 codenotify-server || true
+            docker image prune -f

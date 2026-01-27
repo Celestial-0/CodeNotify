@@ -1,0 +1,36 @@
+services:
+  codenotify-server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: codenotify-server
+    image: codenotify-server:latest
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env.production
+      - .env.local
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:8000/health', (r) => {if (r.statusCode !== 200) throw new Error(r.statusCode)})"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - codenotify-network
+    volumes:
+      - ./logs:/app/logs
+    labels:
+      - "app=codenotify"
+      - "component=codenotify-server"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+networks:
+  codenotify-network:
+    driver: bridge
+

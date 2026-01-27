@@ -51,7 +51,7 @@ const validateEnv = (config: Record<string, unknown>) => {
   imports: [
     NestConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: '.env.local',
+      envFilePath: ['.env.production', '.env.local'],
       validate: validateEnv,
     }),
   ],
