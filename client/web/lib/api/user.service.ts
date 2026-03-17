@@ -75,4 +75,26 @@ export class UserService {
     );
     return response.data;
   }
+
+  /**
+   * Test Discord notification for current user
+   */
+  static async testDiscordNotification(discordId: string): Promise<{ success: boolean; message: string }> {
+    const response = await httpClient.api.post<{ success: boolean; message: string }>(
+      '/notifications/test/discord',
+      { discordId }
+    );
+    return response.data;
+  }
+
+  /**
+   * Test Telegram notification for current user
+   */
+  static async testTelegramNotification(chatId: number): Promise<{ success: boolean; message: string }> {
+    const response = await httpClient.api.post<{ success: boolean; message: string }>(
+      '/notifications/test/telegram',
+      { chatId }
+    );
+    return response.data;
+  }
 }

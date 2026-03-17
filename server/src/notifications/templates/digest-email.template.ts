@@ -2,35 +2,35 @@
  * Format digest email template with multiple contests
  */
 export function formatDigestEmail(
-    contests: Array<{
-        name: string;
-        platform: string;
-        startTime: Date;
-        hoursUntilStart: number;
-        websiteUrl?: string;
-    }>,
-    frequency: 'daily' | 'weekly',
+  contests: Array<{
+    name: string;
+    platform: string;
+    startTime: Date;
+    hoursUntilStart: number;
+    websiteUrl?: string;
+  }>,
+  frequency: 'daily' | 'weekly',
 ): string {
-    const platformColors: Record<string, string> = {
-        codeforces: '#1F8ACB',
-        leetcode: '#FFA116',
-        codechef: '#5B4638',
-        atcoder: '#000000',
-    };
+  const platformColors: Record<string, string> = {
+    codeforces: '#1F8ACB',
+    leetcode: '#FFA116',
+    codechef: '#5B4638',
+    atcoder: '#000000',
+  };
 
-    const contestsHtml = contests
-        .map((contest, index) => {
-            const platformColor =
-                platformColors[contest.platform.toLowerCase()] || '#6366f1';
-            const startTimeFormatted = contest.startTime.toLocaleString('en-US', {
-                weekday: 'short',
-                month: 'short',
-                day: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit',
-            });
+  const contestsHtml = contests
+    .map((contest) => {
+      const platformColor =
+        platformColors[contest.platform.toLowerCase()] || '#6366f1';
+      const startTimeFormatted = contest.startTime.toLocaleString('en-US', {
+        weekday: 'short',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      });
 
-            return `
+      return `
         <div style="padding:16px;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:12px;">
           <div style="display:flex;align-items:center;margin-bottom:8px;">
             <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:${platformColor};margin-right:8px;"></span>
@@ -45,13 +45,13 @@ export function formatDigestEmail(
           </p>
         </div>
       `;
-        })
-        .join('');
+    })
+    .join('');
 
-    const timeframe = frequency === 'daily' ? 'today' : 'this week';
-    const emoji = frequency === 'daily' ? '📅' : '📆';
+  const timeframe = frequency === 'daily' ? 'today' : 'this week';
+  const emoji = frequency === 'daily' ? '📅' : '📆';
 
-    return `
+  return `
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -96,9 +96,9 @@ export function formatDigestEmail(
           You're receiving this ${frequency} digest based on your notification preferences.
         </p>
         <p style="margin:0;font-size:12px;">
-          <a href="https://codenotify.com/preferences" style="color:#6366f1;text-decoration:none;">Manage Preferences</a>
+          <a href="https://code-notify.vercel.app/preferences" style="color:#6366f1;text-decoration:none;">Manage Preferences</a>
           •
-          <a href="https://codenotify.com/unsubscribe" style="color:#475569;text-decoration:none;">Unsubscribe</a>
+          <a href="https://code-notify.vercel.app/unsubscribe" style="color:#475569;text-decoration:none;">Unsubscribe</a>
         </p>
       </td>
     </tr>

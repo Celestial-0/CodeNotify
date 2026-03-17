@@ -3,30 +3,28 @@ import { NotificationPayload } from '../interfaces/notification.interface';
 /**
  * Format contest alert email template with HTML
  */
-export function formatContestAlertEmail(
-    payload: NotificationPayload,
-): string {
-    const platformColors: Record<string, string> = {
-        codeforces: '#1F8ACB',
-        leetcode: '#FFA116',
-        codechef: '#5B4638',
-        atcoder: '#000000',
-    };
+export function formatContestAlertEmail(payload: NotificationPayload): string {
+  const platformColors: Record<string, string> = {
+    codeforces: '#1F8ACB',
+    leetcode: '#FFA116',
+    codechef: '#5B4638',
+    atcoder: '#000000',
+  };
 
-    const platformColor =
-        platformColors[payload.platform.toLowerCase()] || '#6366f1';
+  const platformColor =
+    platformColors[payload.platform.toLowerCase()] || '#6366f1';
 
-    const startTimeFormatted = payload.startTime.toLocaleString('en-US', {
-        weekday: 'long',
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-        timeZoneName: 'short',
-    });
+  const startTimeFormatted = payload.startTime.toLocaleString('en-US', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    timeZoneName: 'short',
+  });
 
-    return `
+  return `
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -79,7 +77,7 @@ export function formatContestAlertEmail(
         </div>
 
         <div style="text-align:center;margin-top:28px;">
-          <a href="https://codenotify.com/contests/${payload.contestId}"
+          <a href="https://code-notify.vercel.app/contests/${payload.contestId}"
             style="display:inline-block;background:${platformColor};color:#fff;text-decoration:none;
                    padding:12px 28px;border-radius:6px;font-weight:600;font-size:15px;">
             View Contest Details
@@ -99,9 +97,9 @@ export function formatContestAlertEmail(
           You're receiving this email because you subscribed to contest notifications.
         </p>
         <p style="margin:0;font-size:12px;">
-          <a href="https://codenotify.com/preferences" style="color:${platformColor};text-decoration:none;">Manage Preferences</a>
+          <a href="https://code-notify.vercel.app/preferences" style="color:${platformColor};text-decoration:none;">Manage Preferences</a>
           •
-          <a href="https://codenotify.com/unsubscribe" style="color:#475569;text-decoration:none;">Unsubscribe</a>
+          <a href="https://code-notify.vercel.app/unsubscribe" style="color:#475569;text-decoration:none;">Unsubscribe</a>
         </p>
       </td>
     </tr>

@@ -4,6 +4,7 @@ import {
   ContestType,
   DifficultyLevel,
 } from '../../../contests/schemas/contest.schema';
+import type { PlatformMetadata } from '../../../common/types';
 
 /**
  * Unified contest data format that all platform adapters must return
@@ -26,7 +27,7 @@ export interface ContestData {
   problemCount?: number;
   country?: string;
   city?: string;
-  platformMetadata?: Record<string, any>;
+  platformMetadata?: PlatformMetadata;
   isActive?: boolean;
   lastSyncedAt?: Date;
 }
@@ -61,10 +62,12 @@ export interface PlatformAdapter {
 
   /**
    * Transform platform-specific data to internal unified format
-   * @param data Raw data from platform API
+   * @param data Raw data from platform API (type varies by platform)
    * @returns Transformed contest data
+   * @remarks Uses 'unknown' as each platform has unique API response formats.
+   *          Concrete implementations should validate and type-check the data.
    */
-  transformToInternalFormat(data: any): ContestData;
+  transformToInternalFormat(data: unknown): ContestData;
 
   /**
    * Check if the platform adapter is healthy and can connect to the API

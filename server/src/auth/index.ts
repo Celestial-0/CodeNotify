@@ -10,7 +10,6 @@ export * from './auth.controller';
 
 // DTOs
 
-
 // Services (explicitly export to avoid conflicts)
 export { PasswordService } from './services/password.service';
 export { TokenService } from './services/token.service';

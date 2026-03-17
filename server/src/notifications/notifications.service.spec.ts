@@ -7,6 +7,8 @@ import { Notification } from './schemas/notification.schema';
 import { EmailNotificationService } from './services/email-notification.service';
 import { WhatsAppNotificationService } from './services/whatsapp-notification.service';
 import { PushNotificationService } from './services/push-notification.service';
+import { TelegramNotificationService } from './services/telegram-notification.service';
+import { DiscordNotificationService } from './services/discord-notification.service';
 
 describe('NotificationsService', () => {
   let service: NotificationsService;
@@ -32,6 +34,18 @@ describe('NotificationsService', () => {
   };
 
   const mockPushService = {
+    send: jest.fn(),
+    isEnabled: jest.fn().mockReturnValue(false),
+    healthCheck: jest.fn(),
+  };
+
+  const mockTelegramService = {
+    send: jest.fn(),
+    isEnabled: jest.fn().mockReturnValue(false),
+    healthCheck: jest.fn(),
+  };
+
+  const mockDiscordService = {
     send: jest.fn(),
     isEnabled: jest.fn().mockReturnValue(false),
     healthCheck: jest.fn(),
@@ -64,6 +78,14 @@ describe('NotificationsService', () => {
         {
           provide: PushNotificationService,
           useValue: mockPushService,
+        },
+        {
+          provide: TelegramNotificationService,
+          useValue: mockTelegramService,
+        },
+        {
+          provide: DiscordNotificationService,
+          useValue: mockDiscordService,
         },
       ],
     }).compile();

@@ -11,6 +11,8 @@ export enum NotificationChannel {
   EMAIL = 'email',
   WHATSAPP = 'whatsapp',
   PUSH = 'push',
+  DISCORD = 'discord',
+  TELEGRAM = 'telegram',
 }
 
 export enum NotificationType {
@@ -110,6 +112,8 @@ export interface NotificationStats {
     email: number;
     whatsapp: number;
     push: number;
+    discord: number;
+    telegram: number;
   };
   byType: Record<string, number>;
 }
@@ -118,6 +122,38 @@ export interface NotificationStatsQuery {
   userId?: string;
   startDate?: string;
   endDate?: string;
+}
+
+// Service health types
+export interface ServiceHealth {
+  status: 'up' | 'down';
+  responseTime?: number;
+  lastChecked: string;
+}
+
+export interface ServiceStatus {
+  available: boolean;
+  configured: boolean;
+  provider?: string;
+}
+
+export interface NotificationHealthResponse {
+  overall: 'healthy' | 'degraded' | 'unhealthy';
+  services: {
+    email: ServiceHealth;
+    whatsapp: ServiceHealth;
+    push: ServiceHealth;
+    discord: ServiceHealth;
+    telegram: ServiceHealth;
+  };
+}
+
+export interface NotificationServiceStatusResponse {
+  email: ServiceStatus;
+  whatsapp: ServiceStatus;
+  push: ServiceStatus;
+  discord: ServiceStatus;
+  telegram: ServiceStatus;
 }
 
 // UI-specific types
@@ -139,6 +175,8 @@ export const NOTIFICATION_CHANNEL_LABELS: Record<NotificationChannel, string> = 
   [NotificationChannel.EMAIL]: 'Email',
   [NotificationChannel.WHATSAPP]: 'WhatsApp',
   [NotificationChannel.PUSH]: 'Push',
+  [NotificationChannel.DISCORD]: 'Discord',
+  [NotificationChannel.TELEGRAM]: 'Telegram',
 };
 
 export const NOTIFICATION_TYPE_LABELS: Record<NotificationType, string> = {

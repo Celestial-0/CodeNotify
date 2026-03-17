@@ -138,7 +138,7 @@ export class CodeChefAdapter extends BasePlatformAdapter {
   /**
    * Transform CodeChef contest to internal format
    */
-  transformToInternalFormat(data: any): ContestData {
+  transformToInternalFormat(data: unknown): ContestData {
     // For CodeChef, data is directly a CodeChefContest
     // We default to 'future' category since this is only called
     // when we need the base interface implementation

@@ -20,6 +20,7 @@
     "test:e2e": "jest --config ./test/jest-e2e.json"
   },
   "dependencies": {
+    "@discordjs/rest": "^0.4.1",
     "@nestjs/axios": "^4.0.1",
     "@nestjs/common": "^11.1.9",
     "@nestjs/config": "^4.0.2",
@@ -36,6 +37,9 @@
     "@types/passport-jwt": "^4.0.1",
     "axios": "^1.13.2",
     "bcrypt": "^6.0.0",
+    "discord-api-types": "^0.38.38",
+    "discord-interactions": "^4.4.0",
+    "grammy": "^1.39.3",
     "mongoose": "^8.20.1",
     "nestjs-zod": "^5.0.1",
     "passport-google-oauth20": "^2.0.0",

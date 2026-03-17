@@ -34,6 +34,8 @@ import {
 import {
   NotificationQuerySchema,
   NotificationStatsSchema,
+  type NotificationQueryDto,
+  type NotificationStatsDto,
 } from './dto/notification.dto';
 
 @Controller('notifications')
@@ -216,7 +218,7 @@ export class NotificationsController {
    * GET /notifications/notifications?userId=xxx&status=SENT&page=1&limit=20
    */
   @Get('notifications')
-  async getNotifications(@Query() query: Record<string, unknown>) {
+  async getNotifications(@Query() query: NotificationQueryDto) {
     const validated = NotificationQuerySchema.parse(query);
     const { userId, status, type, startDate, endDate, page, limit } = validated;
 
@@ -239,7 +241,7 @@ export class NotificationsController {
    * NOTE: This route MUST be defined BEFORE the :id route to avoid "stats" being captured as an ID
    */
   @Get('notifications/stats')
-  async getNotificationStats(@Query() query: Record<string, unknown>) {
+  async getNotificationStats(@Query() query: NotificationStatsDto) {
     const validated = NotificationStatsSchema.parse(query);
     const { userId, startDate, endDate } = validated;
 

@@ -5,3 +5,6 @@ export * from './platform-selector';
 export * from './channel-toggles';
 export * from './timing-slider';
 export * from './account-deletion-dialog';
+export * from './bot-integration-card';
+export * from './discord-link-flow';
+export * from './telegram-link-widget';

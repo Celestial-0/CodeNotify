@@ -109,7 +109,7 @@ export class AtCoderAdapter extends BasePlatformAdapter {
   /**
    * Transform AtCoder contest to internal format
    */
-  transformToInternalFormat(acContest: any): ContestData {
+  transformToInternalFormat(acContest: unknown): ContestData {
     const contest = acContest as AtCoderContest;
     const startTime = this.unixToDate(contest.start_epoch_second);
     const endTime = new Date(

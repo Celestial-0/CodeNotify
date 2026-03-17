@@ -1,5 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getModelToken } from '@nestjs/mongoose';
+import { ConfigModule } from '@nestjs/config';
 import { UsersModule } from './users.module';
 import { UsersService } from './users.service';
 import { UsersController } from './users.controller';
@@ -23,7 +24,7 @@ describe('UsersModule', () => {
     };
 
     module = await Test.createTestingModule({
-      imports: [UsersModule],
+      imports: [UsersModule, ConfigModule.forRoot({ isGlobal: true })],
     })
       .overrideProvider(getModelToken(User.name))
       .useValue(mockUserModel)

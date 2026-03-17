@@ -1,5 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Schema as MongooseSchema } from 'mongoose';
+import type { NotificationPayloadType } from '../../common/types';
 
 export type NotificationDocument = Notification & Document;
 
@@ -16,6 +17,8 @@ export enum NotificationChannel {
   EMAIL = 'email',
   WHATSAPP = 'whatsapp',
   PUSH = 'push',
+  DISCORD = 'discord',
+  TELEGRAM = 'telegram',
 }
 
 // Notification type enum
@@ -64,9 +67,9 @@ export class Notification {
   @Prop({ required: true })
   message: string;
 
-  // Notification payload (flexible for different notification types)
+  // Notification payload (typed for different notification types)
   @Prop({ type: Object })
-  payload?: Record<string, any>;
+  payload?: NotificationPayloadType;
 
   // Delivery information
   @Prop({ type: [String], enum: NotificationChannel, required: true })

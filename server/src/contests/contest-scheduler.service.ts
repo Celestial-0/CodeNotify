@@ -266,8 +266,7 @@ export class ContestSchedulerService {
     this.logger.log('Starting weekly digest processing');
 
     try {
-      const users =
-        await this.notificationsService.getUsersForDigest('weekly');
+      const users = await this.notificationsService.getUsersForDigest('weekly');
       this.logger.log(`Found ${users.length} users for weekly digest`);
 
       let sentCount = 0;

@@ -28,7 +28,7 @@ export class OtpController {
     private readonly emailService: EmailNotificationService,
     private readonly tokenService: TokenService,
     private readonly usersService: UsersService,
-  ) { }
+  ) {}
 
   /**
    * Request OTP for email verification

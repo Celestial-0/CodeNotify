@@ -2,9 +2,12 @@ import { NestFactory, Reflector } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
 import { ZodValidationPipe } from 'nestjs-zod';
+import { json } from 'express';
+import type { Request } from 'express';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  // Disable default body parser - we need custom handling for Discord webhooks
+  const app = await NestFactory.create(AppModule, { bodyParser: false });
 
   // Enable CORS for frontend
   app.enableCors({
@@ -15,6 +18,18 @@ async function bootstrap() {
     ],
     credentials: true,
   });
+
+  // JSON body parser with rawBody capture for Discord webhook signature verification
+  app.use(
+    json({
+      verify: (req: Request & { rawBody?: Buffer }, _res, buf) => {
+        // Only store rawBody for Discord webhooks (signature verification)
+        if (req.originalUrl?.startsWith('/webhooks/discord')) {
+          req.rawBody = buf;
+        }
+      },
+    }),
+  );
 
   // Apply global Zod validation pipe
   app.useGlobalPipes(new ZodValidationPipe());

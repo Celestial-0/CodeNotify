@@ -1,20 +1,47 @@
 'use client';
 
+import { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ProfileForm } from '@/components/core/user/profile-form';
 import { PreferencesForm } from '@/components/core/user/preferences-form';
 import { PasswordManagementCard } from '@/components/core/user/password-management-card';
 import { AccountDeletionDialog } from '@/components/core/user/account-deletion-dialog';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { BotIntegrationCard } from '@/components/core/user/bot-integration-card';
+import { DiscordLinkFlow } from '@/components/core/user/discord-link-flow';
+import { TelegramLinkWidget } from '@/components/core/user/telegram-link-widget';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useProfile } from '@/lib/hooks/use-user';
-import { User, Settings, Shield } from 'lucide-react';
+import { useUserStore, useNotificationStore } from '@/lib/store';
+import { User, Settings, Shield, Link2 } from 'lucide-react';
+import { toast } from 'sonner';
+import type { BotIntegrations } from '@/lib/types/user.types';
 
 export default function ProfilePage() {
   const { data: profile, isLoading } = useProfile();
+  const { botConnections, unlinkDiscord, unlinkTelegram } = useUserStore();
+  const { serviceHealth } = useNotificationStore();
+  
+  // Modal states for bot linking
+  const [showDiscordLink, setShowDiscordLink] = useState(false);
+  const [showTelegramLink, setShowTelegramLink] = useState(false);
+
+  // Build bot integrations from store and profile
+  const botIntegrations: BotIntegrations = {
+    discord: botConnections?.discord || (profile?.discordId ? {
+      connected: true,
+      isConnected: true,
+      username: profile.discordUsername,
+      connectedAt: profile.updatedAt?.toString(),
+    } : undefined),
+    telegram: botConnections?.telegram || (profile?.telegramChatId ? {
+      connected: true,
+      isConnected: true,
+      username: profile.telegramUsername,
+      connectedAt: profile.updatedAt?.toString(),
+    } : undefined),
+    whatsapp: botConnections?.whatsapp,
+  };
 
   if (isLoading) {
     return (
@@ -55,6 +82,10 @@ export default function ProfilePage() {
             <Settings className="h-4 w-4 mr-2" />
             Preferences
           </TabsTrigger>
+          <TabsTrigger value="integrations">
+            <Link2 className="h-4 w-4 mr-2" />
+            Integrations
+          </TabsTrigger>
           <TabsTrigger value="security">
             <Shield className="h-4 w-4 mr-2" />
             Security
@@ -67,6 +98,52 @@ export default function ProfilePage() {
 
         <TabsContent value="preferences" className="space-y-4">
           <PreferencesForm />
+        </TabsContent>
+
+        <TabsContent value="integrations" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Bot Integrations</CardTitle>
+              <CardDescription>
+                Connect your accounts to receive notifications via messaging platforms
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <BotIntegrationCard
+                platform="discord"
+                connection={botIntegrations.discord}
+                serviceHealth={serviceHealth?.services.discord}
+                onLink={() => setShowDiscordLink(true)}
+                onUnlink={async () => {
+                  await unlinkDiscord();
+                  toast.success('Discord account unlinked');
+                }}
+              />
+              
+              <BotIntegrationCard
+                platform="telegram"
+                connection={botIntegrations.telegram}
+                serviceHealth={serviceHealth?.services.telegram}
+                onLink={() => setShowTelegramLink(true)}
+                onUnlink={async () => {
+                  await unlinkTelegram();
+                  toast.success('Telegram account unlinked');
+                }}
+              />
+              
+              <BotIntegrationCard
+                platform="whatsapp"
+                connection={botIntegrations.whatsapp}
+                serviceHealth={serviceHealth?.services.whatsapp}
+                onLink={() => {
+                  toast.info('WhatsApp integration coming soon!');
+                }}
+                onUnlink={async () => {
+                  toast.info('WhatsApp unlink not available yet');
+                }}
+              />
+            </CardContent>
+          </Card>
         </TabsContent>
 
         <TabsContent value="security" className="space-y-4">
@@ -93,6 +170,29 @@ export default function ProfilePage() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Bot Linking Modals */}
+      <DiscordLinkFlow
+        isOpen={showDiscordLink}
+        onClose={() => setShowDiscordLink(false)}
+        onSuccess={() => {
+          toast.success('Discord account linked successfully!');
+        }}
+        onError={(error) => {
+          toast.error(error.message || 'Failed to link Discord account');
+        }}
+      />
+
+      <TelegramLinkWidget
+        isOpen={showTelegramLink}
+        onClose={() => setShowTelegramLink(false)}
+        onSuccess={() => {
+          toast.success('Telegram account linked successfully!');
+        }}
+        onError={(error) => {
+          toast.error(error.message || 'Failed to link Telegram account');
+        }}
+      />
     </div>
   );
 }

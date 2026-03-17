@@ -6,6 +6,8 @@ const envSchema = z.object({
   // Server Configuration
   PORT: z.string().default('8000'),
   NODE_ENV: z.enum(['dev', 'production', 'test']).default('dev'),
+  DB_NAME: z.string().optional(),
+  IS_PUBLIC_KEY: z.string().optional(),
 
   // Database
   MONGO_URI: z.string().min(1, 'MONGO_URI is required'),
@@ -20,18 +22,47 @@ const envSchema = z.object({
   GOOGLE_CALLBACK_URL: z.string().optional(),
   FRONTEND_URL: z.string().optional(),
 
-  // Contest Platform APIs
-  CODEFORCES_API: z.url().optional(),
-  LEETCODE_API: z.url().optional(),
+  // Contest Sync Scheduler
+  CONTEST_SYNC_ENABLED: z.string().optional(),
+  CONTEST_SYNC_INTERVAL: z.string().optional(),
+  CONTEST_CLEANUP_ENABLED: z.string().optional(),
+  CONTEST_CLEANUP_DAYS: z.string().optional(),
+
+  // Notification Configuration
+  NOTIFICATIONS_ENABLED: z.string().optional(),
+  NOTIFICATION_WINDOW_HOURS: z.string().optional(),
 
   // Email Notifications (Resend)
   RESEND_API_KEY: z.string().optional(),
   EMAIL_FROM: z.string().optional(),
 
-  // WhatsApp Cloud API (Meta)
+  // Telegram
+  ENABLE_TELEGRAM: z.string().optional(),
+  TELEGRAM_BOT_TOKEN: z.string().optional(),
+  TELEGRAM_BOT_USERNAME: z.string().optional(),
+  TELEGRAM_WEBHOOK_SECRET: z.string().optional(),
+
+  // Discord
+  ENABLE_DISCORD: z.string().optional(),
+  DISCORD_APPLICATION_ID: z.string().optional(),
+  DISCORD_PUBLIC_KEY: z.string().optional(),
+  DISCORD_BOT_TOKEN: z.string().optional(),
+  DISCORD_CLIENT_ID: z.string().optional(),
+  DISCORD_CLIENT_SECRET: z.string().optional(),
+  DISCORD_CALLBACK_URL: z.string().optional(),
+
+  // WhatsApp
   WHATSAPP_API_KEY: z.string().optional(),
   WHATSAPP_PHONE_ID: z.string().optional(),
   WHATSAPP_BUSINESS_ACCOUNT_ID: z.string().optional(),
+
+  // Webhook
+  WEBHOOK_BASE_URL: z.string().optional(),
+
+  // Notification Retry
+  ENABLE_NOTIFICATION_RETRY: z.string().optional(),
+  NOTIFICATION_MAX_RETRIES: z.string().optional(),
+  NOTIFICATION_RETRY_DELAY_MINUTES: z.string().optional(),
 });
 
 const validateEnv = (config: Record<string, unknown>) => {

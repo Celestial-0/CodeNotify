@@ -22,7 +22,7 @@ export abstract class BasePlatformAdapter implements PlatformAdapter {
   abstract fetchContests(): Promise<ContestData[]>;
   abstract fetchUpcomingContests(): Promise<ContestData[]>;
   abstract fetchRunningContests(): Promise<ContestData[]>;
-  abstract transformToInternalFormat(data: any): ContestData;
+  abstract transformToInternalFormat(data: unknown): ContestData;
 
   /**
    * Make HTTP request with retry logic and error handling

@@ -4,7 +4,7 @@ import { SendAnnouncementDto } from '../dto/email.dto';
  * Format announcement email template
  */
 export function formatAnnouncementEmail(dto: SendAnnouncementDto): string {
-    return `
+  return `
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -31,14 +31,15 @@ export function formatAnnouncementEmail(dto: SendAnnouncementDto): string {
                 ${dto.message}
               </div>
               
-              ${dto.actionUrl && dto.actionText
-            ? `
+              ${
+                dto.actionUrl && dto.actionText
+                  ? `
               <div style="margin: 30px 0; text-align: center;">
                 <a href="${dto.actionUrl}" style="display: inline-block; background-color: #6366f1; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 6px; font-weight: 600; font-size: 16px;">${dto.actionText}</a>
               </div>
               `
-            : ''
-        }
+                  : ''
+              }
             </td>
           </tr>
           
@@ -49,7 +50,7 @@ export function formatAnnouncementEmail(dto: SendAnnouncementDto): string {
                 CodeNotify - Your Competitive Programming Companion
               </p>
               <p style="margin: 10px 0 0 0; color: #6b7280; font-size: 12px;">
-                <a href="https://codenotify.com/preferences" style="color: #6366f1; text-decoration: none;">Manage Preferences</a>
+                <a href="https://code-notify.vercel.app/preferences" style="color: #6366f1; text-decoration: none;">Manage Preferences</a>
               </p>
             </td>
           </tr>

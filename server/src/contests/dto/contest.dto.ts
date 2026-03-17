@@ -6,6 +6,7 @@ import {
   ContestType,
   DifficultyLevel,
 } from '../schemas/contest.schema';
+import type { PlatformMetadata } from '../../common/types';
 
 // Platform metadata schemas
 const PlatformMetadataSchema = z
@@ -144,20 +145,23 @@ export const BulkCreateContestSchema = z.object({
 });
 
 // Sync Request Schema
-export const SyncRequestSchema = z.object({
-  forceSync: z.boolean().optional().default(false),
-}).optional().default({ forceSync: false });
+export const SyncRequestSchema = z
+  .object({
+    forceSync: z.boolean().optional().default(false),
+  })
+  .optional()
+  .default({ forceSync: false });
 
 // Create DTO classes using nestjs-zod
-export class CreateContestDto extends createZodDto(CreateContestSchema) { }
-export class UpdateContestDto extends createZodDto(UpdateContestSchema) { }
-export class ContestQueryDto extends createZodDto(ContestQuerySchema) { }
-export class ContestStatsDto extends createZodDto(ContestStatsSchema) { }
-export class PlatformStatsDto extends createZodDto(PlatformStatsSchema) { }
+export class CreateContestDto extends createZodDto(CreateContestSchema) {}
+export class UpdateContestDto extends createZodDto(UpdateContestSchema) {}
+export class ContestQueryDto extends createZodDto(ContestQuerySchema) {}
+export class ContestStatsDto extends createZodDto(ContestStatsSchema) {}
+export class PlatformStatsDto extends createZodDto(PlatformStatsSchema) {}
 export class BulkCreateContestDto extends createZodDto(
   BulkCreateContestSchema,
-) { }
-export class SyncRequestDto extends createZodDto(SyncRequestSchema) { }
+) {}
+export class SyncRequestDto extends createZodDto(SyncRequestSchema) {}
 
 // Response DTOs
 export interface ContestResponseDto {
@@ -179,7 +183,7 @@ export interface ContestResponseDto {
   problemCount?: number;
   country?: string;
   city?: string;
-  platformMetadata: Record<string, any>;
+  platformMetadata: PlatformMetadata;
   isActive: boolean;
   isNotified: boolean;
   lastSyncedAt?: Date;

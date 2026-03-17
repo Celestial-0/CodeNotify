@@ -18,6 +18,8 @@ export const UpdateUserSchema = z.object({
           whatsapp: z.boolean().optional(),
           email: z.boolean().optional(),
           push: z.boolean().optional(),
+          discord: z.boolean().optional(),
+          telegram: z.boolean().optional(),
         })
         .optional(),
       notifyBefore: z.number().min(1).max(168).optional(), // 1 hour to 7 days
@@ -71,6 +73,8 @@ export interface UserPreferences {
     whatsapp: boolean;
     email: boolean;
     push: boolean;
+    discord: boolean;
+    telegram: boolean;
   };
   notifyBefore?: number; // Hours before contest to notify
 }

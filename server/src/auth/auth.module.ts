@@ -38,4 +38,4 @@ import { NotificationsModule } from '../notifications/notifications.module';
   controllers: [AuthController],
   exports: [AuthService, PasswordService, TokenService],
 })
-export class AuthModule { }
+export class AuthModule {}

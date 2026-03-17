@@ -4,6 +4,7 @@ import {
   NotificationChannel,
   NotificationType,
 } from '../schemas/notification.schema';
+import type { NotificationPayloadType } from '../../common/types';
 
 // Query DTO for fetching notifications
 export const NotificationQuerySchema = z.object({
@@ -51,7 +52,7 @@ export interface NotificationResponseDto {
   type: NotificationType;
   title: string;
   message: string;
-  payload?: Record<string, any>;
+  payload?: NotificationPayloadType;
   channels: NotificationChannel[];
   status: NotificationStatus;
   deliveryStatus: Array<{

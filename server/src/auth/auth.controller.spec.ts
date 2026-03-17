@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
+import { EmailNotificationService } from '../notifications/services/email-notification.service';
 import { CreateUserDto, SigninDto, AuthResponse } from './dto/auth.dto';
 import { UserDocument } from '../users/schemas/user.schema';
 
@@ -54,9 +55,17 @@ describe('AuthController', () => {
       refreshAccessToken: jest.fn(),
     };
 
+    const mockEmailService = {
+      isEnabled: jest.fn().mockReturnValue(true),
+      send: jest.fn().mockResolvedValue({ success: true, channel: 'email' }),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       controllers: [AuthController],
-      providers: [{ provide: AuthService, useValue: mockAuthService }],
+      providers: [
+        { provide: AuthService, useValue: mockAuthService },
+        { provide: EmailNotificationService, useValue: mockEmailService },
+      ],
     }).compile();
 
     controller = module.get<AuthController>(AuthController);

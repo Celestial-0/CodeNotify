@@ -13,6 +13,8 @@ import {
 import { EmailNotificationService } from './services/email-notification.service';
 import { WhatsAppNotificationService } from './services/whatsapp-notification.service';
 import { PushNotificationService } from './services/push-notification.service';
+import { TelegramNotificationService } from './services/telegram-notification.service';
+import { DiscordNotificationService } from './services/discord-notification.service';
 import {
   NotificationPayload,
   NotificationResult,
@@ -51,6 +53,8 @@ export class NotificationsService {
     private readonly emailService: EmailNotificationService,
     private readonly whatsappService: WhatsAppNotificationService,
     private readonly pushService: PushNotificationService,
+    private readonly telegramService: TelegramNotificationService,
+    private readonly discordService: DiscordNotificationService,
   ) {
     this.logger.log(
       'NotificationsService initialized with database-backed notification persistence',
@@ -215,6 +219,8 @@ export class NotificationsService {
       whatsapp: true,
       email: true,
       push: false,
+      discord: false,
+      telegram: false,
     };
 
     // Determine which channels to use
@@ -231,6 +237,18 @@ export class NotificationsService {
     }
     if (channels.push && this.pushService.isEnabled()) {
       enabledChannels.push(NotificationChannel.PUSH);
+    }
+    // Check for Discord - user must have discordId linked
+    if (channels.discord && user.discordId && this.discordService.isEnabled()) {
+      enabledChannels.push(NotificationChannel.DISCORD);
+    }
+    // Check for Telegram - user must have telegramChatId linked
+    if (
+      channels.telegram &&
+      user.telegramChatId &&
+      this.telegramService.isEnabled()
+    ) {
+      enabledChannels.push(NotificationChannel.TELEGRAM);
     }
 
     if (enabledChannels.length === 0) {
@@ -266,6 +284,22 @@ export class NotificationsService {
     // Send via push if enabled
     if (channels.push && this.pushService.isEnabled()) {
       promises.push(this.pushService.send(user.id, payload));
+    }
+
+    // Send via Discord if enabled
+    if (channels.discord && user.discordId && this.discordService.isEnabled()) {
+      promises.push(this.discordService.send(user.discordId, payload));
+    }
+
+    // Send via Telegram if enabled
+    if (
+      channels.telegram &&
+      user.telegramChatId &&
+      this.telegramService.isEnabled()
+    ) {
+      promises.push(
+        this.telegramService.send(String(user.telegramChatId), payload),
+      );
     }
 
     const results = await Promise.all(promises);

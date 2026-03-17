@@ -8,7 +8,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import * as bcrypt from 'bcrypt';
 import { Otp, OtpDocument } from './schemas/otp.schema';
-import { User, UserDocument } from '../../users/schemas/user.schema';
+import type { UserDocument } from '../../users/schemas/user.schema';
 import { UsersService } from '../../users/users.service';
 import { generateOtp } from '../../common/utils/crypto.util';
 import { OTP } from '../../common/constants';
@@ -20,7 +20,7 @@ export class OtpService {
   constructor(
     @InjectModel(Otp.name) private otpModel: Model<OtpDocument>,
     private usersService: UsersService,
-  ) { }
+  ) {}
 
   /**
    * Generate a secure 6-digit OTP code

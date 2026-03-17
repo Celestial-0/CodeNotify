@@ -10,6 +10,8 @@ import type {
   PaginatedNotificationsResponse,
   NotificationStats,
   NotificationStatsQuery,
+  NotificationHealthResponse,
+  NotificationServiceStatusResponse,
 } from '@/lib/types/notification.types';
 
 export class NotificationService {
@@ -78,27 +80,46 @@ export class NotificationService {
   /**
    * Get notification service status
    */
-  static async getServiceStatus(): Promise<{
-    email: { available: boolean; configured: boolean; provider?: string };
-    whatsapp: { available: boolean; configured: boolean; provider?: string };
-    push: { available: boolean; configured: boolean; provider?: string };
-  }> {
-    const response = await httpClient.api.get('/notifications/status');
+  static async getServiceStatus(): Promise<NotificationServiceStatusResponse> {
+    const response = await httpClient.api.get<NotificationServiceStatusResponse>(
+      '/notifications/status'
+    );
     return response.data;
   }
 
   /**
    * Health check for notification services
    */
-  static async healthCheck(): Promise<{
-    overall: 'healthy' | 'degraded' | 'unhealthy';
-    services: {
-      email: { status: 'up' | 'down'; responseTime?: number; lastChecked: string };
-      whatsapp: { status: 'up' | 'down'; responseTime?: number; lastChecked: string };
-      push: { status: 'up' | 'down'; responseTime?: number; lastChecked: string };
-    };
-  }> {
-    const response = await httpClient.api.get('/notifications/health');
+  static async healthCheck(): Promise<NotificationHealthResponse> {
+    const response = await httpClient.api.get<NotificationHealthResponse>(
+      '/notifications/health'
+    );
+    return response.data;
+  }
+
+  /**
+   * Test Discord notification (Admin only)
+   */
+  static async testDiscordNotification(
+    discordId: string
+  ): Promise<{ success: boolean; message: string; error?: string }> {
+    const response = await httpClient.api.post<{ success: boolean; message: string; error?: string }>(
+      '/notifications/test/discord',
+      { discordId }
+    );
+    return response.data;
+  }
+
+  /**
+   * Test Telegram notification (Admin only)
+   */
+  static async testTelegramNotification(
+    chatId: number
+  ): Promise<{ success: boolean; message: string; error?: string }> {
+    const response = await httpClient.api.post<{ success: boolean; message: string; error?: string }>(
+      '/notifications/test/telegram',
+      { chatId }
+    );
     return response.data;
   }
 

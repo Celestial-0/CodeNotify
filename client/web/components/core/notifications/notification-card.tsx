@@ -10,8 +10,8 @@ import {
   NotificationStatus,
   NOTIFICATION_STATUS_LABELS,
   NOTIFICATION_STATUS_COLORS,
-  NOTIFICATION_CHANNEL_LABELS,
 } from '@/lib/types/notification.types';
+import { NotificationChannelBadges } from './notification-channel-badge';
 
 interface NotificationCardProps {
   notification: Notification;
@@ -92,13 +92,11 @@ export function NotificationCard({
             {notification.channels.length > 0 && (
               <>
                 <span>•</span>
-                <div className="flex gap-1">
-                  {notification.channels.map((channel) => (
-                    <Badge key={channel} variant="outline" className="text-xs">
-                      {NOTIFICATION_CHANNEL_LABELS[channel]}
-                    </Badge>
-                  ))}
-                </div>
+                <NotificationChannelBadges
+                  channels={notification.channels}
+                  size="sm"
+                  showLabels={false}
+                />
               </>
             )}
           </div>

@@ -3,3 +3,4 @@ export * from './notification-card';
 export * from './notification-list';
 export * from './notification-filters';
 export * from './notification-stats';
+export * from './notification-channel-badge';

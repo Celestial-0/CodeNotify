@@ -4,7 +4,7 @@ import { NotificationPayload } from '../interfaces/notification.interface';
  * Format WhatsApp message (plain text)
  */
 export function formatWhatsAppMessage(payload: NotificationPayload): string {
-    return `
+  return `
 🚨 *Contest Alert*
 
 *${payload.contestName}*
@@ -15,6 +15,6 @@ export function formatWhatsAppMessage(payload: NotificationPayload): string {
 
 Good luck! 🎯
 
-Manage your preferences: https://codenotify.com/preferences
+Manage your preferences: https://code-notify.vercel.app/preferences
     `.trim();
 }

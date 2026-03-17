@@ -1,7 +1,6 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, FilterQuery } from 'mongoose';
-import { Resend } from 'resend';
 import { EmailNotificationService } from './email-notification.service';
 import { User, UserDocument } from '../../users/schemas/user.schema';
 import {
@@ -32,7 +31,7 @@ export class AdminEmailService {
     @InjectModel(User.name) private userModel: Model<UserDocument>,
     @InjectModel(Contest.name) private contestModel: Model<ContestDocument>,
     private readonly emailService: EmailNotificationService,
-  ) { }
+  ) {}
 
   /**
    * Send custom email to specific email addresses
@@ -42,11 +41,9 @@ export class AdminEmailService {
       throw new Error('Email service is not configured');
     }
 
-    // Access private resend instance safely
-    const resend = (this.emailService as unknown as { resend: Resend | null })
-      .resend;
-    const fromEmail = (this.emailService as unknown as { fromEmail: string })
-      .fromEmail;
+    // Access Resend client via public getter
+    const resend = this.emailService.getResendClient();
+    const fromEmail = this.emailService.getFromEmail();
 
     if (!resend) {
       throw new Error('Resend client not initialized');
@@ -112,10 +109,9 @@ export class AdminEmailService {
       throw new NotFoundException('No active users found with provided IDs');
     }
 
-    const resend = (this.emailService as unknown as { resend: Resend | null })
-      .resend;
-    const fromEmail = (this.emailService as unknown as { fromEmail: string })
-      .fromEmail;
+    // Access Resend client via public getter
+    const resend = this.emailService.getResendClient();
+    const fromEmail = this.emailService.getFromEmail();
 
     if (!resend) {
       throw new Error('Resend client not initialized');
@@ -194,10 +190,9 @@ export class AdminEmailService {
       throw new NotFoundException('No users found matching the filters');
     }
 
-    const resend = (this.emailService as unknown as { resend: Resend | null })
-      .resend;
-    const fromEmail = (this.emailService as unknown as { fromEmail: string })
-      .fromEmail;
+    // Access Resend client via public getter
+    const resend = this.emailService.getResendClient();
+    const fromEmail = this.emailService.getFromEmail();
 
     if (!resend) {
       throw new Error('Resend client not initialized');
@@ -335,6 +330,4 @@ export class AdminEmailService {
       results,
     };
   }
-
-
 }

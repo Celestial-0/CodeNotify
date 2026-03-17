@@ -10,7 +10,7 @@ import { CreateUserDto, SigninDto, AuthResponse } from './dto/auth.dto';
 import {
   RequestPasswordResetDto,
   ResetPasswordDto,
-  PasswordResetResponse,
+  PasswordResetInternalResponse,
 } from './dto/reset-password.dto';
 import type { UserPreferences } from '../users/dto/user.dto';
 import { PasswordService } from './services/password.service';
@@ -25,7 +25,7 @@ export class AuthService {
     private tokenService: TokenService,
     private configService: ConfigService,
     private otpService: OtpService,
-  ) { }
+  ) {}
 
   async signup(createUserDto: CreateUserDto): Promise<AuthResponse> {
     // Check if email already exists
@@ -38,7 +38,9 @@ export class AuthService {
 
     // Validate password is provided for email-based signup
     if (!createUserDto.password) {
-      throw new ConflictException('Password is required for email-based signup');
+      throw new ConflictException(
+        'Password is required for email-based signup',
+      );
     }
 
     // Hash the password
@@ -228,8 +230,9 @@ export class AuthService {
         email,
         name,
         // OAuth users don't have passwords
+        password: undefined,
         phoneNumber: undefined,
-      } as CreateUserDto);
+      });
     }
 
     // Check if user is active
@@ -271,9 +274,10 @@ export class AuthService {
    */
   async requestPasswordReset(
     dto: RequestPasswordResetDto,
-  ): Promise<PasswordResetResponse> {
-    const { code, expiresAt } =
-      await this.otpService.createPasswordResetOtp(dto.email);
+  ): Promise<PasswordResetInternalResponse> {
+    const { code, expiresAt } = await this.otpService.createPasswordResetOtp(
+      dto.email,
+    );
 
     // Return the OTP code and expiry time
     // The controller will handle sending the email
@@ -283,7 +287,7 @@ export class AuthService {
       message: 'Password reset OTP sent to your email',
       expiresIn,
       code, // This will be used by the controller to send email
-    } as PasswordResetResponse & { code: string };
+    };
   }
 
   /**
@@ -306,7 +310,8 @@ export class AuthService {
     await this.usersService.updatePassword(user.id, hashedPassword);
 
     return {
-      message: 'Password reset successfully. You can now sign in with your new password.',
+      message:
+        'Password reset successfully. You can now sign in with your new password.',
     };
   }
 

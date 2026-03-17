@@ -18,6 +18,12 @@ export interface UserDocument extends Document {
   lastLogin?: Date;
   createdAt: Date;
   updatedAt: Date;
+  // Discord integration
+  discordId?: string;
+  discordUsername?: string;
+  // Telegram integration
+  telegramChatId?: number;
+  telegramUsername?: string;
 }
 
 @Schema({ timestamps: true })
@@ -56,11 +62,15 @@ export class User {
           whatsapp: { type: Boolean, default: true },
           email: { type: Boolean, default: true },
           push: { type: Boolean, default: false },
+          discord: { type: Boolean, default: false },
+          telegram: { type: Boolean, default: false },
         },
         default: {
           whatsapp: true,
           email: true,
           push: false,
+          discord: false,
+          telegram: false,
         },
       },
       notifyBefore: { type: Number, default: 24 }, // Hours before contest
@@ -73,11 +83,27 @@ export class User {
         whatsapp: true,
         email: true,
         push: false,
+        discord: false,
+        telegram: false,
       },
       notifyBefore: 24,
     },
   })
   preferences: UserPreferences;
+
+  // Discord integration
+  @Prop()
+  discordId?: string;
+
+  @Prop()
+  discordUsername?: string;
+
+  // Telegram integration
+  @Prop()
+  telegramChatId?: number;
+
+  @Prop()
+  telegramUsername?: string;
 
   @Prop({ default: true })
   isActive: boolean;

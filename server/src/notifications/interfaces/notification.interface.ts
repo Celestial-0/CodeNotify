@@ -8,6 +8,8 @@ export interface NotificationPayload {
   platform: string;
   startTime: Date;
   hoursUntilStart: number;
+  /** Optional URL to the contest page */
+  contestUrl?: string;
 }
 
 /**

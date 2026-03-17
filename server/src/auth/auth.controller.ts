@@ -33,7 +33,7 @@ export class AuthController {
   constructor(
     private readonly authService: AuthService,
     private readonly emailService: EmailNotificationService,
-  ) { }
+  ) {}
 
   @Public()
   @Throttle({ short: { limit: 50, ttl: 60000 } }) // 50 requests per minute

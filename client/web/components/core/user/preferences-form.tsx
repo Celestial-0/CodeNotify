@@ -6,20 +6,29 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { useProfile, useUpdatePreferences } from '@/lib/hooks/use-user';
+import { useUserStore } from '@/lib/store';
 import { PlatformSelector } from './platform-selector';
 import { ChannelToggles } from './channel-toggles';
 import { TimingSlider } from './timing-slider';
+import { DiscordLinkFlow } from './discord-link-flow';
+import { TelegramLinkWidget } from './telegram-link-widget';
 import { toast } from 'sonner';
 import { Loader2, Save } from 'lucide-react';
 import type {
   Platform,
   AlertFrequency,
   NotificationChannels,
+  BotIntegrations,
 } from '@/lib/types/user.types';
 
 export function PreferencesForm() {
   const { data: profile, isLoading } = useProfile();
   const updatePreferences = useUpdatePreferences();
+  const { botConnections } = useUserStore();
+
+  // Modal states for bot linking
+  const [showDiscordLink, setShowDiscordLink] = useState(false);
+  const [showTelegramLink, setShowTelegramLink] = useState(false);
 
   const [platforms, setPlatforms] = useState<Platform[]>(
     profile?.preferences?.platforms || []
@@ -30,13 +39,32 @@ export function PreferencesForm() {
   const [channels, setChannels] = useState<NotificationChannels>(
     profile?.preferences?.notificationChannels || {
       email: true,
-      whatsapp: true,
+      whatsapp: false,
       push: false,
+      discord: false,
+      telegram: false,
     }
   );
   const [notifyBefore, setNotifyBefore] = useState<number>(
     profile?.preferences?.notifyBefore || 24
   );
+
+  // Build bot integrations from store and profile
+  const botIntegrations: BotIntegrations = {
+    discord: botConnections?.discord || (profile?.discordId ? {
+      connected: true,
+      isConnected: true,
+      username: profile.discordUsername,
+      connectedAt: profile.updatedAt?.toString(),
+    } : undefined),
+    telegram: botConnections?.telegram || (profile?.telegramChatId ? {
+      connected: true,
+      isConnected: true,
+      username: profile.telegramUsername,
+      connectedAt: profile.updatedAt?.toString(),
+    } : undefined),
+    whatsapp: botConnections?.whatsapp,
+  };
 
   // Update local state when profile data loads
   useState(() => {
@@ -48,13 +76,29 @@ export function PreferencesForm() {
     }
   });
 
+  const handleLinkBot = (platform: 'discord' | 'telegram' | 'whatsapp') => {
+    switch (platform) {
+      case 'discord':
+        setShowDiscordLink(true);
+        break;
+      case 'telegram':
+        setShowTelegramLink(true);
+        break;
+      case 'whatsapp':
+        // WhatsApp uses phone number linking, handled separately
+        toast.info('WhatsApp linking is available in Account Settings');
+        break;
+    }
+  };
+
   const handleSave = async () => {
     if (platforms.length === 0) {
       toast.error('Please select at least one platform');
       return;
     }
 
-    if (!channels.email && !channels.whatsapp && !channels.push) {
+    const hasActiveChannel = channels.email || channels.whatsapp || channels.push || channels.discord || channels.telegram;
+    if (!hasActiveChannel) {
       toast.error('Please enable at least one notification channel');
       return;
     }
@@ -136,6 +180,8 @@ export function PreferencesForm() {
             channels={channels}
             onChange={setChannels}
             disabled={updatePreferences.isPending}
+            botIntegrations={botIntegrations}
+            onLinkBot={handleLinkBot}
           />
         </CardContent>
       </Card>
@@ -217,6 +263,33 @@ export function PreferencesForm() {
           Reset
         </Button>
       </div>
+
+      {/* Bot Linking Modals */}
+      <DiscordLinkFlow
+        isOpen={showDiscordLink}
+        onClose={() => setShowDiscordLink(false)}
+        onSuccess={() => {
+          toast.success('Discord account linked successfully!');
+          // Auto-enable Discord channel
+          setChannels(prev => ({ ...prev, discord: true }));
+        }}
+        onError={(error) => {
+          toast.error(error.message || 'Failed to link Discord account');
+        }}
+      />
+
+      <TelegramLinkWidget
+        isOpen={showTelegramLink}
+        onClose={() => setShowTelegramLink(false)}
+        onSuccess={() => {
+          toast.success('Telegram account linked successfully!');
+          // Auto-enable Telegram channel
+          setChannels(prev => ({ ...prev, telegram: true }));
+        }}
+        onError={(error) => {
+          toast.error(error.message || 'Failed to link Telegram account');
+        }}
+      />
     </div>
   );
 }

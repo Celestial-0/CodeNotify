@@ -10,6 +10,25 @@ export interface NotificationChannels {
   whatsapp: boolean;
   email: boolean;
   push: boolean;
+  discord: boolean;
+  telegram: boolean;
+}
+
+// Bot integration types
+export interface BotConnection {
+  connected: boolean;
+  isConnected?: boolean; // Alias for connected
+  username?: string;
+  userId?: string;
+  linkedAt?: Date;
+  connectedAt?: string;
+  platform?: 'discord' | 'telegram' | 'whatsapp';
+}
+
+export interface BotIntegrations {
+  discord?: BotConnection;
+  telegram?: BotConnection;
+  whatsapp?: BotConnection;
 }
 
 export interface UserPreferences {
@@ -32,6 +51,11 @@ export interface UserProfile {
   createdAt: Date;
   updatedAt: Date;
   lastLogin?: Date;
+  // Bot integration fields
+  discordId?: string;
+  discordUsername?: string;
+  telegramChatId?: number;
+  telegramUsername?: string;
 }
 
 export interface UpdateUserDto {

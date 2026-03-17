@@ -18,4 +18,4 @@ import { AuthModule } from '../auth.module';
   controllers: [OtpController],
   exports: [OtpService],
 })
-export class OtpModule { }
+export class OtpModule {}
