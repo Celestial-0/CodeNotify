@@ -31,6 +31,7 @@ interface ChannelTogglesProps {
   channels: NotificationChannels;
   onChange: (channels: NotificationChannels) => void;
   disabled?: boolean;
+  disabledChannels?: Partial<Record<keyof NotificationChannels, boolean>>;
   botIntegrations?: BotIntegrations;
   onLinkBot?: (platform: 'discord' | 'telegram' | 'whatsapp') => void;
 }
@@ -50,6 +51,7 @@ export function ChannelToggles({
   channels,
   onChange,
   disabled = false,
+  disabledChannels,
   botIntegrations,
   onLinkBot,
 }: ChannelTogglesProps) {
@@ -120,7 +122,12 @@ export function ChannelToggles({
           const botConnected = channel.requiresBot && channel.botPlatform
             ? isBotConnected(channel.botPlatform)
             : true;
-          const isDisabled = disabled || channel.comingSoon || (channel.requiresBot && !botConnected);
+          const isFeatureDisabled = !!disabledChannels?.[channel.key];
+          const isDisabled =
+            disabled ||
+            isFeatureDisabled ||
+            channel.comingSoon ||
+            (channel.requiresBot && !botConnected);
 
           return (
             <Card
@@ -169,6 +176,11 @@ export function ChannelToggles({
                             <p>Link your {channel.label.replace(' Notifications', '')} account to enable notifications</p>
                           </TooltipContent>
                         </Tooltip>
+                      )}
+                      {isFeatureDisabled && (
+                        <Badge variant="secondary" className="text-xs">
+                          Disabled by admin
+                        </Badge>
                       )}
                     </div>
                     <p className="text-xs text-muted-foreground mt-1">

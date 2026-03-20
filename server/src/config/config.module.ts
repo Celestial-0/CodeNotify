@@ -52,6 +52,7 @@ const envSchema = z.object({
   DISCORD_CALLBACK_URL: z.string().optional(),
 
   // WhatsApp
+  ENABLE_WHATSAPP: z.string().optional(),
   WHATSAPP_API_KEY: z.string().optional(),
   WHATSAPP_PHONE_ID: z.string().optional(),
   WHATSAPP_BUSINESS_ACCOUNT_ID: z.string().optional(),

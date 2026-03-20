@@ -1,10 +1,10 @@
+name: codenotify
 services:
-  codenotify-server:
+  server:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: codenotify-server
-    image: codenotify-server:latest
+    container_name: server
     restart: unless-stopped
     ports:
       - "8000:8000"
@@ -18,12 +18,12 @@ services:
       retries: 3
       start_period: 40s
     networks:
-      - codenotify-network
+      - codenotify
     volumes:
       - ./logs:/app/logs
     labels:
       - "app=codenotify"
-      - "component=codenotify-server"
+      - "component=server"
     logging:
       driver: "json-file"
       options:
@@ -31,6 +31,6 @@ services:
         max-file: "3"
 
 networks:
-  codenotify-network:
+  codenotify:
     driver: bridge
 

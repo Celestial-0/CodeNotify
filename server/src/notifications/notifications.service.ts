@@ -528,18 +528,47 @@ export class NotificationsService {
    * Get notification service status
    */
   getServiceStatus() {
+    const emailEnabled = this.emailService.isEnabled();
+    const whatsappEnabled = this.whatsappService.isEnabled();
+    const pushEnabled = this.pushService.isEnabled();
+    const discordEnabled = this.discordService.isEnabled();
+    const telegramEnabled = this.telegramService.isEnabled();
+
     return {
       email: {
-        enabled: this.emailService.isEnabled(),
+        enabled: emailEnabled,
+        available: emailEnabled,
+        configured: emailEnabled,
+        provider: 'Resend',
         channel: this.emailService.channel,
       },
       whatsapp: {
-        enabled: this.whatsappService.isEnabled(),
+        enabled: whatsappEnabled,
+        available: whatsappEnabled,
+        configured: whatsappEnabled,
+        provider: 'WhatsApp Cloud API',
         channel: this.whatsappService.channel,
       },
       push: {
-        enabled: this.pushService.isEnabled(),
+        enabled: pushEnabled,
+        available: pushEnabled,
+        configured: pushEnabled,
+        provider: 'Firebase',
         channel: this.pushService.channel,
+      },
+      discord: {
+        enabled: discordEnabled,
+        available: discordEnabled,
+        configured: discordEnabled,
+        provider: 'Discord',
+        channel: this.discordService.channel,
+      },
+      telegram: {
+        enabled: telegramEnabled,
+        available: telegramEnabled,
+        configured: telegramEnabled,
+        provider: 'Telegram',
+        channel: this.telegramService.channel,
       },
     };
   }
@@ -548,17 +577,53 @@ export class NotificationsService {
    * Health check for all notification services
    */
   async healthCheckAll() {
-    const [emailHealth, whatsappHealth, pushHealth] = await Promise.all([
+    const [
+      emailHealth,
+      whatsappHealth,
+      pushHealth,
+      discordHealth,
+      telegramHealth,
+    ] = await Promise.all([
       this.emailService.healthCheck(),
       this.whatsappService.healthCheck(),
       this.pushService.healthCheck(),
+      this.discordService.healthCheck(),
+      this.telegramService.healthCheck(),
     ]);
 
+    const now = new Date().toISOString();
+    const toStatus = (healthy: boolean) => ({
+      status: healthy ? 'up' : 'down',
+      lastChecked: now,
+    });
+
+    const allHealthy =
+      emailHealth &&
+      whatsappHealth &&
+      pushHealth &&
+      discordHealth &&
+      telegramHealth;
+    const anyHealthy =
+      emailHealth ||
+      whatsappHealth ||
+      pushHealth ||
+      discordHealth ||
+      telegramHealth;
+
     return {
+      services: {
+        email: toStatus(emailHealth),
+        whatsapp: toStatus(whatsappHealth),
+        push: toStatus(pushHealth),
+        discord: toStatus(discordHealth),
+        telegram: toStatus(telegramHealth),
+      },
       email: emailHealth,
       whatsapp: whatsappHealth,
       push: pushHealth,
-      overall: emailHealth || whatsappHealth || pushHealth,
+      discord: discordHealth,
+      telegram: telegramHealth,
+      overall: allHealthy ? 'healthy' : anyHealthy ? 'degraded' : 'unhealthy',
     };
   }
 

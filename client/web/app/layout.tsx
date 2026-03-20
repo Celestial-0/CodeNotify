@@ -19,7 +19,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "CodeNotify",
   description: "Smart Contest Alert System",
-  authors: [{ name: "Yash Kumar Singh", url: "https://yashkumarsingh.tech" }],
+  authors: [{ name: "Yash Kumar Singh", url: "https://yashkumarsingh.me" }],
 };
 
 export default function RootLayout({

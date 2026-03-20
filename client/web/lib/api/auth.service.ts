@@ -8,14 +8,13 @@ import type {
   SigninFormData,
   SignupFormData,
   AuthResponse,
-  ForgotPasswordFormData,
 } from '@/lib/types/auth.types';
 
 // Re-export types for convenience
 export type { SigninFormData, SignupFormData, AuthResponse };
 
 // API base URL for OAuth redirects
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+const API_BASE_URL = '/api';
 
 export class AuthService {
   /**

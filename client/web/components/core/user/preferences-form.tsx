@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { useProfile, useUpdatePreferences } from '@/lib/hooks/use-user';
+import { useServiceStatus } from '@/lib/hooks/use-admin';
 import { useUserStore } from '@/lib/store';
 import { PlatformSelector } from './platform-selector';
 import { ChannelToggles } from './channel-toggles';
@@ -23,6 +24,7 @@ import type {
 
 export function PreferencesForm() {
   const { data: profile, isLoading } = useProfile();
+  const { data: serviceStatus } = useServiceStatus();
   const updatePreferences = useUpdatePreferences();
   const { botConnections } = useUserStore();
 
@@ -48,6 +50,8 @@ export function PreferencesForm() {
   const [notifyBefore, setNotifyBefore] = useState<number>(
     profile?.preferences?.notifyBefore || 24
   );
+
+  const isWhatsAppEnabled = serviceStatus?.whatsapp?.available ?? true;
 
   // Build bot integrations from store and profile
   const botIntegrations: BotIntegrations = {
@@ -180,6 +184,9 @@ export function PreferencesForm() {
             channels={channels}
             onChange={setChannels}
             disabled={updatePreferences.isPending}
+            disabledChannels={{
+              whatsapp: !isWhatsAppEnabled,
+            }}
             botIntegrations={botIntegrations}
             onLinkBot={handleLinkBot}
           />

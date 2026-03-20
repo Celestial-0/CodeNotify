@@ -12,6 +12,7 @@ import { DiscordLinkFlow } from '@/components/core/user/discord-link-flow';
 import { TelegramLinkWidget } from '@/components/core/user/telegram-link-widget';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useProfile } from '@/lib/hooks/use-user';
+import { useServiceStatus } from '@/lib/hooks/use-admin';
 import { useUserStore, useNotificationStore } from '@/lib/store';
 import { User, Settings, Shield, Link2 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -19,8 +20,11 @@ import type { BotIntegrations } from '@/lib/types/user.types';
 
 export default function ProfilePage() {
   const { data: profile, isLoading } = useProfile();
+  const { data: serviceStatus } = useServiceStatus();
   const { botConnections, unlinkDiscord, unlinkTelegram } = useUserStore();
   const { serviceHealth } = useNotificationStore();
+
+  const isWhatsAppEnabled = serviceStatus?.whatsapp?.available ?? true;
   
   // Modal states for bot linking
   const [showDiscordLink, setShowDiscordLink] = useState(false);
@@ -107,6 +111,11 @@ export default function ProfilePage() {
               <CardDescription>
                 Connect your accounts to receive notifications via messaging platforms
               </CardDescription>
+              {!isWhatsAppEnabled && (
+                <p className="text-sm text-amber-600 dark:text-amber-400">
+                  WhatsApp is disabled by admin.
+                </p>
+              )}
             </CardHeader>
             <CardContent className="space-y-4">
               <BotIntegrationCard
@@ -131,17 +140,19 @@ export default function ProfilePage() {
                 }}
               />
               
-              <BotIntegrationCard
-                platform="whatsapp"
-                connection={botIntegrations.whatsapp}
-                serviceHealth={serviceHealth?.services.whatsapp}
-                onLink={() => {
-                  toast.info('WhatsApp integration coming soon!');
-                }}
-                onUnlink={async () => {
-                  toast.info('WhatsApp unlink not available yet');
-                }}
-              />
+              {isWhatsAppEnabled && (
+                <BotIntegrationCard
+                  platform="whatsapp"
+                  connection={botIntegrations.whatsapp}
+                  serviceHealth={serviceHealth?.services.whatsapp}
+                  onLink={() => {
+                    toast.info('WhatsApp integration coming soon!');
+                  }}
+                  onUnlink={async () => {
+                    toast.info('WhatsApp unlink not available yet');
+                  }}
+                />
+              )}
             </CardContent>
           </Card>
         </TabsContent>

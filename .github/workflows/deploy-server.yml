@@ -27,9 +27,9 @@ jobs:
             git fetch origin main
             git reset --hard origin/main
             docker compose down --remove-orphans || true
-            docker rm -f codenotify-server || true
+            docker rm -f server || true
             docker compose up -d --build
             docker compose ps
             sleep 30
-            docker compose logs --tail=50 codenotify-server || true
+            docker compose logs --tail=50 server || true
             docker image prune -f

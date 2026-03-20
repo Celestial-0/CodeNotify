@@ -19,13 +19,15 @@ export class WhatsAppNotificationService implements INotificationService {
   constructor(private readonly configService: ConfigService) {
     this.apiKey = this.configService.get<string>('WHATSAPP_API_KEY');
     this.phoneId = this.configService.get<string>('WHATSAPP_PHONE_ID');
-    this.enabled = !!(this.apiKey && this.phoneId);
+    const featureFlag =
+      this.configService.get<string>('ENABLE_WHATSAPP') !== 'false';
+    this.enabled = !!(this.apiKey && this.phoneId && featureFlag);
 
     if (this.enabled) {
       this.logger.log('WhatsApp notification service initialized');
     } else {
       this.logger.warn(
-        'WhatsApp notification service disabled - WHATSAPP_API_KEY or WHATSAPP_PHONE_ID not configured',
+        'WhatsApp notification service disabled - WHATSAPP_API_KEY or WHATSAPP_PHONE_ID not configured, or ENABLE_WHATSAPP=false',
       );
     }
   }

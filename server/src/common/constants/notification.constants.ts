@@ -11,7 +11,7 @@ export const EMAIL = {
     return process.env.RESEND_API_KEY || '';
   },
   get EMAIL_FROM(): string {
-    return process.env.EMAIL_FROM || 'CodeNotify <noreply@yashkumarsingh.tech>';
+    return process.env.EMAIL_FROM || 'CodeNotify <noreply@yashlabs.dev>';
   },
 };
 
