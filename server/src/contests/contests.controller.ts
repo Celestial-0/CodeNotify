@@ -151,7 +151,7 @@ export class ContestsController {
   }
 
   // Synchronization endpoints (POST routes)
-  @Throttle({ long: { limit: 100, ttl: 3600000 } }) // 100 requests per hour
+  @Throttle({ long: { limit: 24, ttl: 3600000 } })
   @Post('sync/all')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('admin')
@@ -160,18 +160,20 @@ export class ContestsController {
     message: string;
     results: Record<
       string,
-      { synced: number; updated: number; failed: number }
+      { synced: number; updated: number; failed: number; skipped?: boolean }
     >;
   }> {
     this.logger.log('Syncing all platforms');
-    const results = await this.contestsService.syncAllPlatforms();
+    const results = await this.contestsService.syncAllPlatformsWithOptions({
+      source: 'api',
+    });
     return {
       message: 'Sync completed for all platforms',
       results,
     };
   }
 
-  @Throttle({ long: { limit: 100, ttl: 3600000 } }) // 100 requests per hour
+  @Throttle({ long: { limit: 24, ttl: 3600000 } })
   @Post('sync/:platform')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('admin')
@@ -186,11 +188,15 @@ export class ContestsController {
     synced: number;
     updated: number;
     failed: number;
+    skipped?: boolean;
   }> {
     this.logger.log(
-      `Syncing platform: ${platform} (force: ${syncRequest.forceSync})`,
+      `Syncing platform: ${platform} (force: ${syncRequest?.forceSync ?? false})`,
     );
-    const result = await this.contestsService.syncPlatform(platform);
+    const result = await this.contestsService.syncPlatform(platform, {
+      forceSync: syncRequest?.forceSync,
+      source: 'api',
+    });
     return {
       message: `Sync completed for ${platform}`,
       platform,

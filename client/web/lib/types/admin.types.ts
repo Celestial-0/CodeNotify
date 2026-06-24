@@ -43,6 +43,7 @@ export interface SyncResult {
   synced: number;
   updated: number;
   failed: number;
+  skipped?: boolean;
 }
 
 export interface PlatformSyncResult extends SyncResult {

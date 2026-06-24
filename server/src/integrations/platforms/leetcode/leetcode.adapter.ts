@@ -181,6 +181,7 @@ export class LeetCodeAdapter extends BasePlatformAdapter {
           () => controller.abort(),
           this.config.timeout,
         );
+        timeoutId.unref?.();
 
         const response = await fetch(this.graphqlEndpoint, {
           method: 'POST',
@@ -192,9 +193,9 @@ export class LeetCodeAdapter extends BasePlatformAdapter {
             Referer: LEETCODE_HEADERS.REFERER,
           },
           body: JSON.stringify({ query }),
+        }).finally(() => {
+          clearTimeout(timeoutId);
         });
-
-        clearTimeout(timeoutId);
 
         if (!response.ok) {
           throw new Error(`HTTP ${response.status}: ${response.statusText}`);

@@ -4,6 +4,7 @@
   "description": "Smart Contest Alert System",
   "author": "Yash Kumar Singh",
   "private": true,
+  "packageManager": "bun@1.3.10",
   "license": "UNLICENSED",
   "scripts": {
     "build": "nest build",
@@ -35,7 +36,7 @@
     "@types/bcrypt": "^6.0.0",
     "@types/passport-google-oauth20": "^2.0.17",
     "@types/passport-jwt": "^4.0.1",
-    "axios": "^1.13.2",
+    "axios": "^1.15.2",
     "bcrypt": "^6.0.0",
     "discord-api-types": "^0.38.38",
     "discord-interactions": "^4.4.0",

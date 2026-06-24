@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2, ChevronLeft, Code2, Eye, EyeOff, Lock } from "lucide-react";
+import { Loader2, ChevronLeft, Code2, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 import { AxiosError } from "axios";
 import { z } from "zod";
@@ -227,7 +227,7 @@ export function ResetPasswordForm() {
                     </form>
 
                     <div className="text-center text-sm">
-                        Didn't receive the code?{" "}
+                        Didn&apos;t receive the code?{" "}
                         <Link
                             href={`/auth/forgot-password?email=${encodeURIComponent(email)}`}
                             className="text-primary hover:underline font-medium"

@@ -124,7 +124,7 @@ export class TelegramService implements OnModuleInit, OnModuleDestroy {
       return configuredBaseUrl;
     }
 
-    const port = this.configService.get<string>('PORT') ?? '8000';
+    const port = this.configService.get<string>('PORT') ?? '4010';
     return `http://127.0.0.1:${port}`;
   }
 
@@ -138,6 +138,7 @@ export class TelegramService implements OnModuleInit, OnModuleDestroy {
       const baseUrl = this.getApiBaseUrl();
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+      timeoutId.unref?.();
 
       const response = await fetch(
         `${baseUrl}/users/integrations/telegram/callback`,
@@ -151,9 +152,9 @@ export class TelegramService implements OnModuleInit, OnModuleDestroy {
           }),
           signal: controller.signal,
         },
-      );
-
-      clearTimeout(timeoutId);
+      ).finally(() => {
+        clearTimeout(timeoutId);
+      });
 
       if (response.ok) {
         await ctx.reply(

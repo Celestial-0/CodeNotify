@@ -50,17 +50,6 @@ function FloatingPaths({ position }: { position: number }) {
   );
 }
 
-// Auth separator component
-function AuthSeparator() {
-  return (
-    <div className="relative text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t after:border-border">
-      <span className="relative z-10 bg-background px-2 text-muted-foreground">
-        Or
-      </span>
-    </div>
-  );
-}
-
 export function ForgotPasswordForm() {
   const router = useRouter();
   const [submitted, setSubmitted] = useState(false);
@@ -117,7 +106,7 @@ export function ForgotPasswordForm() {
           <div className="z-10 mt-auto">
             <blockquote className="space-y-2">
               <p className="text-xl">
-                &ldquo;Check your email for the verification code. We've sent it to help you reset your password securely.&rdquo;
+                &ldquo;Check your email for the verification code. We&apos;ve sent it to help you reset your password securely.&rdquo;
               </p>
               <footer className="font-mono text-sm font-semibold">
                 ~ CodeNotify Security Team
@@ -162,14 +151,14 @@ export function ForgotPasswordForm() {
                 Check your email
               </h1>
               <p className="text-muted-foreground text-base">
-                We've sent a verification code to <strong>{submittedEmail}</strong>
+                We&apos;ve sent a verification code to <strong>{submittedEmail}</strong>
               </p>
             </div>
 
             <div className="space-y-4">
               <p className="text-sm text-muted-foreground text-center">
                 Enter the 6-digit code in the next page to reset your password.
-                If you don't see the email, check your spam folder.
+                If you don&apos;t see the email, check your spam folder.
               </p>
               <Button variant="outline" size="lg" className="w-full" asChild>
                 <Link href="/auth/signin">Back to Sign In</Link>
@@ -194,7 +183,7 @@ export function ForgotPasswordForm() {
         <div className="z-10 mt-auto">
           <blockquote className="space-y-2">
             <p className="text-xl">
-              &ldquo;We'll help you get back on track. Reset your password and continue receiving contest notifications.&rdquo;
+              &ldquo;We&apos;ll help you get back on track. Reset your password and continue receiving contest notifications.&rdquo;
             </p>
             <footer className="font-mono text-sm font-semibold">
               ~ CodeNotify Team
@@ -238,7 +227,7 @@ export function ForgotPasswordForm() {
               Forgot your password?
             </h1>
             <p className="text-muted-foreground text-base">
-              Enter your email address and we'll send you a verification code
+              Enter your email address and we&apos;ll send you a verification code
             </p>
           </div>
 

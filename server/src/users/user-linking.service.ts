@@ -59,13 +59,13 @@ export class UserLinkingService implements OnModuleDestroy {
     return {
       telegram: {
         linked: !!user.telegramChatId,
-        username: user.telegramUsername as string | undefined,
-        chatId: user.telegramChatId as number | undefined,
+        username: user.telegramUsername,
+        chatId: user.telegramChatId,
       },
       discord: {
         linked: !!user.discordId,
-        username: user.discordUsername as string | undefined,
-        discordId: user.discordId as string | undefined,
+        username: user.discordUsername,
+        discordId: user.discordId,
       },
     };
   }
@@ -113,7 +113,7 @@ export class UserLinkingService implements OnModuleDestroy {
   ): Promise<{ success: boolean; message: string }> {
     // Atomic get-and-delete to prevent race conditions (token can only be used once)
     const linkingToken = this.linkingTokens.get(token);
-    
+
     if (!linkingToken) {
       throw new BadRequestException('Invalid or expired linking token');
     }
@@ -239,7 +239,7 @@ export class UserLinkingService implements OnModuleDestroy {
   ): Promise<{ success: boolean; message: string }> {
     // Atomic get-and-delete to prevent race conditions (state can only be used once)
     const linkingToken = this.linkingTokens.get(state);
-    
+
     if (!linkingToken || linkingToken.type !== 'discord') {
       throw new UnauthorizedException('Invalid or expired state token');
     }
@@ -342,7 +342,8 @@ export class UserLinkingService implements OnModuleDestroy {
       if (error instanceof UnauthorizedException) {
         throw error;
       }
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error';
       this.logger.error(`Discord OAuth error: ${errorMessage}`);
       throw new BadRequestException('Failed to link Discord account');
     }

@@ -16,6 +16,7 @@ describe('AuthController', () => {
       name: 'Test User',
       phoneNumber: '+1234567890',
       role: 'user',
+      isEmailVerified: true,
     },
     accessToken: 'access-token',
     refreshToken: 'refresh-token',

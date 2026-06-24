@@ -104,7 +104,7 @@ export class ContestService {
    */
   static async syncAllPlatforms(): Promise<{
     message: string;
-    results: Record<string, { synced: number; updated: number; failed: number }>;
+    results: Record<string, { synced: number; updated: number; failed: number; skipped?: boolean }>;
   }> {
     const response = await httpClient.api.post('/contests/sync/all');
     return response.data;
@@ -122,6 +122,7 @@ export class ContestService {
     synced: number;
     updated: number;
     failed: number;
+    skipped?: boolean;
   }> {
     const response = await httpClient.api.post(`/contests/sync/${platform}`, { forceSync });
     return response.data;

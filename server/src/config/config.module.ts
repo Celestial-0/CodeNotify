@@ -4,7 +4,7 @@ import { z } from 'zod';
 
 const envSchema = z.object({
   // Server Configuration
-  PORT: z.string().default('8000'),
+  PORT: z.string().default('4010'),
   NODE_ENV: z.enum(['dev', 'production', 'test']).default('dev'),
   DB_NAME: z.string().optional(),
   IS_PUBLIC_KEY: z.string().optional(),
@@ -83,7 +83,7 @@ const validateEnv = (config: Record<string, unknown>) => {
   imports: [
     NestConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: ['.env.production', '.env.local'],
+      envFilePath: '.env',
       validate: validateEnv,
     }),
   ],

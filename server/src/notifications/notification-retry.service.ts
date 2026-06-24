@@ -164,21 +164,26 @@ export class NotificationRetryService {
     const notificationPayload = notification.payload;
     const isContestReminder = isContestReminderPayload(notificationPayload);
 
-    const payload: import('./interfaces/notification.interface').NotificationPayload = {
-      userId: (notification.userId as unknown as Types.ObjectId).toString(),
-      contestId: notification.contestId
-        ? (notification.contestId as unknown as Types.ObjectId).toString()
-        : '',
-      contestName: isContestReminder
-        ? notificationPayload.contestName
-        : notification.title,
-      platform: isContestReminder ? notificationPayload.platform : 'Unknown',
-      startTime: isContestReminder ? notificationPayload.startTime : new Date(),
-      hoursUntilStart: isContestReminder
-        ? notificationPayload.hoursUntilStart
-        : 0,
-      contestUrl: isContestReminder ? notificationPayload.contestUrl : undefined,
-    };
+    const payload: import('./interfaces/notification.interface').NotificationPayload =
+      {
+        userId: (notification.userId as unknown as Types.ObjectId).toString(),
+        contestId: notification.contestId
+          ? (notification.contestId as unknown as Types.ObjectId).toString()
+          : '',
+        contestName: isContestReminder
+          ? notificationPayload.contestName
+          : notification.title,
+        platform: isContestReminder ? notificationPayload.platform : 'Unknown',
+        startTime: isContestReminder
+          ? notificationPayload.startTime
+          : new Date(),
+        hoursUntilStart: isContestReminder
+          ? notificationPayload.hoursUntilStart
+          : 0,
+        contestUrl: isContestReminder
+          ? notificationPayload.contestUrl
+          : undefined,
+      };
 
     switch (channel) {
       case NotificationChannel.EMAIL:

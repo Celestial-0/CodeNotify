@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 // import { Badge } from '@/components/ui/badge';
 import { useProfile } from '@/lib/hooks/use-user';
 import { useSyncPlatform, useSyncAllPlatforms } from '@/lib/hooks/use-admin';
-import { RefreshCw, CheckCircle2, XCircle, Loader2 } from 'lucide-react';
+import { RefreshCw, CheckCircle2, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
@@ -71,12 +71,17 @@ export default function AdminContestsPage() {
   const handleSyncAll = async () => {
     setSyncingAll(true);
     try {
-      const results = await syncAllPlatforms.mutateAsync();
-      const totalSynced = Object.values(results).reduce((sum, r) => sum + (r?.synced || 0), 0);
-      const totalUpdated = Object.values(results).reduce((sum, r) => sum + (r?.updated || 0), 0);
+      const response = await syncAllPlatforms.mutateAsync();
+      const platformResults = response.results;
+      const totalSynced = Object.values(platformResults).reduce((sum, r) => sum + (r?.synced || 0), 0);
+      const totalUpdated = Object.values(platformResults).reduce((sum, r) => sum + (r?.updated || 0), 0);
+      const totalSkipped = Object.values(platformResults).reduce(
+        (sum, r) => sum + (r?.skipped ? 1 : 0),
+        0,
+      );
 
       toast.success('All platforms synced successfully', {
-        description: `Total synced: ${totalSynced}, Updated: ${totalUpdated}`,
+        description: `Total synced: ${totalSynced}, Updated: ${totalUpdated}, Skipped: ${totalSkipped}`,
       });
     } catch (error) {
       toast.error('Failed to sync all platforms', {
@@ -185,7 +190,7 @@ export default function AdminContestsPage() {
         </CardHeader>
         <CardContent className="text-sm text-muted-foreground space-y-2">
           <p>
-            • Syncing will fetch the latest contest data from each platform's API
+            • Syncing will fetch the latest contest data from each platform API
           </p>
           <p>
             • Existing contests will be updated with new information

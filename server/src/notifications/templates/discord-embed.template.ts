@@ -95,7 +95,10 @@ export function formatDiscordDigestEmbed(
 ): APIEmbed {
   if (!contests || contests.length === 0) {
     return {
-      title: digestType === 'daily' ? "📅 Today's Contests" : "📅 This Week's Contests",
+      title:
+        digestType === 'daily'
+          ? "📅 Today's Contests"
+          : "📅 This Week's Contests",
       description: 'No upcoming contests found.',
       color: 0x5865f2,
       timestamp: new Date().toISOString(),

@@ -1,17 +1,35 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, type Dispatch, type SetStateAction } from 'react';
 import { useRouter } from 'next/navigation';
+import type { AppRouterInstance } from 'next/dist/shared/lib/app-router-context.shared-runtime';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useProfile } from '@/lib/hooks/use-user';
+import type { UserProfile } from '@/lib/types/user.types';
 import { AuthService } from '@/lib/api/auth.service';
 import { toast } from 'sonner';
 import { Loader2, KeyRound, Eye, EyeOff, Lock } from 'lucide-react';
 import { AxiosError } from 'axios';
+
+type PasswordCreationSectionProps = {
+    profile?: UserProfile;
+    router: AppRouterInstance;
+};
+
+type PasswordResetSectionProps = {
+    profile?: UserProfile;
+    router: AppRouterInstance;
+    showCurrentPassword: boolean;
+    setShowCurrentPassword: Dispatch<SetStateAction<boolean>>;
+    showNewPassword: boolean;
+    setShowNewPassword: Dispatch<SetStateAction<boolean>>;
+    isSubmittingPassword: boolean;
+    setIsSubmittingPassword: Dispatch<SetStateAction<boolean>>;
+};
 
 export function PasswordManagementCard() {
     const { data: profile } = useProfile();
@@ -66,7 +84,7 @@ export function PasswordManagementCard() {
 }
 
 // Password Creation Section for OAuth users
-function PasswordCreationSection({ profile, router }: { profile: any; router: any }) {
+function PasswordCreationSection({ profile, router }: PasswordCreationSectionProps) {
     return (
         <div className="space-y-4">
             <Alert>
@@ -79,7 +97,7 @@ function PasswordCreationSection({ profile, router }: { profile: any; router: an
 
             <div className="space-y-3">
                 <p className="text-sm text-muted-foreground">
-                    To create a password, we'll send a verification code to your email address.
+                    To create a password, we&apos;ll send a verification code to your email address.
                 </p>
                 <Button
                     type="button"
@@ -104,7 +122,7 @@ function PasswordResetSection({
     setShowNewPassword,
     isSubmittingPassword,
     setIsSubmittingPassword,
-}: any) {
+}: PasswordResetSectionProps) {
     const [currentPassword, setCurrentPassword] = useState('');
     const [newPassword, setNewPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');

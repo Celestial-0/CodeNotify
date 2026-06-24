@@ -41,6 +41,7 @@ export abstract class BasePlatformAdapter implements PlatformAdapter {
           () => controller.abort(),
           this.config.timeout,
         );
+        timeoutId.unref?.();
 
         const response = await fetch(url, {
           ...options,
@@ -49,9 +50,9 @@ export abstract class BasePlatformAdapter implements PlatformAdapter {
             'User-Agent': HTTP_CONFIG.USER_AGENT,
             ...options?.headers,
           },
+        }).finally(() => {
+          clearTimeout(timeoutId);
         });
-
-        clearTimeout(timeoutId);
 
         if (!response.ok) {
           throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -96,7 +97,10 @@ export abstract class BasePlatformAdapter implements PlatformAdapter {
    * Utility: Sleep for specified milliseconds
    */
   protected sleep(ms: number): Promise<void> {
-    return new Promise((resolve) => setTimeout(resolve, ms));
+    return new Promise((resolve) => {
+      const timer = setTimeout(resolve, ms);
+      timer.unref?.();
+    });
   }
 
   /**

@@ -4,17 +4,21 @@ import { ConfigService } from '@nestjs/config';
 import { ContestsService } from './contests.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { SCHEDULER, NOTIFICATIONS } from '../common/constants';
+import { SchedulerRegistry } from '@nestjs/schedule';
+import { CronJob } from 'cron';
 
 @Injectable()
 export class ContestSchedulerService {
   private readonly logger = new Logger(ContestSchedulerService.name);
   private readonly syncEnabled: boolean;
   private readonly syncInterval: string;
+  private readonly syncJobName = 'sync-all-contests-dynamic';
 
   constructor(
     private readonly contestsService: ContestsService,
     private readonly notificationsService: NotificationsService,
     private readonly configService: ConfigService,
+    private readonly schedulerRegistry: SchedulerRegistry,
   ) {
     this.syncEnabled = this.configService.get<boolean>(
       'CONTEST_SYNC_ENABLED',
@@ -28,16 +32,51 @@ export class ContestSchedulerService {
     this.logger.log(
       `Contest Scheduler initialized - Enabled: ${this.syncEnabled}, Interval: ${this.syncInterval}`,
     );
+
+    this.registerContestSyncJob();
+  }
+
+  private registerContestSyncJob(): void {
+    if (!this.syncEnabled) {
+      this.logger.log('Contest sync cron registration skipped (disabled)');
+      return;
+    }
+
+    try {
+      const existingJob = this.schedulerRegistry.doesExist(
+        'cron',
+        this.syncJobName,
+      );
+      if (existingJob) {
+        this.schedulerRegistry.deleteCronJob(this.syncJobName);
+      }
+
+      const job = new CronJob(
+        this.syncInterval,
+        () => {
+          void this.handleContestSync();
+        },
+        null,
+        false,
+        'UTC',
+      );
+
+      this.schedulerRegistry.addCronJob(this.syncJobName, job);
+      job.start();
+      this.logger.log(
+        `Registered contest sync cron with expression: ${this.syncInterval}`,
+      );
+    } catch (error) {
+      this.logger.error(
+        `Failed to register contest sync cron (${this.syncInterval}): ${error instanceof Error ? error.message : 'Unknown error'}`,
+      );
+    }
   }
 
   /**
    * Scheduled job to sync contests from all platforms
    * Runs every 6 hours
    */
-  @Cron(CronExpression.EVERY_6_HOURS, {
-    name: 'sync-all-contests',
-    timeZone: 'UTC',
-  })
   async handleContestSync(): Promise<void> {
     if (!this.syncEnabled) {
       this.logger.debug('Contest sync is disabled via configuration');
@@ -47,12 +86,14 @@ export class ContestSchedulerService {
     this.logger.log('Starting scheduled contest sync');
 
     try {
-      const results = await this.contestsService.syncAllPlatforms();
+      const results = await this.contestsService.syncAllPlatformsWithOptions({
+        source: 'scheduler',
+      });
 
       // Log results for each platform
       Object.entries(results).forEach(([platform, stats]) => {
         this.logger.log(
-          `${platform}: ${stats.synced} new, ${stats.updated} updated, ${stats.failed} failed`,
+          `${platform}: ${stats.synced} new, ${stats.updated} updated, ${stats.failed} failed${stats.skipped ? ' (skipped)' : ''}`,
         );
       });
 
@@ -62,12 +103,13 @@ export class ContestSchedulerService {
           synced: acc.synced + stats.synced,
           updated: acc.updated + stats.updated,
           failed: acc.failed + stats.failed,
+          skipped: acc.skipped + (stats.skipped ? 1 : 0),
         }),
-        { synced: 0, updated: 0, failed: 0 },
+        { synced: 0, updated: 0, failed: 0, skipped: 0 },
       );
 
       this.logger.log(
-        `Scheduled sync completed - Total: ${totals.synced} new, ${totals.updated} updated, ${totals.failed} failed`,
+        `Scheduled sync completed - Total: ${totals.synced} new, ${totals.updated} updated, ${totals.failed} failed, ${totals.skipped} skipped`,
       );
     } catch (error) {
       this.logger.error(
@@ -109,13 +151,11 @@ export class ContestSchedulerService {
       const cutoffDate = new Date();
       cutoffDate.setDate(cutoffDate.getDate() - daysToKeep);
 
-      const result = await this.contestsService['contestModel'].deleteMany({
-        endTime: { $lt: cutoffDate },
-        phase: 'FINISHED',
-      });
+      const deletedCount =
+        await this.contestsService.cleanupOldFinishedContests(cutoffDate);
 
       this.logger.log(
-        `Cleanup completed - Deleted ${result.deletedCount} old contests`,
+        `Cleanup completed - Deleted ${deletedCount} old contests`,
       );
     } catch (error) {
       this.logger.error(
@@ -156,14 +196,11 @@ export class ContestSchedulerService {
       );
 
       // Find contests starting within the notification window
-      const upcomingContests = await this.contestsService['contestModel'].find({
-        startTime: {
-          $gte: now,
-          $lte: windowEnd,
-        },
-        phase: 'BEFORE',
-        isActive: true,
-      });
+      const upcomingContests =
+        await this.contestsService.findUpcomingForNotificationWindow(
+          now,
+          windowEnd,
+        );
 
       if (upcomingContests.length > 0) {
         this.logger.log(
@@ -173,6 +210,10 @@ export class ContestSchedulerService {
         // Send notifications using the notifications service
         await this.notificationsService.notifyUpcomingContests(
           upcomingContests,
+        );
+
+        await this.contestsService.markContestsAsNotified(
+          upcomingContests.map((contest) => String(contest._id)),
         );
       }
     } catch (error) {
@@ -311,6 +352,15 @@ export class ContestSchedulerService {
    */
   async triggerManualSync(): Promise<void> {
     this.logger.log('Manual contest sync triggered');
-    await this.handleContestSync();
+    const results = await this.contestsService.syncAllPlatformsWithOptions({
+      source: 'manual',
+      forceSync: true,
+    });
+
+    Object.entries(results).forEach(([platform, stats]) => {
+      this.logger.log(
+        `Manual sync - ${platform}: ${stats.synced} new, ${stats.updated} updated, ${stats.failed} failed${stats.skipped ? ' (skipped)' : ''}`,
+      );
+    });
   }
 }

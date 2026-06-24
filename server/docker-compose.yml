@@ -7,12 +7,11 @@ services:
     container_name: server
     restart: unless-stopped
     ports:
-      - "8000:8000"
+      - "4010:4010"
     env_file:
-      - .env.production
-      - .env.local
+      - .env
     healthcheck:
-      test: ["CMD", "node", "-e", "require('http').get('http://localhost:8000/health', (r) => {if (r.statusCode !== 200) throw new Error(r.statusCode)})"]
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:4010/health', (r) => {if (r.statusCode !== 200) throw new Error(r.statusCode)})"]
       interval: 30s
       timeout: 10s
       retries: 3

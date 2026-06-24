@@ -23,11 +23,11 @@ describe('CommonModule', () => {
     expect(module).toBeInstanceOf(TestingModule);
   });
 
-  it('should have no providers by default', () => {
+  it('should have correct providers registered', () => {
     const providers =
       (Reflect.getMetadata('providers', CommonModule) as unknown[]) || [];
     expect(Array.isArray(providers)).toBe(true);
-    expect(providers.length).toBe(0);
+    expect(providers.length).toBe(3);
   });
 
   it('should have no controllers by default', () => {
@@ -44,11 +44,11 @@ describe('CommonModule', () => {
     expect(imports.length).toBe(0);
   });
 
-  it('should have no exports by default', () => {
+  it('should have correct exports registered', () => {
     const exports =
       (Reflect.getMetadata('exports', CommonModule) as unknown[]) || [];
     expect(Array.isArray(exports)).toBe(true);
-    expect(exports.length).toBe(0);
+    expect(exports.length).toBe(3);
   });
 
   it('should be importable in other modules', async () => {

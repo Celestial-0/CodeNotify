@@ -4,6 +4,7 @@ import {
   useQuery,
   useMutation,
   useQueryClient,
+  QueryClient,
   UseQueryOptions,
   UseMutationOptions,
 } from '@tanstack/react-query';
@@ -22,6 +23,42 @@ import type {
   HealthCheckResult,
 } from '@/lib/types/admin.types';
 import type { CreateContestDto, ContestResponseDto } from '@/lib/types/contest.types';
+
+function invalidateContestQueries(
+  queryClient: QueryClient,
+  platform?: string,
+) {
+  queryClient.invalidateQueries({
+    predicate: (query) => {
+      const key = query.queryKey as unknown[];
+      if (key[0] !== 'contests') {
+        return false;
+      }
+
+      if (!platform) {
+        return true;
+      }
+
+      const section = key[1];
+
+      if (section === 'platformStats') {
+        return key[2] === platform;
+      }
+
+      if (section === 'upcoming' || section === 'running' || section === 'finished') {
+        return key[2] === platform || key[2] === undefined;
+      }
+
+      if (section === 'list') {
+        const filters = key[2] as { platform?: string } | undefined;
+        return !filters?.platform || filters.platform === platform;
+      }
+
+      return section === 'stats';
+    },
+    refetchType: 'active',
+  });
+}
 
 // ==================== Query Keys ====================
 
@@ -113,7 +150,7 @@ export function useSyncAllPlatforms(
   return useMutation<AllPlatformsSyncResult, Error, void>({
     mutationFn: () => ContestService.syncAllPlatforms(),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['contests'] });
+      invalidateContestQueries(queryClient);
     },
     ...options,
   });
@@ -135,8 +172,8 @@ export function useSyncPlatform(
   >({
     mutationFn: ({ platform, forceSync }) =>
       ContestService.syncPlatform(platform, forceSync),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['contests'] });
+    onSuccess: (_data, variables) => {
+      invalidateContestQueries(queryClient, variables.platform);
     },
     ...options,
   });

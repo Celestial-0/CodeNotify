@@ -5,6 +5,7 @@
 
 // Core module
 export * from './integrations.module';
+export * from './integrations.controller';
 
 // Platform adapters
 export * from './platforms/platforms.module';

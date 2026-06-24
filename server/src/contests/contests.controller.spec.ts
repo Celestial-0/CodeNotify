@@ -66,7 +66,7 @@ describe('ContestsController', () => {
       getContestStats: jest.fn(),
       getPlatformStats: jest.fn(),
       syncPlatform: jest.fn(),
-      syncAllPlatforms: jest.fn(),
+      syncAllPlatformsWithOptions: jest.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -571,7 +571,6 @@ describe('ContestsController', () => {
 
   describe('syncPlatform', () => {
     const syncRequest: SyncRequestDto = {
-      platform: ContestPlatform.CODEFORCES,
       forceSync: false,
     };
 
@@ -586,6 +585,10 @@ describe('ContestsController', () => {
 
       expect(contestsService.syncPlatform).toHaveBeenCalledWith(
         ContestPlatform.CODEFORCES,
+        {
+          forceSync: false,
+          source: 'api',
+        },
       );
       expect(result).toEqual({
         message: `Sync completed for ${ContestPlatform.CODEFORCES}`,
@@ -610,11 +613,15 @@ describe('ContestsController', () => {
         [ContestPlatform.LEETCODE]: { synced: 2, updated: 1, failed: 0 },
       };
 
-      contestsService.syncAllPlatforms.mockResolvedValue(mockResults);
+      contestsService.syncAllPlatformsWithOptions.mockResolvedValue(
+        mockResults,
+      );
 
       const result = await controller.syncAllPlatforms();
 
-      expect(contestsService.syncAllPlatforms).toHaveBeenCalled();
+      expect(contestsService.syncAllPlatformsWithOptions).toHaveBeenCalledWith({
+        source: 'api',
+      });
       expect(result).toEqual({
         message: 'Sync completed for all platforms',
         results: mockResults,
@@ -622,7 +629,7 @@ describe('ContestsController', () => {
     });
 
     it('should handle sync all errors', async () => {
-      contestsService.syncAllPlatforms.mockRejectedValue(
+      contestsService.syncAllPlatformsWithOptions.mockRejectedValue(
         new Error('Sync all failed'),
       );
 

@@ -6,7 +6,10 @@ import { TelegramController } from './telegram.controller';
 import { User, UserSchema } from '../../users/schemas/user.schema';
 
 @Module({
-  imports: [ConfigModule, MongooseModule.forFeature([{ name: User.name, schema: UserSchema }])],
+  imports: [
+    ConfigModule,
+    MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]),
+  ],
   controllers: [TelegramController],
   providers: [TelegramService],
   exports: [TelegramService],

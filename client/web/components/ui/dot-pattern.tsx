@@ -90,6 +90,11 @@ export function DotPattern({
     return () => window.removeEventListener("resize", updateDimensions)
   }, [])
 
+  const getDeterministicValue = (seed: number): number => {
+    const x = Math.sin(seed * 12.9898) * 43758.5453
+    return x - Math.floor(x)
+  }
+
   const dots = Array.from(
     {
       length:
@@ -99,11 +104,12 @@ export function DotPattern({
     (_, i) => {
       const col = i % Math.ceil(dimensions.width / width)
       const row = Math.floor(i / Math.ceil(dimensions.width / width))
+      const seed = i + col * 97 + row * 31 + 1
       return {
         x: col * width + cx,
         y: row * height + cy,
-        delay: Math.random() * 5,
-        duration: Math.random() * 3 + 2,
+        delay: getDeterministicValue(seed) * 5,
+        duration: getDeterministicValue(seed + 11) * 3 + 2,
       }
     }
   )
@@ -124,7 +130,7 @@ export function DotPattern({
           <stop offset="100%" stopColor="currentColor" stopOpacity="0" />
         </radialGradient>
       </defs>
-      {dots.map((dot, index) => (
+      {dots.map((dot) => (
         <motion.circle
           key={`${dot.x}-${dot.y}`}
           cx={dot.x}

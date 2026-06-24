@@ -5,7 +5,7 @@
 
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/lib/store/auth-store";
 import { Loader2 } from "lucide-react";
@@ -22,30 +22,21 @@ export function ProtectedRoute({
   redirectTo = "/auth/signin",
 }: ProtectedRouteProps) {
   const router = useRouter();
-  const { isAuthenticated, isLoading, initialize, user } = useAuthStore();
-  const [isHydrated, setIsHydrated] = useState(false);
+  const { isAuthenticated, isLoading, initialize } = useAuthStore();
 
   useEffect(() => {
-    // Wait for Zustand store to hydrate from localStorage
-    setIsHydrated(true);
-  }, []);
+    initialize();
+  }, [initialize]);
 
   useEffect(() => {
-    if (isHydrated) {
-      // Initialize auth state after hydration
-      initialize();
-    }
-  }, [isHydrated, initialize]);
-
-  useEffect(() => {
-    if (isHydrated && !isLoading && requireAuth && !isAuthenticated) {
+    if (!isLoading && requireAuth && !isAuthenticated) {
       // Redirect to sign in if not authenticated
       router.push(redirectTo);
     }
-  }, [isAuthenticated, isLoading, requireAuth, redirectTo, router, isHydrated]);
+  }, [isAuthenticated, isLoading, requireAuth, redirectTo, router]);
 
   // Show loading spinner while hydrating or checking authentication
-  if (!isHydrated || isLoading) {
+  if (isLoading) {
     return (
       <div className="flex h-screen items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />

@@ -401,10 +401,13 @@ describe('LeetCodeAdapter', () => {
       };
 
       const result = adapter.transformToInternalFormat(lcContest);
+      const metadata = result.platformMetadata as
+        | { cardImg?: string }
+        | undefined;
 
       expect(result.platformId).toBe('test-contest');
       expect(result.description).toBeUndefined();
-      expect(result.platformMetadata?.cardImg).toBeUndefined();
+      expect(metadata?.cardImg).toBeUndefined();
     });
 
     it('should include platform metadata', () => {

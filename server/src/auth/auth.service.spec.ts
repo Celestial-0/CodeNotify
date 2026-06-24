@@ -1,22 +1,21 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { ConflictException, UnauthorizedException } from '@nestjs/common';
-import * as bcrypt from 'bcrypt';
 import { Types } from 'mongoose';
 import { AuthService } from './auth.service';
 import { UsersService } from '../users/users.service';
+import { PasswordService } from './services/password.service';
+import { TokenService } from './services/token.service';
+import { OtpService } from './otp/otp.service';
 import { CreateUserDto, SigninDto } from './dto/auth.dto';
 import type { UserDocument } from '../users/schemas/user.schema';
-
-// Mock bcrypt
-jest.mock('bcrypt');
-const mockedBcrypt = bcrypt as jest.Mocked<typeof bcrypt>;
 
 describe('AuthService', () => {
   let service: AuthService;
   let usersService: jest.Mocked<UsersService>;
-  let jwtService: jest.Mocked<JwtService>;
+  let passwordService: jest.Mocked<PasswordService>;
+  let tokenService: jest.Mocked<TokenService>;
+  let otpService: jest.Mocked<OtpService>;
   let configService: jest.Mocked<ConfigService>;
 
   const mockUser: Partial<UserDocument> = {
@@ -60,9 +59,19 @@ describe('AuthService', () => {
       getUserById: jest.fn(),
     };
 
-    const mockJwtService = {
-      signAsync: jest.fn(),
-      verifyAsync: jest.fn(),
+    const mockPasswordService = {
+      hashPassword: jest.fn(),
+      verifyPassword: jest.fn(),
+    };
+
+    const mockTokenService = {
+      generateTokens: jest.fn(),
+      verifyRefreshToken: jest.fn(),
+    };
+
+    const mockOtpService = {
+      createPasswordResetOtp: jest.fn(),
+      verifyPasswordResetOtp: jest.fn(),
     };
 
     const mockConfigService = {
@@ -73,14 +82,18 @@ describe('AuthService', () => {
       providers: [
         AuthService,
         { provide: UsersService, useValue: mockUsersService },
-        { provide: JwtService, useValue: mockJwtService },
+        { provide: PasswordService, useValue: mockPasswordService },
+        { provide: TokenService, useValue: mockTokenService },
+        { provide: OtpService, useValue: mockOtpService },
         { provide: ConfigService, useValue: mockConfigService },
       ],
     }).compile();
 
     service = module.get<AuthService>(AuthService);
     usersService = module.get(UsersService);
-    jwtService = module.get(JwtService);
+    passwordService = module.get(PasswordService);
+    tokenService = module.get(TokenService);
+    otpService = module.get(OtpService);
     configService = module.get(ConfigService);
 
     // Setup default mocks
@@ -104,11 +117,12 @@ describe('AuthService', () => {
     it('should successfully create a new user', async () => {
       // Arrange
       usersService.findByEmail.mockResolvedValue(null);
-      mockedBcrypt.hash.mockResolvedValue('hashedPassword' as never);
+      passwordService.hashPassword.mockResolvedValue('hashedPassword');
       usersService.createUser.mockResolvedValue(mockUser as UserDocument);
-      jwtService.signAsync
-        .mockResolvedValueOnce('access-token')
-        .mockResolvedValueOnce('refresh-token');
+      tokenService.generateTokens.mockResolvedValue({
+        accessToken: 'access-token',
+        refreshToken: 'refresh-token',
+      });
       usersService.updateRefreshToken.mockResolvedValue(undefined);
 
       // Act
@@ -118,15 +132,18 @@ describe('AuthService', () => {
       expect(usersService.findByEmail).toHaveBeenCalledWith(
         mockCreateUserDto.email,
       );
-      expect(mockedBcrypt.hash).toHaveBeenCalledWith(
+      expect(passwordService.hashPassword).toHaveBeenCalledWith(
         mockCreateUserDto.password,
-        12,
       );
       expect(usersService.createUser).toHaveBeenCalledWith({
         ...mockCreateUserDto,
         password: 'hashedPassword',
       });
-      expect(jwtService.signAsync).toHaveBeenCalledTimes(2);
+      expect(tokenService.generateTokens).toHaveBeenCalledWith(
+        mockUser.id,
+        mockUser.email,
+        mockUser.role,
+      );
       expect(usersService.updateRefreshToken).toHaveBeenCalledWith(
         mockUser.id,
         'refresh-token',
@@ -163,10 +180,11 @@ describe('AuthService', () => {
     it('should successfully sign in a user', async () => {
       // Arrange
       usersService.findByEmail.mockResolvedValue(mockUser as UserDocument);
-      mockedBcrypt.compare.mockResolvedValue(true as never);
-      jwtService.signAsync
-        .mockResolvedValueOnce('access-token')
-        .mockResolvedValueOnce('refresh-token');
+      passwordService.verifyPassword.mockResolvedValue(true);
+      tokenService.generateTokens.mockResolvedValue({
+        accessToken: 'access-token',
+        refreshToken: 'refresh-token',
+      });
       usersService.updateRefreshToken.mockResolvedValue(undefined);
       usersService.updateLastLogin.mockResolvedValue(undefined);
 
@@ -177,11 +195,15 @@ describe('AuthService', () => {
       expect(usersService.findByEmail).toHaveBeenCalledWith(
         mockSigninDto.email,
       );
-      expect(mockedBcrypt.compare).toHaveBeenCalledWith(
+      expect(passwordService.verifyPassword).toHaveBeenCalledWith(
         mockSigninDto.password,
         mockUser.password,
       );
-      expect(jwtService.signAsync).toHaveBeenCalledTimes(2);
+      expect(tokenService.generateTokens).toHaveBeenCalledWith(
+        mockUser.id,
+        mockUser.email,
+        mockUser.role,
+      );
       expect(usersService.updateRefreshToken).toHaveBeenCalledWith(
         mockUser.id,
         'refresh-token',
@@ -211,13 +233,13 @@ describe('AuthService', () => {
       expect(usersService.findByEmail).toHaveBeenCalledWith(
         mockSigninDto.email,
       );
-      expect(mockedBcrypt.compare).not.toHaveBeenCalled();
+      expect(passwordService.verifyPassword).not.toHaveBeenCalled();
     });
 
     it('should throw UnauthorizedException if password is invalid', async () => {
       // Arrange
       usersService.findByEmail.mockResolvedValue(mockUser as UserDocument);
-      mockedBcrypt.compare.mockResolvedValue(false as never);
+      passwordService.verifyPassword.mockResolvedValue(false);
 
       // Act & Assert
       await expect(service.signin(mockSigninDto)).rejects.toThrow(
@@ -226,7 +248,7 @@ describe('AuthService', () => {
       expect(usersService.findByEmail).toHaveBeenCalledWith(
         mockSigninDto.email,
       );
-      expect(mockedBcrypt.compare).toHaveBeenCalledWith(
+      expect(passwordService.verifyPassword).toHaveBeenCalledWith(
         mockSigninDto.password,
         mockUser.password,
       );
@@ -286,7 +308,7 @@ describe('AuthService', () => {
       const refreshToken = 'valid-refresh-token';
       const userWithRefreshToken = {
         ...mockUser,
-        refreshToken: refreshToken, // Store plain token now
+        refreshToken: refreshToken,
       } as UserDocument;
 
       const jwtPayload = {
@@ -297,22 +319,25 @@ describe('AuthService', () => {
         exp: Math.floor(Date.now() / 1000) + 7 * 24 * 60 * 60,
       };
 
-      jwtService.verifyAsync.mockResolvedValue(jwtPayload);
+      tokenService.verifyRefreshToken.mockResolvedValue(jwtPayload);
       usersService.getUserById.mockResolvedValue(userWithRefreshToken);
-      jwtService.signAsync
-        .mockResolvedValueOnce('new-access-token')
-        .mockResolvedValueOnce('new-refresh-token');
+      tokenService.generateTokens.mockResolvedValue({
+        accessToken: 'new-access-token',
+        refreshToken: 'new-refresh-token',
+      });
       usersService.updateRefreshToken.mockResolvedValue(undefined);
 
       // Act
       const result = await service.refreshAccessToken(refreshToken);
 
       // Assert
-      expect(jwtService.verifyAsync).toHaveBeenCalledWith(refreshToken, {
-        secret: 'test-refresh-secret',
-      });
+      expect(tokenService.verifyRefreshToken).toHaveBeenCalledWith(refreshToken);
       expect(usersService.getUserById).toHaveBeenCalledWith(mockUser.id);
-      expect(jwtService.signAsync).toHaveBeenCalledTimes(2); // Both tokens regenerated
+      expect(tokenService.generateTokens).toHaveBeenCalledWith(
+        mockUser.id,
+        mockUser.email,
+        mockUser.role,
+      );
       expect(usersService.updateRefreshToken).toHaveBeenCalledWith(
         mockUser.id,
         'new-refresh-token',
@@ -326,15 +351,13 @@ describe('AuthService', () => {
     it('should throw UnauthorizedException if JWT verification fails', async () => {
       // Arrange
       const refreshToken = 'invalid-refresh-token';
-      jwtService.verifyAsync.mockRejectedValue(new Error('Invalid token'));
+      tokenService.verifyRefreshToken.mockRejectedValue(new Error('Invalid token'));
 
       // Act & Assert
       await expect(service.refreshAccessToken(refreshToken)).rejects.toThrow(
         UnauthorizedException,
       );
-      expect(jwtService.verifyAsync).toHaveBeenCalledWith(refreshToken, {
-        secret: 'test-refresh-secret',
-      });
+      expect(tokenService.verifyRefreshToken).toHaveBeenCalledWith(refreshToken);
       expect(usersService.getUserById).not.toHaveBeenCalled();
     });
 
@@ -347,14 +370,14 @@ describe('AuthService', () => {
         role: 'user',
       };
 
-      jwtService.verifyAsync.mockResolvedValue(jwtPayload);
+      tokenService.verifyRefreshToken.mockResolvedValue(jwtPayload);
       usersService.getUserById.mockResolvedValue(null);
 
       // Act & Assert
       await expect(service.refreshAccessToken(refreshToken)).rejects.toThrow(
         UnauthorizedException,
       );
-      expect(jwtService.verifyAsync).toHaveBeenCalled();
+      expect(tokenService.verifyRefreshToken).toHaveBeenCalled();
       expect(usersService.getUserById).toHaveBeenCalledWith(
         'non-existent-user',
       );
@@ -373,14 +396,14 @@ describe('AuthService', () => {
         role: mockUser.role,
       };
 
-      jwtService.verifyAsync.mockResolvedValue(jwtPayload);
+      tokenService.verifyRefreshToken.mockResolvedValue(jwtPayload);
       usersService.getUserById.mockResolvedValue(userWithoutRefreshToken);
 
       // Act & Assert
       await expect(service.refreshAccessToken(refreshToken)).rejects.toThrow(
         UnauthorizedException,
       );
-      expect(jwtService.verifyAsync).toHaveBeenCalled();
+      expect(tokenService.verifyRefreshToken).toHaveBeenCalled();
       expect(usersService.getUserById).toHaveBeenCalledWith(mockUser.id);
     });
 
@@ -397,16 +420,16 @@ describe('AuthService', () => {
         role: mockUser.role,
       };
 
-      jwtService.verifyAsync.mockResolvedValue(jwtPayload);
+      tokenService.verifyRefreshToken.mockResolvedValue(jwtPayload);
       usersService.getUserById.mockResolvedValue(userWithRefreshToken);
 
       // Act & Assert
       await expect(service.refreshAccessToken(refreshToken)).rejects.toThrow(
         UnauthorizedException,
       );
-      expect(jwtService.verifyAsync).toHaveBeenCalled();
+      expect(tokenService.verifyRefreshToken).toHaveBeenCalled();
       expect(usersService.getUserById).toHaveBeenCalledWith(mockUser.id);
-      expect(jwtService.signAsync).not.toHaveBeenCalled();
+      expect(tokenService.generateTokens).not.toHaveBeenCalled();
     });
   });
 
@@ -416,14 +439,14 @@ describe('AuthService', () => {
       const email = 'test@example.com';
       const password = 'password123';
       usersService.findByEmail.mockResolvedValue(mockUser as UserDocument);
-      mockedBcrypt.compare.mockResolvedValue(true as never);
+      passwordService.verifyPassword.mockResolvedValue(true);
 
       // Act
       const result = await service.validateUser(email, password);
 
       // Assert
       expect(usersService.findByEmail).toHaveBeenCalledWith(email);
-      expect(mockedBcrypt.compare).toHaveBeenCalledWith(
+      expect(passwordService.verifyPassword).toHaveBeenCalledWith(
         password,
         mockUser.password,
       );
@@ -443,7 +466,7 @@ describe('AuthService', () => {
 
       // Assert
       expect(usersService.findByEmail).toHaveBeenCalledWith(email);
-      expect(mockedBcrypt.compare).not.toHaveBeenCalled();
+      expect(passwordService.verifyPassword).not.toHaveBeenCalled();
       expect(result).toBeNull();
     });
 
@@ -452,14 +475,14 @@ describe('AuthService', () => {
       const email = 'test@example.com';
       const password = 'wrongpassword';
       usersService.findByEmail.mockResolvedValue(mockUser as UserDocument);
-      mockedBcrypt.compare.mockResolvedValue(false as never);
+      passwordService.verifyPassword.mockResolvedValue(false);
 
       // Act
       const result = await service.validateUser(email, password);
 
       // Assert
       expect(usersService.findByEmail).toHaveBeenCalledWith(email);
-      expect(mockedBcrypt.compare).toHaveBeenCalledWith(
+      expect(passwordService.verifyPassword).toHaveBeenCalledWith(
         password,
         mockUser.password,
       );
@@ -471,9 +494,9 @@ describe('AuthService', () => {
     it('should handle JWT token generation failure during signup', async () => {
       // Arrange
       usersService.findByEmail.mockResolvedValue(null);
-      mockedBcrypt.hash.mockResolvedValue('hashedPassword' as never);
+      passwordService.hashPassword.mockResolvedValue('hashedPassword');
       usersService.createUser.mockResolvedValue(mockUser as UserDocument);
-      jwtService.signAsync.mockRejectedValue(
+      tokenService.generateTokens.mockRejectedValue(
         new Error('JWT generation failed'),
       );
 
@@ -488,8 +511,8 @@ describe('AuthService', () => {
     it('should handle JWT token generation failure during signin', async () => {
       // Arrange
       usersService.findByEmail.mockResolvedValue(mockUser as any);
-      mockedBcrypt.compare.mockResolvedValue(true as never);
-      jwtService.signAsync.mockRejectedValue(
+      passwordService.verifyPassword.mockResolvedValue(true);
+      tokenService.generateTokens.mockRejectedValue(
         new Error('JWT generation failed'),
       );
 
@@ -514,9 +537,9 @@ describe('AuthService', () => {
         role: mockUser.role,
       };
 
-      jwtService.verifyAsync.mockResolvedValue(jwtPayload as any);
+      tokenService.verifyRefreshToken.mockResolvedValue(jwtPayload as any);
       usersService.getUserById.mockResolvedValue(userWithRefreshToken as any);
-      jwtService.signAsync.mockRejectedValue(
+      tokenService.generateTokens.mockRejectedValue(
         new Error('JWT generation failed'),
       );
 
@@ -530,7 +553,7 @@ describe('AuthService', () => {
     it('should handle bcrypt hashing failure during signup', async () => {
       // Arrange
       usersService.findByEmail.mockResolvedValue(null);
-      mockedBcrypt.hash.mockRejectedValue(new Error('Hashing failed') as never);
+      passwordService.hashPassword.mockRejectedValue(new Error('Hashing failed'));
 
       // Act & Assert
       await expect(service.signup(mockCreateUserDto)).rejects.toThrow(
@@ -542,15 +565,15 @@ describe('AuthService', () => {
     it('should handle bcrypt comparison failure during signin', async () => {
       // Arrange
       usersService.findByEmail.mockResolvedValue(mockUser as any);
-      mockedBcrypt.compare.mockRejectedValue(
-        new Error('Comparison failed') as never,
+      passwordService.verifyPassword.mockRejectedValue(
+        new Error('Comparison failed'),
       );
 
       // Act & Assert
       await expect(service.signin(mockSigninDto)).rejects.toThrow(
         'Comparison failed',
       );
-      expect(jwtService.signAsync).not.toHaveBeenCalled();
+      expect(tokenService.generateTokens).not.toHaveBeenCalled();
     });
   });
 });
