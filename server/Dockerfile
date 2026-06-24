@@ -1,56 +1,47 @@
 # Build stage
-FROM node:25-alpine AS builder
+FROM oven/bun:1-alpine AS builder
 
 WORKDIR /app
 
-# Copy package files
-COPY package*.json ./
+# Copy package and lock files
+COPY package.json bun.lockb* ./
 
 # Install dependencies
-RUN npm ci
+RUN bun install --frozen-lockfile
 
 # Copy source code
 COPY . .
 
 # Build the application
-RUN npm run build
+RUN bun run build
 
 # Production stage
-FROM node:25-alpine
+FROM oven/bun:1-alpine
 
 WORKDIR /app
 
-# Install dumb-init to handle signals properly
-RUN apk add --no-cache dumb-init
-
-# Copy package files from source
-COPY --from=builder /app/package*.json ./
+# Copy package and lock files
+COPY package.json bun.lockb* ./
 
 # Install production dependencies only
-RUN npm ci --only=production
+RUN bun install --production --frozen-lockfile
 
 # Copy built application from builder
 COPY --from=builder /app/dist ./dist
 
-# Copy environment files (.env.* if they exist - using sh to handle missing files gracefully)
+# Copy environment files (.env if it exists)
 RUN true
 COPY .env* ./
 
-# Create non-root user for security
-RUN addgroup -g 1001 -S nodejs && \
-    adduser -S nestjs -u 1001
-
-USER nestjs
+# Use the non-root bun user from the official image
+USER bun
 
 # Expose port
 EXPOSE 4010
 
-# Health check
+# Health check using bun to fetch
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-    CMD node -e "require('http').get('http://localhost:4010/health', (r) => {if (r.statusCode !== 200) throw new Error(r.statusCode)})"
-
-# Use dumb-init to handle signals
-ENTRYPOINT ["dumb-init", "--"]
+    CMD bun -e "fetch('http://localhost:4010/health').then(r => {if (r.status !== 200) throw r.status})"
 
 # Start the application
-CMD ["node", "dist/main"]
+CMD ["bun", "run", "dist/main.js"]
