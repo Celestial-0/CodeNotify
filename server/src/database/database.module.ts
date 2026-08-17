@@ -1,7 +1,7 @@
 import { Module, Logger } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ConfigService } from '@nestjs/config';
-import { Connection, ConnectionStates } from 'mongoose';
+import { Connection } from 'mongoose';
 import { DATABASE, getDatabaseName } from '../common/constants';
 
 @Module({
@@ -18,9 +18,9 @@ import { DATABASE, getDatabaseName } from '../common/constants';
         const dbName = getDatabaseName(nodeEnv, baseDbName);
 
         const uri =
-          configService.get<string>('MONGO_URI', DATABASE.MONGO_URI) +
-          '/' +
-          dbName;
+          configService.get<string>('MONGO_URI') ||
+          DATABASE.MONGO_URI ||
+          'mongodb://localhost:27017';
 
         logger.log(`Connecting to MongoDB...`);
         logger.log(`Environment: ${nodeEnv}`);
@@ -28,6 +28,7 @@ import { DATABASE, getDatabaseName } from '../common/constants';
 
         return {
           uri,
+          dbName,
           connectionFactory: (connection: Connection) => {
             connection.on('connected', () => {
               logger.log('MongoDB connected successfully');
@@ -42,7 +43,7 @@ import { DATABASE, getDatabaseName } from '../common/constants';
             });
 
             // Log immediate connection state
-            if (connection.readyState === ConnectionStates.connected) {
+            if (connection.readyState === 1) {
               logger.log('MongoDB connected successfully');
             }
 

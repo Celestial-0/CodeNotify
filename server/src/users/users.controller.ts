@@ -10,6 +10,7 @@ import {
   HttpStatus,
   Query,
   Patch,
+  ForbiddenException,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -111,7 +112,10 @@ export class UsersController {
   @Get(':id')
   @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.OK)
-  async getUserById(@Param() params: GetUserByIdDto): Promise<{
+  async getUserById(
+    @Param() params: GetUserByIdDto,
+    @CurrentUser() currentUser: UserDocument,
+  ): Promise<{
     id: string;
     email: string;
     name: string;
@@ -121,6 +125,9 @@ export class UsersController {
     createdAt: Date;
     updatedAt: Date;
   }> {
+    if (currentUser.role !== 'admin' && currentUser.id !== params.id) {
+      throw new ForbiddenException('Access denied');
+    }
     return this.usersService.getUserByIdWithFormatting(params.id);
   }
 

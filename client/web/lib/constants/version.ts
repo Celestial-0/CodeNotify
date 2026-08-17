@@ -4,7 +4,7 @@
  * This version should match package.json
  */
 
-export const APP_VERSION = '0.1.0-beta';
-export const APP_VERSION_DISPLAY = 'Beta v0.1';
+export const APP_VERSION = '1.0.0';
+export const APP_VERSION_DISPLAY = 'v1.0.0';
 export const APP_NAME = 'CodeNotify';
 export const APP_DESCRIPTION = 'Smart Contest Alert System';

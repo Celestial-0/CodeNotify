@@ -4,10 +4,12 @@ import { z } from 'zod';
 
 const envSchema = z.object({
   // Server Configuration
-  PORT: z.string().default('4010'),
+  PORT: z.string().default('3999'),
   NODE_ENV: z.enum(['dev', 'production', 'test']).default('dev'),
   DB_NAME: z.string().optional(),
   IS_PUBLIC_KEY: z.string().optional(),
+  CORS_ORIGIN: z.string().optional(),
+  CORS_ORIGINS: z.string().optional(),
 
   // Database
   MONGO_URI: z.string().min(1, 'MONGO_URI is required'),

@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { createZodDto } from 'nestjs-zod';
 import {
   NotificationStatus,
   NotificationChannel,
@@ -17,15 +18,17 @@ export const NotificationQuerySchema = z.object({
     .string()
     .transform((val) => val === 'true')
     .optional(),
-  startDate: z.iso.datetime().optional(),
-  endDate: z.iso.datetime().optional(),
+  startDate: z.string().datetime().optional(),
+  endDate: z.string().datetime().optional(),
   page: z.coerce.number().default(1),
   limit: z.coerce.number().default(20),
   sortBy: z.enum(['createdAt', 'sentAt', 'scheduledAt']).default('createdAt'),
   sortOrder: z.enum(['asc', 'desc']).default('desc'),
 });
 
-export type NotificationQueryDto = z.infer<typeof NotificationQuerySchema>;
+export class NotificationQueryDto extends createZodDto(
+  NotificationQuerySchema,
+) {}
 
 // Update notification DTO
 export const UpdateNotificationSchema = z.object({
@@ -33,7 +36,9 @@ export const UpdateNotificationSchema = z.object({
   status: z.nativeEnum(NotificationStatus).optional(),
 });
 
-export type UpdateNotificationDto = z.infer<typeof UpdateNotificationSchema>;
+export class UpdateNotificationDto extends createZodDto(
+  UpdateNotificationSchema,
+) {}
 
 // Notification stats DTO
 export const NotificationStatsSchema = z.object({
@@ -42,7 +47,9 @@ export const NotificationStatsSchema = z.object({
   endDate: z.string().datetime().optional(),
 });
 
-export type NotificationStatsDto = z.infer<typeof NotificationStatsSchema>;
+export class NotificationStatsDto extends createZodDto(
+  NotificationStatsSchema,
+) {}
 
 // Response DTOs
 export interface NotificationResponseDto {

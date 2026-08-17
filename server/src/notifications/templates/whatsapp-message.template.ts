@@ -1,4 +1,4 @@
-import { NotificationPayload } from '../interfaces/notification.interface';
+import type { NotificationPayload } from '../interfaces/notification.interface';
 
 /**
  * Format WhatsApp message (plain text)

@@ -1,6 +1,6 @@
 # CodeNotify
 
-![Version](https://img.shields.io/badge/version-0.1.0--beta-blue)
+![Version](https://img.shields.io/badge/version-1.0.0-blue)
 
 > **Smart Contest Alert System**  
 > Never miss a competitive programming contest again. Get personalized notifications from Codeforces, LeetCode, CodeChef, and AtCoder.
@@ -11,32 +11,31 @@
 
 Complete documentation is available in the [`docs`](./docs) directory.
 
-- **[Quick StartGuide](./docs/guide/quick-start.md)**
-- **[Server Documentation](./docs/server/modules/README.md)**
-- **[Client Documentation](./docs/client/README.md)**
+- **[Quick Start Guide](./docs/guide/quick-start.md)**
+- **[Server Documentation](./docs/server/modules.md)**
 - **[API Reference](./docs/api/overview.md)**
+- **[Docker Deployment](./docs/server/deployment/docker.md)**
 
 ## ✨ Features
 
 - **Multi-Platform**: Support for Codeforces, LeetCode, CodeChef, and AtCoder.
 - **Smart Notifications**: 
   - Personalized alerts based on your preferences.
-  - Multi-channel delivery: **Email**, **WhatsApp**, and **Push**.
+  - Multi-channel delivery: **Email**, **Telegram**, and **Discord**.
   - Customizable timing (e.g., "Notify me 2 hours before").
 - **Secure Authentication**: 
-  - JWT-based auth with refresh tokens.
-  - **New**: Email OTP verification flow.
+  - JWT-based auth with refresh token hashing.
+  - Email OTP verification flow.
 - **Robust Architecture**:
-  - **Server**: NestJS, MongoDB, BullMQ (Scheduling).
+  - **Server**: NestJS, MongoDB, Bun Runtime, ES Modules.
   - **Client**: Next.js 15, Tailwind CSS, Zustand, React Query.
 
 ## 🚀 Getting Started
 
 ### Prerequisites
 
-- Node.js 18+
-- MongoDB
-- npm or yarn
+- [Bun](https://bun.sh) (v1.0+)
+- MongoDB Atlas or Local MongoDB (v6+)
 
 ### Installation
 
@@ -49,18 +48,18 @@ Complete documentation is available in the [`docs`](./docs) directory.
 2. **Server Setup**
    ```bash
    cd server
-   npm install
+   bun install
    cp .env.example .env
    # Update .env with your credentials
-   npm run start:dev
+   bun run start:dev
    ```
 
 3. **Client Setup**
    ```bash
    cd ../client/web
-   npm install
+   bun install
    cp .env.example .env.local
-   npm run dev
+   bun run dev
    ```
 
 ## 🤝 Contributing

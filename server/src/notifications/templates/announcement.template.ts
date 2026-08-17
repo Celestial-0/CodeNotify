@@ -1,16 +1,38 @@
 import { SendAnnouncementDto } from '../dto/email.dto';
 
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+function sanitizeUrl(url?: string): string {
+  if (!url) return '';
+  if (/^https?:\/\//i.test(url)) {
+    return url;
+  }
+  return '#';
+}
+
 /**
  * Format announcement email template
  */
 export function formatAnnouncementEmail(dto: SendAnnouncementDto): string {
+  const safeTitle = escapeHtml(dto.title);
+  const safeMessage = escapeHtml(dto.message).replace(/\n/g, '<br />');
+  const safeActionText = dto.actionText ? escapeHtml(dto.actionText) : '';
+  const safeActionUrl = sanitizeUrl(dto.actionUrl);
+
   return `
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${dto.title}</title>
+  <title>${safeTitle}</title>
 </head>
 <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f3f4f6;">
   <table role="presentation" style="width: 100%; border-collapse: collapse;">
@@ -20,7 +42,7 @@ export function formatAnnouncementEmail(dto: SendAnnouncementDto): string {
           <!-- Header -->
           <tr>
             <td style="background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); padding: 30px; text-align: center; border-radius: 8px 8px 0 0;">
-              <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: bold;">📢 ${dto.title}</h1>
+              <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: bold;">📢 ${safeTitle}</h1>
             </td>
           </tr>
           
@@ -28,14 +50,14 @@ export function formatAnnouncementEmail(dto: SendAnnouncementDto): string {
           <tr>
             <td style="padding: 40px 30px;">
               <div style="color: #374151; font-size: 16px; line-height: 1.6;">
-                ${dto.message}
+                ${safeMessage}
               </div>
               
               ${
-                dto.actionUrl && dto.actionText
+                safeActionUrl && safeActionText
                   ? `
               <div style="margin: 30px 0; text-align: center;">
-                <a href="${dto.actionUrl}" style="display: inline-block; background-color: #6366f1; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 6px; font-weight: 600; font-size: 16px;">${dto.actionText}</a>
+                <a href="${safeActionUrl}" style="display: inline-block; background-color: #6366f1; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 6px; font-weight: 600; font-size: 16px;">${safeActionText}</a>
               </div>
               `
                   : ''

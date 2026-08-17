@@ -1,23 +1,11 @@
 /**
  * Authentication and Authorization Constants
- * Contains JWT secrets, OAuth configuration, and auth-related settings
  */
 
 export const AUTH = {
-  JWT_SECRET: process.env.JWT_SECRET || '',
-  JWT_REFRESH_SECRET:
-    process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET || '',
-  IS_PUBLIC_KEY: process.env.IS_PUBLIC_KEY || 'isPublic',
-  GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID || '',
-  GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET || '',
-  GOOGLE_CALLBACK_URL:
-    process.env.GOOGLE_CALLBACK_URL || '/auth/google/callback',
-  FRONTEND_URL: process.env.FRONTEND_URL || 'http://localhost:3000',
+  IS_PUBLIC_KEY: 'isPublic',
 } as const;
 
-/**
- * Legacy export for backward compatibility
- */
 export const IS_PUBLIC_KEY = AUTH.IS_PUBLIC_KEY;
 
 /**

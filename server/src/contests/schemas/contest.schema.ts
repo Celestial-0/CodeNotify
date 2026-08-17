@@ -86,13 +86,13 @@ export class Contest {
   @Prop({ required: true, index: true })
   name: string;
 
-  @Prop({ required: true, enum: ContestPlatform, index: true })
+  @Prop({ required: true, type: String, enum: ContestPlatform, index: true })
   platform: ContestPlatform;
 
-  @Prop({ required: true, enum: ContestPhase, index: true })
+  @Prop({ required: true, type: String, enum: ContestPhase, index: true })
   phase: ContestPhase;
 
-  @Prop({ required: true, enum: ContestType })
+  @Prop({ required: true, type: String, enum: ContestType })
   type: ContestType;
 
   // Timing information
@@ -118,7 +118,7 @@ export class Contest {
   @Prop()
   preparedBy?: string;
 
-  @Prop({ enum: DifficultyLevel })
+  @Prop({ type: String, enum: DifficultyLevel })
   difficulty?: DifficultyLevel;
 
   // Participation details

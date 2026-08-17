@@ -5,6 +5,7 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import * as crypto from 'crypto';
 import { UsersService } from '../users/users.service';
 import { CreateUserDto, SigninDto, AuthResponse } from './dto/auth.dto';
 import {
@@ -162,8 +163,16 @@ export class AuthService {
       throw new UnauthorizedException('Access denied');
     }
 
-    // Verify the refresh token matches the one stored in database
-    if (user.refreshToken !== refreshToken) {
+    // Verify the refresh token matches the one stored in database (supports both hashed and legacy unhashed)
+    const hashedToken = crypto
+      .createHash('sha256')
+      .update(refreshToken)
+      .digest('hex');
+
+    if (
+      user.refreshToken !== hashedToken &&
+      user.refreshToken !== refreshToken
+    ) {
       throw new UnauthorizedException('Invalid refresh token');
     }
 
@@ -281,12 +290,15 @@ export class AuthService {
 
     // Return the OTP code and expiry time
     // The controller will handle sending the email
-    const expiresIn = Math.floor((expiresAt.getTime() - Date.now()) / 1000);
+    const expiresIn = expiresAt
+      ? Math.floor((expiresAt.getTime() - Date.now()) / 1000)
+      : 600;
 
     return {
-      message: 'Password reset OTP sent to your email',
+      message:
+        'If this email is registered, password reset instructions have been sent.',
       expiresIn,
-      code, // This will be used by the controller to send email
+      code: code || '', // This will be used by the controller to send email if user exists
     };
   }
 

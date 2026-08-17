@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
+import * as crypto from 'crypto';
 import { User, UserDocument } from './schemas/user.schema';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto, UserPreferences } from './dto/user.dto';
@@ -41,10 +42,13 @@ export class UsersService {
     id: string,
     refreshToken: string | null,
   ): Promise<void> {
-    // Store refresh token as-is (JWT tokens are already cryptographically secure)
-    // No need to hash them - they should be verified by signature, not compared
+    // Hash refresh tokens with SHA-256 to ensure database breaches do not compromise active sessions
+    const hashedToken = refreshToken
+      ? crypto.createHash('sha256').update(refreshToken).digest('hex')
+      : null;
+
     await this.userModel
-      .findByIdAndUpdate(id, { refreshToken: refreshToken })
+      .findByIdAndUpdate(id, { refreshToken: hashedToken })
       .exec();
   }
 

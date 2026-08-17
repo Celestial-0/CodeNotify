@@ -1,8 +1,13 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model, FilterQuery } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { User, UserDocument } from '../users/schemas/user.schema';
-import { Contest, ContestDocument } from '../contests/schemas/contest.schema';
+import {
+  Contest,
+  ContestDocument,
+  ContestPhase,
+  ContestPlatform,
+} from '../contests/schemas/contest.schema';
 import {
   Notification,
   NotificationDocument,
@@ -21,11 +26,12 @@ import {
 } from './interfaces/notification.interface';
 
 // Type definitions for MongoDB queries and aggregations
-interface NotificationQuery extends FilterQuery<NotificationDocument> {
-  userId?: string;
-  contestId?: string;
+interface NotificationQuery {
+  userId?: Types.ObjectId | string;
+  contestId?: Types.ObjectId | string;
   status?: NotificationStatus;
   type?: NotificationType;
+  isRead?: boolean;
   createdAt?: {
     $gte?: Date;
     $lte?: Date;
@@ -99,14 +105,15 @@ export class NotificationsService {
     userId: string,
     contestId: string,
   ): Promise<boolean> {
-    const twelveHoursAgo = new Date(Date.now() - 12 * 60 * 60 * 1000);
+    const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000);
 
     const existingNotification = await this.notificationModel
       .findOne({
-        userId,
-        contestId,
+        userId: new Types.ObjectId(userId),
+        contestId: new Types.ObjectId(contestId),
+        type: NotificationType.CONTEST_REMINDER,
         status: NotificationStatus.SENT,
-        sentAt: { $gte: twelveHoursAgo },
+        sentAt: { $gte: twoHoursAgo },
       })
       .exec();
 
@@ -397,9 +404,9 @@ export class NotificationsService {
     // Get contests matching user's platforms and within timeframe
     const contests = await this.contestModel
       .find({
-        platform: { $in: user.preferences.platforms },
+        platform: { $in: user.preferences.platforms as ContestPlatform[] },
         startTime: { $gte: now, $lte: endTime },
-        phase: 'BEFORE',
+        phase: ContestPhase.BEFORE,
         isActive: true,
       })
       .sort({ startTime: 1 })
@@ -728,7 +735,7 @@ export class NotificationsService {
    */
   async markAllNotificationsAsRead(userId: string) {
     const result = await this.notificationModel.updateMany(
-      { userId, isRead: false },
+      { userId: new Types.ObjectId(userId), isRead: false },
       { isRead: true, readAt: new Date() },
     );
 

@@ -26,6 +26,3 @@ export { DiscordModule } from './discord/discord.module';
 export { DiscordService } from './discord/discord.service';
 export { DiscordController } from './discord/discord.controller';
 export { DiscordSignatureGuard } from './discord/discord.guard';
-
-// WhatsApp
-export { WhatsappService } from './whatsapp/whatsapp.service';

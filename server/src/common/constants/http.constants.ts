@@ -7,7 +7,7 @@
  * Server Configuration
  */
 export const ENV = {
-  PORT: process.env.PORT || '4010',
+  PORT: process.env.PORT || '3999',
   NODE_ENV: process.env.NODE_ENV || 'dev',
 } as const;
 

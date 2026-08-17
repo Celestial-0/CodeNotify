@@ -5,6 +5,7 @@ import {
   HttpCode,
   HttpStatus,
   Get,
+  Patch,
   UseGuards,
   Res,
   Req,
@@ -19,6 +20,7 @@ import {
   ResetPasswordDto,
   PasswordResetResponse,
 } from './dto/reset-password.dto';
+import { ChangePasswordDto } from './dto/change-password.dto';
 import type { UserDocument } from '../users/schemas/user.schema';
 import { GoogleUser } from './strategies/google.strategy';
 import { GoogleAuthGuard } from './guards/google-auth.guard';
@@ -36,7 +38,7 @@ export class AuthController {
   ) {}
 
   @Public()
-  @Throttle({ short: { limit: 50, ttl: 60000 } }) // 50 requests per minute
+  @Throttle({ default: { limit: 10, ttl: 60000 } }) // 10 signups per minute
   @Post('signup')
   @HttpCode(HttpStatus.CREATED)
   async signup(@Body() createUserDto: CreateUserDto): Promise<AuthResponse> {
@@ -44,7 +46,7 @@ export class AuthController {
   }
 
   @Public()
-  @Throttle({ short: { limit: 100, ttl: 60000 } }) // 100 requests per minute
+  @Throttle({ default: { limit: 5, ttl: 60000 } }) // 5 signin attempts per minute
   @Post('signin')
   @HttpCode(HttpStatus.OK)
   async signin(@Body() signinDto: SigninDto): Promise<AuthResponse> {
@@ -60,6 +62,7 @@ export class AuthController {
   }
 
   @Public()
+  @Throttle({ default: { limit: 30, ttl: 60000 } })
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
   async refreshAccessToken(
@@ -81,30 +84,41 @@ export class AuthController {
   googleCallback(@Req() req: GoogleOAuthRequest, @Res() res: Response): void {
     const user: GoogleUser = req.user;
 
+    // Set secure HttpOnly cookies
+    res.cookie('access_token', user.accessToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 15 * 60 * 1000,
+    });
+    res.cookie('refresh_token', user.refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+
     // Redirect to frontend with tokens
     const frontendUrl = this.authService.getFrontendUrl();
-    const redirectUrl = `${frontendUrl}/auth/callback?access_token=${user.accessToken}&refresh_token=${user.refreshToken}&user_id=${user.id}`;
+    const redirectUrl = `${frontendUrl}/auth/callback?access_token=${encodeURIComponent(user.accessToken)}&refresh_token=${encodeURIComponent(user.refreshToken)}&user_id=${encodeURIComponent(user.id)}`;
 
     res.redirect(redirectUrl);
   }
 
   @Public()
-  @Throttle({ short: { limit: 10, ttl: 60000 } }) // 10 requests per minute
+  @Throttle({ default: { limit: 3, ttl: 600000 } }) // 3 requests per 10 minutes
   @Post('password/reset/request')
   @HttpCode(HttpStatus.OK)
   async requestPasswordReset(
     @Body() dto: RequestPasswordResetDto,
   ): Promise<PasswordResetResponse> {
-    const result = (await this.authService.requestPasswordReset(dto)) as
-      | PasswordResetResponse
-      | (PasswordResetResponse & { code: string });
+    const result = await this.authService.requestPasswordReset(dto);
 
-    // Send password reset email
-    if ('code' in result) {
+    // Send reset code via email if user exists
+    if (result.code) {
       await this.emailService.sendPasswordResetEmail(dto.email, result.code);
     }
 
-    // Return response without the code
     return {
       message: result.message,
       expiresIn: result.expiresIn,
@@ -112,23 +126,22 @@ export class AuthController {
   }
 
   @Public()
-  @Throttle({ short: { limit: 10, ttl: 60000 } }) // 10 requests per minute
-  @Post('password/reset/verify')
+  @Throttle({ default: { limit: 5, ttl: 600000 } }) // 5 attempts per 10 minutes
+  @Post('password/reset')
   @HttpCode(HttpStatus.OK)
   async resetPassword(
     @Body() dto: ResetPasswordDto,
-  ): Promise<{ message: string }> {
+  ): Promise<PasswordResetResponse> {
     return await this.authService.resetPassword(dto);
   }
 
-  @Post('password/change')
+  @Patch('password')
   @HttpCode(HttpStatus.OK)
-  @Throttle({ short: { limit: 5, ttl: 60000 } }) // 5 requests per minute
   async changePassword(
     @CurrentUser() user: UserDocument,
-    @Body() dto: { currentPassword: string; newPassword: string },
+    @Body() dto: ChangePasswordDto,
   ): Promise<{ message: string }> {
-    return this.authService.changePassword(
+    return await this.authService.changePassword(
       user.id,
       user.email,
       dto.currentPassword,

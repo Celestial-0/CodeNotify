@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Resend } from 'resend';
-import {
+import type {
   INotificationService,
   NotificationPayload,
   NotificationResult,

@@ -2,7 +2,7 @@ import { Controller, Get, Inject, Logger } from '@nestjs/common';
 import { DiscordService } from './discord/discord.service';
 import { TelegramService } from './telegram/telegram.service';
 import { Public } from '../common/decorators';
-import { PlatformAdapter } from './platforms/base/platform.interface';
+import type { PlatformAdapter } from './platforms/base/platform.interface';
 import { PLATFORM_ADAPTERS } from './platforms/platforms.module';
 
 type IntegrationHealthStatus = 'healthy' | 'degraded' | 'unhealthy';

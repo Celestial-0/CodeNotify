@@ -129,42 +129,36 @@ server/
 ## 🚀 Getting Started
 
 ### Prerequisites
-- Node.js >= 18.x
+- Bun >= 1.0.0
 - MongoDB >= 6.x
-- npm or yarn
 
 ### Installation
 
 ```bash
 # Clone repository
-git clone <repository-url>
-cd server
+git clone https://github.com/Celestial-0/CodeNotify.git
+cd CodeNotify/server
 
 # Install dependencies
-npm install
+bun install
 
 # Configure environment
-cp .env.example .env.local
-# Edit .env.local with your configuration
-
-# Start MongoDB (if local)
-mongod
+cp .env.example .env
+# Edit .env with your configuration
 
 # Run development server
-npm run start:dev
+bun run start:dev
 
-# Access API at http://localhost:3000
+# Access API at http://localhost:3999
 ```
 
 ### Quick Commands
 
 ```bash
-npm run start:dev      # Development mode with hot reload
-npm run build          # Build for production
-npm run start:prod     # Production mode
-npm run test           # Run unit tests
-npm run test:e2e       # Run E2E tests
-npm run lint           # Lint code
+bun run start:dev      # Development mode with watch reload
+bun run build          # Typecheck & build
+bun run start          # Start server
+bun run lint           # Lint code
 ```
 
 ---
@@ -173,17 +167,21 @@ npm run lint           # Lint code
 
 ### Base URL
 ```
-http://localhost:3000
+http://localhost:3999
 ```
 
 ### Authentication
 
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/auth/register` | POST | Register new user |
-| `/auth/signin` | POST | signinand get tokens |
-| `/auth/refresh-token` | POST | Refresh access token |
-| `/auth/logout` | POST | Logout and invalidate tokens |
+| Endpoint | Method | Auth | Description |
+|----------|--------|------|-------------|
+| `/auth/signup` | POST | ❌ | Register new user |
+| `/auth/signin` | POST | ❌ | Login with email/password |
+| `/auth/signout` | POST | ✅ | Logout (invalidates refresh token) |
+| `/auth/refresh` | POST | ❌ | Refresh access token |
+| `/auth/google` | GET | ❌ | Initiate Google OAuth |
+| `/auth/google/callback` | GET | ❌ | Google OAuth callback |
+| `/auth/otp/request` | POST | ❌ | Request email verification OTP |
+| `/auth/otp/verify` | POST | ❌ | Verify email OTP |
 
 ### Users
 
@@ -224,7 +222,7 @@ Key environment variables (see `.env.example` for full list):
 
 ```env
 # Server
-PORT=3000
+PORT=3999
 NODE_ENV=development
 
 # Database

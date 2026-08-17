@@ -303,6 +303,12 @@ Subscribe to real-time events:
 
 ## Changelog
 
+### v1.0.0 (2026-08-17)
+- Production-grade release
+- Multi-stage Docker container & GHCR publishing
+- Full ES Modules and strict TypeScript typing
+- Security hardening (CWE-915 fix, Helmet, token hashing)
+
 ### v0.1.0-beta (2026-01-06)
 - Initial beta release
 - Auto-login after email verification

@@ -50,16 +50,14 @@ export class OtpService {
    * Create new OTP record for email
    * Deletes any existing OTP for the email first
    */
-  async createOtp(email: string): Promise<{ code: string; expiresAt: Date }> {
+  async createOtp(email: string): Promise<{ code?: string; expiresAt: Date }> {
     // Check if user exists
     const user = await this.usersService.findByEmail(email);
-    if (!user) {
-      throw new NotFoundException('User not found');
-    }
-
-    // Check if user is already verified
-    if (user.isEmailVerified) {
-      throw new BadRequestException('Email is already verified');
+    if (!user || user.isEmailVerified) {
+      // Don't leak user existence or verification status
+      const dummyExpiry = new Date();
+      dummyExpiry.setMinutes(dummyExpiry.getMinutes() + OTP.EXPIRY_MINUTES);
+      return { expiresAt: dummyExpiry };
     }
 
     // Delete any existing OTP for this email
@@ -164,7 +162,9 @@ export class OtpService {
    * Resend OTP to email
    * Creates a new OTP and invalidates the old one
    */
-  async resendOtp(email: string): Promise<{ code: string; expiresAt: Date }> {
+  async resendOtp(
+    email: string,
+  ): Promise<{ code?: string; expiresAt: Date }> {
     return this.createOtp(email);
   }
 
@@ -175,11 +175,14 @@ export class OtpService {
    */
   async createPasswordResetOtp(
     email: string,
-  ): Promise<{ code: string; expiresAt: Date }> {
+  ): Promise<{ code?: string; expiresAt: Date }> {
     // Check if user exists
     const user = await this.usersService.findByEmail(email);
     if (!user) {
-      throw new NotFoundException('User not found');
+      // Don't leak user existence
+      const dummyExpiry = new Date();
+      dummyExpiry.setMinutes(dummyExpiry.getMinutes() + OTP.EXPIRY_MINUTES);
+      return { expiresAt: dummyExpiry };
     }
 
     // Delete any existing OTP for this email

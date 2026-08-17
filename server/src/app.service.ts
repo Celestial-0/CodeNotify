@@ -12,7 +12,7 @@ export class AppService {
   health() {
     const nodeEnv = this.configService.get<string>('NODE_ENV') ?? 'unknown';
     const apiVersion =
-      this.configService.get<string>('API_VERSION') ?? '0.1.0-beta';
+      this.configService.get<string>('API_VERSION') ?? '1.0.0';
 
     return {
       status: 'ok',

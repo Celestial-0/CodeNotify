@@ -6,6 +6,7 @@ import {
   HttpStatus,
   Logger,
 } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { OtpService } from './otp.service';
 import { EmailNotificationService } from '../../notifications/services/email-notification.service';
 import { TokenService } from '../services/token.service';
@@ -35,21 +36,24 @@ export class OtpController {
    * POST /auth/otp/request
    */
   @Public()
+  @Throttle({ default: { limit: 3, ttl: 600000 } }) // 3 requests per 10 minutes
   @Post('request')
   @HttpCode(HttpStatus.OK)
   async requestOtp(@Body() dto: RequestOtpDto): Promise<OtpResponse> {
     try {
       const { code, expiresAt } = await this.otpService.createOtp(dto.email);
 
-      // Send OTP via email
-      await this.emailService.sendOtpEmail(dto.email, code);
+      // Send OTP via email if user exists and is unverified
+      if (code) {
+        await this.emailService.sendOtpEmail(dto.email, code);
+      }
 
       const expiresIn = Math.floor((expiresAt.getTime() - Date.now()) / 1000);
 
       this.logger.log(`OTP requested for email: ${dto.email}`);
 
       return {
-        message: 'OTP sent to your email address',
+        message: 'If this email is eligible, an OTP has been sent to your email address',
         expiresIn,
       };
     } catch (error) {
@@ -67,6 +71,7 @@ export class OtpController {
    * POST /auth/otp/verify
    */
   @Public()
+  @Throttle({ default: { limit: 5, ttl: 600000 } }) // 5 attempts per 10 minutes
   @Post('verify')
   @HttpCode(HttpStatus.OK)
   async verifyOtp(@Body() dto: VerifyOtpDto): Promise<VerifyOtpResponse> {
@@ -115,21 +120,24 @@ export class OtpController {
    * POST /auth/otp/resend
    */
   @Public()
+  @Throttle({ default: { limit: 2, ttl: 300000 } }) // 2 requests per 5 minutes
   @Post('resend')
   @HttpCode(HttpStatus.OK)
   async resendOtp(@Body() dto: ResendOtpDto): Promise<OtpResponse> {
     try {
       const { code, expiresAt } = await this.otpService.resendOtp(dto.email);
 
-      // Send OTP via email
-      await this.emailService.sendOtpEmail(dto.email, code);
+      // Send OTP via email if user exists and is unverified
+      if (code) {
+        await this.emailService.sendOtpEmail(dto.email, code);
+      }
 
       const expiresIn = Math.floor((expiresAt.getTime() - Date.now()) / 1000);
 
       this.logger.log(`OTP resent for email: ${dto.email}`);
 
       return {
-        message: 'New OTP sent to your email address',
+        message: 'If this email is eligible, a new OTP has been sent to your email address',
         expiresIn,
       };
     } catch (error) {

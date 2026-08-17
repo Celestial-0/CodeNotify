@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { createZodDto } from 'nestjs-zod';
 
 // Change password with current password verification (no OTP)
 export const ChangePasswordSchema = z.object({
@@ -6,7 +7,7 @@ export const ChangePasswordSchema = z.object({
   newPassword: z.string().min(6, 'New password must be at least 6 characters'),
 });
 
-export type ChangePasswordDto = z.infer<typeof ChangePasswordSchema>;
+export class ChangePasswordDto extends createZodDto(ChangePasswordSchema) {}
 
 export interface ChangePasswordResponse {
   message: string;

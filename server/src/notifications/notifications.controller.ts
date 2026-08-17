@@ -10,32 +10,27 @@ import {
   UseGuards,
   HttpCode,
   HttpStatus,
+  ForbiddenException,
+  NotFoundException,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard, EmailVerifiedGuard } from '../common/guards';
-import { Roles } from '../common/decorators';
+import { Roles, CurrentUser } from '../common/decorators';
+import type { UserDocument } from '../users/schemas/user.schema';
 import { NotificationsService } from './notifications.service';
 import { EmailNotificationService } from './services/email-notification.service';
 import { WhatsAppNotificationService } from './services/whatsapp-notification.service';
 import { PushNotificationService } from './services/push-notification.service';
 import { AdminEmailService } from './services/admin-email.service';
-import type {
+import {
   SendCustomEmailDto,
   SendBulkEmailDto,
   SendAnnouncementDto,
   SendContestReminderDto,
 } from './dto/email.dto';
 import {
-  SendCustomEmailSchema,
-  SendBulkEmailSchema,
-  SendAnnouncementSchema,
-  SendContestReminderSchema,
-} from './dto/email.dto';
-import {
-  NotificationQuerySchema,
-  NotificationStatsSchema,
-  type NotificationQueryDto,
-  type NotificationStatsDto,
+  NotificationQueryDto,
+  NotificationStatsDto,
 } from './dto/notification.dto';
 
 @Controller('notifications')
@@ -168,8 +163,7 @@ export class NotificationsController {
   @Roles('admin')
   @HttpCode(HttpStatus.OK)
   async sendCustomEmail(@Body() body: SendCustomEmailDto) {
-    const validated = SendCustomEmailSchema.parse(body);
-    return await this.adminEmailService.sendCustomEmail(validated);
+    return await this.adminEmailService.sendCustomEmail(body);
   }
 
   /**
@@ -181,8 +175,7 @@ export class NotificationsController {
   @Roles('admin')
   @HttpCode(HttpStatus.OK)
   async sendBulkEmail(@Body() body: SendBulkEmailDto) {
-    const validated = SendBulkEmailSchema.parse(body);
-    return await this.adminEmailService.sendBulkEmail(validated);
+    return await this.adminEmailService.sendBulkEmail(body);
   }
 
   /**
@@ -194,8 +187,7 @@ export class NotificationsController {
   @Roles('admin')
   @HttpCode(HttpStatus.OK)
   async sendAnnouncement(@Body() body: SendAnnouncementDto) {
-    const validated = SendAnnouncementSchema.parse(body);
-    return await this.adminEmailService.sendAnnouncement(validated);
+    return await this.adminEmailService.sendAnnouncement(body);
   }
 
   /**
@@ -207,8 +199,7 @@ export class NotificationsController {
   @Roles('admin')
   @HttpCode(HttpStatus.OK)
   async sendContestReminder(@Body() body: SendContestReminderDto) {
-    const validated = SendContestReminderSchema.parse(body);
-    return await this.adminEmailService.sendContestReminder(validated);
+    return await this.adminEmailService.sendContestReminder(body);
   }
 
   // ==================== NOTIFICATION HISTORY ENDPOINTS ====================
@@ -218,12 +209,20 @@ export class NotificationsController {
    * GET /notifications/notifications?userId=xxx&status=SENT&page=1&limit=20
    */
   @Get('notifications')
-  async getNotifications(@Query() query: NotificationQueryDto) {
-    const validated = NotificationQuerySchema.parse(query);
-    const { userId, status, type, startDate, endDate, page, limit } = validated;
+  async getNotifications(
+    @Query() query: NotificationQueryDto,
+    @CurrentUser() currentUser: UserDocument,
+  ) {
+    const { status, type, startDate, endDate, page, limit } = query;
+
+    // Enforce ownership: Non-admin users can only view their own notifications
+    const targetUserId =
+      currentUser.role === 'admin' && query.userId
+        ? query.userId
+        : currentUser.id;
 
     return await this.notificationsService.getNotificationHistory(
-      userId || '',
+      targetUserId,
       {
         page,
         limit,
@@ -241,23 +240,33 @@ export class NotificationsController {
    * NOTE: This route MUST be defined BEFORE the :id route to avoid "stats" being captured as an ID
    */
   @Get('notifications/stats')
-  async getNotificationStats(@Query() query: NotificationStatsDto) {
-    const validated = NotificationStatsSchema.parse(query);
-    const { userId, startDate, endDate } = validated;
+  async getNotificationStats(
+    @Query() query: NotificationStatsDto,
+    @CurrentUser() currentUser: UserDocument,
+  ) {
+    const { startDate, endDate } = query;
+
+    // Enforce ownership: Non-admin users can only view their own statistics
+    const targetUserId =
+      currentUser.role === 'admin' && query.userId
+        ? query.userId
+        : currentUser.id;
 
     return await this.notificationsService.getNotificationStats(
-      userId,
+      targetUserId,
       startDate ? new Date(startDate) : undefined,
       endDate ? new Date(endDate) : undefined,
     );
   }
 
   /**
-   * Cleanup old notifications
+   * Cleanup old notifications (Admin only)
    * DELETE /notifications/notifications/cleanup?daysOld=90
    * NOTE: This route MUST be defined BEFORE the :id route to avoid "cleanup" being captured as an ID
    */
   @Delete('notifications/cleanup')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('admin')
   async cleanupNotifications(@Query('daysOld') daysOld?: string) {
     const days = daysOld ? parseInt(daysOld, 10) : 90;
     return await this.notificationsService.cleanupOldNotifications(days);
@@ -268,12 +277,25 @@ export class NotificationsController {
    * GET /notifications/notifications/:id
    */
   @Get('notifications/:id')
-  async getNotificationById(@Param('id') id: string) {
+  async getNotificationById(
+    @Param('id') id: string,
+    @CurrentUser() currentUser: UserDocument,
+  ) {
     const notification =
       await this.notificationsService.getNotificationById(id);
     if (!notification) {
-      return { error: 'Notification not found' };
+      throw new NotFoundException('Notification not found');
     }
+
+    const notificationUserId =
+      typeof notification.userId === 'object' && notification.userId !== null
+        ? String((notification.userId as { _id?: unknown })._id ?? notification.userId)
+        : String(notification.userId);
+
+    if (currentUser.role !== 'admin' && notificationUserId !== currentUser.id) {
+      throw new ForbiddenException('Access denied');
+    }
+
     return notification;
   }
 
@@ -282,13 +304,31 @@ export class NotificationsController {
    * PATCH /notifications/notifications/:id/read
    */
   @Patch('notifications/:id/read')
-  async markAsRead(@Param('id') id: string) {
+  async markAsRead(
+    @Param('id') id: string,
+    @CurrentUser() currentUser: UserDocument,
+  ) {
+    const notification =
+      await this.notificationsService.getNotificationById(id);
+    if (!notification) {
+      throw new NotFoundException('Notification not found');
+    }
+
+    const notificationUserId =
+      typeof notification.userId === 'object' && notification.userId !== null
+        ? String((notification.userId as { _id?: unknown })._id ?? notification.userId)
+        : String(notification.userId);
+
+    if (currentUser.role !== 'admin' && notificationUserId !== currentUser.id) {
+      throw new ForbiddenException('Access denied');
+    }
+
     try {
-      const notification =
+      const updated =
         await this.notificationsService.markNotificationAsRead(id);
       return {
         success: true,
-        notification,
+        notification: updated,
       };
     } catch (error) {
       return {
@@ -303,7 +343,13 @@ export class NotificationsController {
    * PATCH /notifications/notifications/user/:userId/read-all
    */
   @Patch('notifications/user/:userId/read-all')
-  async markAllAsRead(@Param('userId') userId: string) {
+  async markAllAsRead(
+    @Param('userId') userId: string,
+    @CurrentUser() currentUser: UserDocument,
+  ) {
+    if (currentUser.role !== 'admin' && currentUser.id !== userId) {
+      throw new ForbiddenException('Access denied');
+    }
     return await this.notificationsService.markAllNotificationsAsRead(userId);
   }
 
@@ -312,13 +358,31 @@ export class NotificationsController {
    * POST /notifications/notifications/:id/retry
    */
   @Post('notifications/:id/retry')
-  async retryNotification(@Param('id') id: string) {
+  async retryNotification(
+    @Param('id') id: string,
+    @CurrentUser() currentUser: UserDocument,
+  ) {
+    const notification =
+      await this.notificationsService.getNotificationById(id);
+    if (!notification) {
+      throw new NotFoundException('Notification not found');
+    }
+
+    const notificationUserId =
+      typeof notification.userId === 'object' && notification.userId !== null
+        ? String((notification.userId as { _id?: unknown })._id ?? notification.userId)
+        : String(notification.userId);
+
+    if (currentUser.role !== 'admin' && notificationUserId !== currentUser.id) {
+      throw new ForbiddenException('Access denied');
+    }
+
     try {
-      const notification =
+      const updated =
         await this.notificationsService.retryFailedNotification(id);
       return {
         success: true,
-        notification,
+        notification: updated,
       };
     } catch (error) {
       return {

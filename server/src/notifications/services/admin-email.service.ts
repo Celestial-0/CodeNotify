@@ -1,6 +1,6 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model, FilterQuery } from 'mongoose';
+import { Model } from 'mongoose';
 import { EmailNotificationService } from './email-notification.service';
 import { User, UserDocument } from '../../users/schemas/user.schema';
 import {
@@ -23,6 +23,8 @@ import type {
 } from '../types/email-result.types';
 import { formatAnnouncementEmail } from '../templates/announcement.template';
 
+const BATCH_SIZE = 10;
+
 @Injectable()
 export class AdminEmailService {
   private readonly logger = new Logger(AdminEmailService.name);
@@ -41,7 +43,6 @@ export class AdminEmailService {
       throw new Error('Email service is not configured');
     }
 
-    // Access Resend client via public getter
     const resend = this.emailService.getResendClient();
     const fromEmail = this.emailService.getFromEmail();
 
@@ -52,37 +53,43 @@ export class AdminEmailService {
     const recipients = Array.isArray(dto.to) ? dto.to : [dto.to];
     const results: EmailResult[] = [];
 
-    for (const email of recipients) {
-      try {
-        const result = await resend.emails.send({
-          from: fromEmail,
-          to: email,
-          subject: dto.subject,
-          html: dto.html,
-          text: dto.text,
-          replyTo: dto.replyTo,
-        });
+    // Process recipients in controlled concurrent batches
+    for (let i = 0; i < recipients.length; i += BATCH_SIZE) {
+      const batch = recipients.slice(i, i + BATCH_SIZE);
+      const batchResults = await Promise.all(
+        batch.map(async (email) => {
+          try {
+            const result = await resend.emails.send({
+              from: fromEmail,
+              to: email,
+              subject: dto.subject,
+              html: dto.html,
+              text: dto.text,
+              replyTo: dto.replyTo,
+            });
 
-        results.push({
-          email,
-          success: !result.error,
-          messageId: result.data?.id,
-          error: result.error?.message,
-        });
-
-        this.logger.log(`Custom email sent to ${email}`);
-      } catch (error) {
-        const errorMessage =
-          error instanceof Error ? error.message : String(error);
-        results.push({
-          email,
-          success: false,
-          error: errorMessage,
-        });
-        this.logger.error(
-          `Failed to send custom email to ${email}: ${errorMessage}`,
-        );
-      }
+            this.logger.log(`Custom email sent to ${email}`);
+            return {
+              email,
+              success: !result.error,
+              messageId: result.data?.id,
+              error: result.error?.message,
+            };
+          } catch (error) {
+            const errorMessage =
+              error instanceof Error ? error.message : String(error);
+            this.logger.error(
+              `Failed to send custom email to ${email}: ${errorMessage}`,
+            );
+            return {
+              email,
+              success: false,
+              error: errorMessage,
+            };
+          }
+        }),
+      );
+      results.push(...batchResults);
     }
 
     return {
@@ -109,7 +116,6 @@ export class AdminEmailService {
       throw new NotFoundException('No active users found with provided IDs');
     }
 
-    // Access Resend client via public getter
     const resend = this.emailService.getResendClient();
     const fromEmail = this.emailService.getFromEmail();
 
@@ -117,44 +123,49 @@ export class AdminEmailService {
       throw new Error('Resend client not initialized');
     }
 
+    const validUsers = users.filter((u) => !!u.email);
     const results: UserEmailResult[] = [];
 
-    for (const user of users) {
-      if (!user.email) continue;
+    // Process users in controlled concurrent batches
+    for (let i = 0; i < validUsers.length; i += BATCH_SIZE) {
+      const batch = validUsers.slice(i, i + BATCH_SIZE);
+      const batchResults = await Promise.all(
+        batch.map(async (user) => {
+          try {
+            const result = await resend.emails.send({
+              from: fromEmail,
+              to: user.email,
+              subject: dto.subject,
+              html: dto.html,
+              text: dto.text,
+            });
 
-      try {
-        const result = await resend.emails.send({
-          from: fromEmail,
-          to: user.email,
-          subject: dto.subject,
-          html: dto.html,
-          text: dto.text,
-        });
-
-        results.push({
-          userId: String(user.id),
-          email: user.email,
-          username: user.name,
-          success: !result.error,
-          messageId: result.data?.id,
-          error: result.error?.message,
-        });
-
-        this.logger.log(`Bulk email sent to ${user.email}`);
-      } catch (error) {
-        const errorMessage =
-          error instanceof Error ? error.message : String(error);
-        results.push({
-          userId: String(user.id),
-          email: user.email,
-          username: user.name,
-          success: false,
-          error: errorMessage,
-        });
-        this.logger.error(
-          `Failed to send bulk email to ${user.email}: ${errorMessage}`,
-        );
-      }
+            this.logger.log(`Bulk email sent to ${user.email}`);
+            return {
+              userId: String(user.id),
+              email: user.email,
+              username: user.name,
+              success: !result.error,
+              messageId: result.data?.id,
+              error: result.error?.message,
+            };
+          } catch (error) {
+            const errorMessage =
+              error instanceof Error ? error.message : String(error);
+            this.logger.error(
+              `Failed to send bulk email to ${user.email}: ${errorMessage}`,
+            );
+            return {
+              userId: String(user.id),
+              email: user.email,
+              username: user.name,
+              success: false,
+              error: errorMessage,
+            };
+          }
+        }),
+      );
+      results.push(...batchResults);
     }
 
     return {
@@ -171,7 +182,7 @@ export class AdminEmailService {
   async sendAnnouncement(
     dto: SendAnnouncementDto,
   ): Promise<AnnouncementResponse> {
-    const query: FilterQuery<UserDocument> = {};
+    const query: Record<string, any> = {};
 
     if (dto.filters) {
       if (dto.filters.platforms && dto.filters.platforms.length > 0) {
@@ -190,7 +201,6 @@ export class AdminEmailService {
       throw new NotFoundException('No users found matching the filters');
     }
 
-    // Access Resend client via public getter
     const resend = this.emailService.getResendClient();
     const fromEmail = this.emailService.getFromEmail();
 
@@ -199,43 +209,48 @@ export class AdminEmailService {
     }
 
     const html = formatAnnouncementEmail(dto);
+    const validUsers = users.filter((u) => !!u.email);
     const results: UserEmailResult[] = [];
 
-    for (const user of users) {
-      if (!user.email) continue;
+    // Process announcements in controlled concurrent batches
+    for (let i = 0; i < validUsers.length; i += BATCH_SIZE) {
+      const batch = validUsers.slice(i, i + BATCH_SIZE);
+      const batchResults = await Promise.all(
+        batch.map(async (user) => {
+          try {
+            const result = await resend.emails.send({
+              from: fromEmail,
+              to: user.email,
+              subject: dto.subject,
+              html,
+            });
 
-      try {
-        const result = await resend.emails.send({
-          from: fromEmail,
-          to: user.email,
-          subject: dto.subject,
-          html,
-        });
-
-        results.push({
-          userId: String(user.id),
-          email: user.email,
-          username: user.name,
-          success: !result.error,
-          messageId: result.data?.id,
-          error: result.error?.message,
-        });
-
-        this.logger.log(`Announcement sent to ${user.email}`);
-      } catch (error) {
-        const errorMessage =
-          error instanceof Error ? error.message : String(error);
-        results.push({
-          userId: String(user.id),
-          email: user.email,
-          username: user.name,
-          success: false,
-          error: errorMessage,
-        });
-        this.logger.error(
-          `Failed to send announcement to ${user.email}: ${errorMessage}`,
-        );
-      }
+            this.logger.log(`Announcement sent to ${user.email}`);
+            return {
+              userId: String(user.id),
+              email: user.email,
+              username: user.name,
+              success: !result.error,
+              messageId: result.data?.id,
+              error: result.error?.message,
+            };
+          } catch (error) {
+            const errorMessage =
+              error instanceof Error ? error.message : String(error);
+            this.logger.error(
+              `Failed to send announcement to ${user.email}: ${errorMessage}`,
+            );
+            return {
+              userId: String(user.id),
+              email: user.email,
+              username: user.name,
+              success: false,
+              error: errorMessage,
+            };
+          }
+        }),
+      );
+      results.push(...batchResults);
     }
 
     return {
@@ -276,45 +291,51 @@ export class AdminEmailService {
       (contest.startTime.getTime() - now.getTime()) / (1000 * 60 * 60),
     );
 
-    for (const user of users) {
-      if (!user.email) continue;
+    const validUsers = users.filter((u) => !!u.email);
 
-      try {
-        const payload = {
-          userId: String(user.id),
-          contestId: String(contest._id),
-          contestName: contest.name,
-          platform: contest.platform,
-          startTime: contest.startTime,
-          hoursUntilStart,
-        };
+    // Process reminders in controlled concurrent batches
+    for (let i = 0; i < validUsers.length; i += BATCH_SIZE) {
+      const batch = validUsers.slice(i, i + BATCH_SIZE);
+      const batchResults = await Promise.all(
+        batch.map(async (user) => {
+          try {
+            const payload = {
+              userId: String(user.id),
+              contestId: String(contest._id),
+              contestName: contest.name,
+              platform: contest.platform,
+              startTime: contest.startTime,
+              hoursUntilStart,
+            };
 
-        const result = await this.emailService.send(user.email, payload);
+            const result = await this.emailService.send(user.email, payload);
 
-        results.push({
-          userId: String(user.id),
-          email: user.email,
-          username: user.name,
-          success: result.success,
-          messageId: result.messageId,
-          error: result.error,
-        });
-
-        this.logger.log(`Contest reminder sent to ${user.email}`);
-      } catch (error) {
-        const errorMessage =
-          error instanceof Error ? error.message : String(error);
-        results.push({
-          userId: String(user.id),
-          email: user.email,
-          username: user.name,
-          success: false,
-          error: errorMessage,
-        });
-        this.logger.error(
-          `Failed to send contest reminder to ${user.email}: ${errorMessage}`,
-        );
-      }
+            this.logger.log(`Contest reminder sent to ${user.email}`);
+            return {
+              userId: String(user.id),
+              email: user.email,
+              username: user.name,
+              success: result.success,
+              messageId: result.messageId,
+              error: result.error,
+            };
+          } catch (error) {
+            const errorMessage =
+              error instanceof Error ? error.message : String(error);
+            this.logger.error(
+              `Failed to send contest reminder to ${user.email}: ${errorMessage}`,
+            );
+            return {
+              userId: String(user.id),
+              email: user.email,
+              username: user.name,
+              success: false,
+              error: errorMessage,
+            };
+          }
+        }),
+      );
+      results.push(...batchResults);
     }
 
     return {

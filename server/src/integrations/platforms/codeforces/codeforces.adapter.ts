@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { BasePlatformAdapter } from '../base/platform-adapter.abstract';
-import { ContestData, PlatformConfig } from '../base/platform.interface';
+import type { ContestData, PlatformConfig } from '../base/platform.interface';
 import {
   ContestPlatform,
   ContestPhase,

@@ -7,13 +7,14 @@ import {
   Optional,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model, FilterQuery } from 'mongoose';
+import { Model } from 'mongoose';
 import {
   Contest,
   ContestDocument,
   ContestPlatform,
   DifficultyLevel,
   ContestType,
+  ContestPhase,
 } from './schemas/contest.schema';
 import {
   CreateContestDto,
@@ -25,7 +26,7 @@ import {
   ContestResponseDto,
   PaginatedContestResponseDto,
 } from './dto/contest.dto';
-import {
+import type {
   PlatformAdapter,
   ContestData,
 } from '../integrations/platforms/base/platform.interface';
@@ -47,6 +48,8 @@ interface BreakdownResult {
 interface MongoTimeFilter {
   $gte?: Date;
   $lte?: Date;
+  $gt?: Date;
+  $lt?: Date;
 }
 
 interface ContestDocumentWithVirtuals extends ContestDocument {
@@ -54,8 +57,18 @@ interface ContestDocumentWithVirtuals extends ContestDocument {
   updatedAt?: Date;
 }
 
-interface FilterQueryWithTime extends FilterQuery<ContestDocument> {
+interface FilterQueryWithTime {
+  platform?: ContestPlatform;
+  phase?: ContestPhase;
+  type?: ContestType;
+  difficulty?: DifficultyLevel;
+  isActive?: boolean;
+  isNotified?: boolean;
+  country?: string;
+  city?: string;
   startTime?: MongoTimeFilter;
+  endTime?: MongoTimeFilter;
+  $text?: { $search: string };
 }
 
 interface SyncStats {
@@ -349,11 +362,11 @@ export class ContestsService {
     query?: Partial<ContestQueryDto>,
   ): Promise<ContestResponseDto[]> {
     try {
-      const filter: FilterQuery<ContestDocument> = { platform, isActive: true };
+      const filter: FilterQueryWithTime = { platform, isActive: true };
 
-      if (query?.phase) filter.phase = query.phase;
-      if (query?.type) filter.type = query.type;
-      if (query?.difficulty) filter.difficulty = query.difficulty;
+      if (query?.phase) filter.phase = query.phase as ContestPhase;
+      if (query?.type) filter.type = query.type as ContestType;
+      if (query?.difficulty) filter.difficulty = query.difficulty as DifficultyLevel;
 
       const contests = await this.contestModel
         .find(filter)
@@ -375,7 +388,7 @@ export class ContestsService {
     platform?: ContestPlatform,
   ): Promise<ContestResponseDto[]> {
     try {
-      const filter: FilterQuery<ContestDocument> = {
+      const filter: FilterQueryWithTime = {
         startTime: { $gt: new Date() },
         isActive: true,
       };
@@ -401,7 +414,7 @@ export class ContestsService {
   async findRunning(platform?: ContestPlatform): Promise<ContestResponseDto[]> {
     try {
       const now = new Date();
-      const filter: FilterQuery<ContestDocument> = {
+      const filter: FilterQueryWithTime = {
         startTime: { $lte: now },
         endTime: { $gte: now },
         isActive: true,
@@ -428,7 +441,7 @@ export class ContestsService {
     platform?: ContestPlatform,
   ): Promise<ContestResponseDto[]> {
     try {
-      const filter: FilterQuery<ContestDocument> = {
+      const filter: FilterQueryWithTime = {
         endTime: { $lt: new Date() },
         isActive: true,
       };
@@ -643,7 +656,7 @@ export class ContestsService {
   // Utility methods
   private buildFilterQuery(
     query: ContestQueryDto,
-  ): FilterQuery<ContestDocument> {
+  ): FilterQueryWithTime {
     const filter: FilterQueryWithTime = {};
 
     if (query.platform) filter.platform = query.platform;
@@ -956,7 +969,7 @@ export class ContestsService {
   async cleanupOldFinishedContests(cutoffDate: Date): Promise<number> {
     const result = await this.contestModel.deleteMany({
       endTime: { $lt: cutoffDate },
-      phase: 'FINISHED',
+      phase: ContestPhase.FINISHED,
     });
 
     return result.deletedCount ?? 0;
@@ -972,9 +985,8 @@ export class ContestsService {
           $gte: now,
           $lte: windowEnd,
         },
-        phase: 'BEFORE',
+        phase: ContestPhase.BEFORE,
         isActive: true,
-        isNotified: false,
       })
       .exec();
   }

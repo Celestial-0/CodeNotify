@@ -62,40 +62,26 @@ Traditional server deployment using PM2 process manager.
 
 ### Production Environment Variables
 
-Create `.env.production` file:
+Create `.env` file:
 
 ```bash
 # Server Configuration
 NODE_ENV=production
-PORT=3000
+PORT=3999
 
 # Database
-MONGODB_URI=mongodb+srv://user:password@cluster.mongodb.net/codenotify?retryWrites=true&w=majority
+MONGO_URI=mongodb+srv://user:password@cluster.mongodb.net/codenotify?retryWrites=true&w=majority
 
 # JWT Secrets (MUST be strong random strings)
 JWT_SECRET=your-super-secret-jwt-key-min-32-characters-random
 JWT_REFRESH_SECRET=your-super-secret-refresh-key-min-32-characters-random
 
-# Token Expiry
-JWT_EXPIRES_IN=15m
-REFRESH_TOKEN_EXPIRES_IN=7d
-
 # CORS
-CORS_ORIGIN=https://yourdomain.com,https://www.yourdomain.com
+CORS_ORIGIN=https://yourdomain.com
 
 # Email Service (Resend)
 RESEND_API_KEY=re_xxxxxxxxxxxxxxxxxxxx
-
-# WhatsApp (Optional)
-WHATSAPP_API_KEY=your-whatsapp-api-key
-WHATSAPP_PHONE_NUMBER_ID=your-phone-number-id
-
-# Rate Limiting
-RATE_LIMIT_TTL=60
-RATE_LIMIT_MAX=100
-
-# Logging
-LOG_LEVEL=error
+EMAIL_FROM="CodeNotify <noreply@yourdomain.com>"
 ```
 
 ### Security Checklist
@@ -116,19 +102,19 @@ LOG_LEVEL=error
 ### 1. Install Dependencies
 
 ```bash
-npm ci --production
+bun install --production --frozen-lockfile
 ```
 
 ### 2. Build Application
 
 ```bash
-npm run build
+bun run build
 ```
 
-### 3. Verify Build
+### 3. Verify Startup
 
 ```bash
-ls -la dist/
+bun src/main.ts
 ```
 
 ## VPS Deployment with PM2

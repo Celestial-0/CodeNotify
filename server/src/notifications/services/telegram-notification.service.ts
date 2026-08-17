@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { TelegramService } from '../../integrations/telegram/telegram.service';
-import {
+import type {
   INotificationService,
   NotificationPayload,
   NotificationResult,

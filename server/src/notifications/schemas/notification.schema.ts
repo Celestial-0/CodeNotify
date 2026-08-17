@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document, Schema as MongooseSchema } from 'mongoose';
+import { Document, Schema as MongooseSchema, Types } from 'mongoose';
 import type { NotificationPayloadType } from '../../common/types';
 
 export type NotificationDocument = Notification & Document;
@@ -51,14 +51,14 @@ export class Notification {
     ref: 'User',
     index: true,
   })
-  userId: MongooseSchema.Types.ObjectId;
+  userId: Types.ObjectId | string;
 
   // Contest reference (optional, for contest-related notifications)
   @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'Contest', index: true })
-  contestId?: MongooseSchema.Types.ObjectId;
+  contestId?: Types.ObjectId | string;
 
   // Notification metadata
-  @Prop({ required: true, enum: NotificationType, index: true })
+  @Prop({ required: true, type: String, enum: NotificationType, index: true })
   type: NotificationType;
 
   @Prop({ required: true })
@@ -81,6 +81,7 @@ export class Notification {
   // Overall notification status
   @Prop({
     required: true,
+    type: String,
     enum: NotificationStatus,
     default: NotificationStatus.PENDING,
     index: true,
@@ -174,10 +175,7 @@ export const NotificationSchema = SchemaFactory.createForClass(Notification);
 // Create compound indexes for better query performance
 NotificationSchema.index({ userId: 1, createdAt: -1 });
 NotificationSchema.index({ userId: 1, status: 1 });
-NotificationSchema.index(
-  { userId: 1, contestId: 1 },
-  { unique: true, sparse: true },
-);
+NotificationSchema.index({ userId: 1, contestId: 1 });
 NotificationSchema.index({ contestId: 1, createdAt: -1 });
 NotificationSchema.index({ status: 1, scheduledAt: 1 });
 NotificationSchema.index({ status: 1, nextRetryAt: 1 });
@@ -222,11 +220,10 @@ NotificationSchema.set('toJSON', { virtuals: true });
 NotificationSchema.set('toObject', { virtuals: true });
 
 // Pre-save middleware to set default expiration (90 days)
-NotificationSchema.pre('save', function (next) {
+NotificationSchema.pre('save', function (this: NotificationDocument) {
   if (!this.expiresAt) {
     const ninetyDaysFromNow = new Date();
     ninetyDaysFromNow.setDate(ninetyDaysFromNow.getDate() + 90);
     this.expiresAt = ninetyDaysFromNow;
   }
-  next();
 });

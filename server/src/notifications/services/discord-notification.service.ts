@@ -1,15 +1,13 @@
 import { Injectable, Logger } from '@nestjs/common';
-import {
-  DiscordService,
-  DiscordSendResult,
-} from '../../integrations/discord/discord.service';
-import {
+import { DiscordService } from '../../integrations/discord/discord.service';
+import type { DiscordSendResult } from '../../integrations/discord/discord.service';
+import type {
   INotificationService,
   NotificationPayload,
   NotificationResult,
 } from '../interfaces/notification.interface';
 import { formatDiscordEmbed } from '../templates/discord-embed.template';
-import { APIEmbed } from 'discord-api-types/v10';
+import type { APIEmbed } from 'discord-api-types/v10';
 
 @Injectable()
 export class DiscordNotificationService implements INotificationService {

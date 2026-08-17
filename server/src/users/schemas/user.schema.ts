@@ -125,12 +125,22 @@ UserSchema.virtual('id').get(function (this: UserDocument) {
   return this._id.toHexString();
 });
 
-// Ensure virtuals are included when converting to JSON
+// Ensure virtuals are included and sensitive fields stripped when converting to JSON
 UserSchema.set('toJSON', {
   virtuals: true,
+  transform: (_doc, ret) => {
+    delete ret.password;
+    delete ret.refreshToken;
+    return ret;
+  },
 });
 
-// Ensure virtuals are included when converting to Object
+// Ensure virtuals are included and sensitive fields stripped when converting to Object
 UserSchema.set('toObject', {
   virtuals: true,
+  transform: (_doc, ret) => {
+    delete ret.password;
+    delete ret.refreshToken;
+    return ret;
+  },
 });

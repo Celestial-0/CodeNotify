@@ -6,7 +6,7 @@
 import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
-import { AUTH, TOKEN } from '../../common/constants';
+import { TOKEN } from '../../common/constants';
 
 export interface JwtPayload {
   sub: string;
@@ -46,16 +46,17 @@ export class TokenService {
       role: role,
     };
 
+    const jwtSecret = this.configService.get<string>('JWT_SECRET');
+    const refreshSecret =
+      this.configService.get<string>('JWT_REFRESH_SECRET') || jwtSecret;
+
     const [accessToken, refreshToken] = await Promise.all([
       this.jwtService.signAsync(payload, {
-        secret: this.configService.get<string>('JWT_SECRET', AUTH.JWT_SECRET),
+        secret: jwtSecret,
         expiresIn: TOKEN.ACCESS_TOKEN_EXPIRY,
       }),
       this.jwtService.signAsync(payload, {
-        secret: this.configService.get<string>(
-          'JWT_REFRESH_SECRET',
-          AUTH.JWT_REFRESH_SECRET,
-        ),
+        secret: refreshSecret,
         expiresIn: TOKEN.REFRESH_TOKEN_EXPIRY,
       }),
     ]);
@@ -73,11 +74,12 @@ export class TokenService {
    * @throws UnauthorizedException if token is invalid
    */
   async verifyRefreshToken(refreshToken: string): Promise<JwtPayload> {
+    const jwtSecret = this.configService.get<string>('JWT_SECRET');
+    const refreshSecret =
+      this.configService.get<string>('JWT_REFRESH_SECRET') || jwtSecret;
+
     return this.jwtService.verifyAsync<JwtPayload>(refreshToken, {
-      secret: this.configService.get<string>(
-        'JWT_REFRESH_SECRET',
-        AUTH.JWT_REFRESH_SECRET,
-      ),
+      secret: refreshSecret,
     });
   }
 }

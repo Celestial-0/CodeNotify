@@ -15,8 +15,8 @@ export * from './guards';
 // Pipes
 export * from './pipes';
 
-// Logger
-export * from './logger';
+// Filters
+export * from './filters';
 
 // Utils
 export * from './utils';

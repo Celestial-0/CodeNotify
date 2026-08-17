@@ -4,10 +4,12 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { TelegramService } from './telegram.service';
 import { TelegramController } from './telegram.controller';
 import { User, UserSchema } from '../../users/schemas/user.schema';
+import { UsersModule } from '../../users/users.module';
 
 @Module({
   imports: [
     ConfigModule,
+    UsersModule,
     MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]),
   ],
   controllers: [TelegramController],

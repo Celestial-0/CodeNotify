@@ -37,10 +37,9 @@ export function generateRandomString(
 ): string {
   let result = '';
   const charsetLength = charset.length;
-  const randomBytes = crypto.randomBytes(length);
 
   for (let i = 0; i < length; i++) {
-    result += charset[randomBytes[i] % charsetLength];
+    result += charset[crypto.randomInt(0, charsetLength)];
   }
 
   return result;

@@ -5,7 +5,6 @@ import { createZodDto } from 'nestjs-zod';
 export const UpdateUserSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters long').optional(),
   phoneNumber: z.string().optional(),
-  role: z.enum(['user', 'admin']).optional(),
   preferences: z
     .object({
       platforms: z

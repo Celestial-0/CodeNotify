@@ -15,7 +15,7 @@ export class GenerateTelegramLinkTokenDto extends createZodDto(
  */
 export const LinkTelegramSchema = z.object({
   token: z.string().min(1, 'Token is required'),
-  chatId: z.number().int().positive('Chat ID must be a positive integer'),
+  chatId: z.number().int('Chat ID must be an integer'),
   username: z.string().optional(),
 });
 

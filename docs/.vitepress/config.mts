@@ -39,7 +39,7 @@ export default defineConfig({
         ]
       },
       {
-        text: 'v0.1.0-beta',
+        text: 'v1.0.0',
         items: [
           { text: 'Changelog', link: '/changelog' },
           { text: 'Contributing', link: '/contributing' }

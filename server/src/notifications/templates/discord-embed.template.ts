@@ -1,5 +1,5 @@
-import { APIEmbed } from 'discord-api-types/v10';
-import { NotificationPayload } from '../interfaces/notification.interface';
+import type { APIEmbed } from 'discord-api-types/v10';
+import type { NotificationPayload } from '../interfaces/notification.interface';
 
 /**
  * Platform colors for Discord embeds (in decimal format)

@@ -11,6 +11,7 @@ import type { Update, InlineKeyboardMarkup } from 'grammy/types';
 import { Model } from 'mongoose';
 import { User } from '../../users/schemas/user.schema';
 import type { UserDocument } from '../../users/schemas/user.schema';
+import { UserLinkingService } from '../../users/user-linking.service';
 
 @Injectable()
 export class TelegramService implements OnModuleInit, OnModuleDestroy {
@@ -24,6 +25,7 @@ export class TelegramService implements OnModuleInit, OnModuleDestroy {
   constructor(
     private readonly configService: ConfigService,
     @InjectModel(User.name) private readonly userModel: Model<UserDocument>,
+    private readonly userLinkingService: UserLinkingService,
   ) {
     this.token = this.configService.get<string>('TELEGRAM_BOT_TOKEN');
     const featureFlag =
@@ -32,6 +34,9 @@ export class TelegramService implements OnModuleInit, OnModuleDestroy {
 
     if (this.enabled && this.token) {
       this.bot = new Bot(this.token);
+      this.bot.catch((err) => {
+        this.logger.error(`Telegram bot error: ${err.message}`);
+      });
     }
   }
 
@@ -106,26 +111,19 @@ export class TelegramService implements OnModuleInit, OnModuleDestroy {
     }
 
     // Local development fallback when HTTPS webhook cannot be registered.
-    void this.bot.start({
-      allowed_updates: ['message', 'callback_query'],
-      drop_pending_updates: true,
-      onStart: (botInfo) => {
-        this.logger.log(
-          `Telegram long polling started for @${botInfo.username}`,
-        );
-      },
-    });
-  }
-
-  private getApiBaseUrl(): string {
-    const configuredBaseUrl =
-      this.configService.get<string>('WEBHOOK_BASE_URL');
-    if (configuredBaseUrl) {
-      return configuredBaseUrl;
-    }
-
-    const port = this.configService.get<string>('PORT') ?? '4010';
-    return `http://127.0.0.1:${port}`;
+    this.bot
+      .start({
+        allowed_updates: ['message', 'callback_query'],
+        drop_pending_updates: true,
+        onStart: (botInfo) => {
+          this.logger.log(
+            `Telegram long polling started for @${botInfo.username}`,
+          );
+        },
+      })
+      .catch((error: Error) => {
+        this.logger.error(`Telegram polling error: ${error.message}`);
+      });
   }
 
   private async completeLinkingFromToken(
@@ -135,28 +133,13 @@ export class TelegramService implements OnModuleInit, OnModuleDestroy {
     username?: string,
   ): Promise<void> {
     try {
-      const baseUrl = this.getApiBaseUrl();
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
-      timeoutId.unref?.();
+      const result = await this.userLinkingService.linkTelegram(
+        token,
+        chatId,
+        username,
+      );
 
-      const response = await fetch(
-        `${baseUrl}/users/integrations/telegram/callback`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            token,
-            chatId,
-            username,
-          }),
-          signal: controller.signal,
-        },
-      ).finally(() => {
-        clearTimeout(timeoutId);
-      });
-
-      if (response.ok) {
+      if (result.success) {
         await ctx.reply(
           `✅ <b>Account Linked Successfully!</b>\n\n` +
             `You will now receive contest notifications here.\n\n` +
@@ -165,10 +148,9 @@ export class TelegramService implements OnModuleInit, OnModuleDestroy {
           { parse_mode: 'HTML' },
         );
       } else {
-        const error = (await response.json()) as { message?: string };
         await ctx.reply(
           `❌ <b>Linking Failed</b>\n\n` +
-            `${error.message || 'The link token may be expired.'}\n\n` +
+            `The link token may be invalid or expired.\n\n` +
             `Please try again from your CodeNotify settings.`,
           { parse_mode: 'HTML' },
         );
@@ -176,11 +158,10 @@ export class TelegramService implements OnModuleInit, OnModuleDestroy {
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : 'Unknown error';
-      const isTimeout = error instanceof Error && error.name === 'AbortError';
       this.logger.error(`Failed to link account: ${errorMessage}`);
       await ctx.reply(
         `❌ <b>Linking Error</b>\n\n` +
-          `${isTimeout ? 'Request timed out.' : 'Something went wrong.'} Please try again later.`,
+          `${errorMessage || 'Something went wrong.'} Please try again later.`,
         { parse_mode: 'HTML' },
       );
     }

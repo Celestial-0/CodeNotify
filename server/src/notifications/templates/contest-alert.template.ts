@@ -1,4 +1,4 @@
-import { NotificationPayload } from '../interfaces/notification.interface';
+import type { NotificationPayload } from '../interfaces/notification.interface';
 
 /**
  * Format contest alert email template with HTML

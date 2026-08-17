@@ -5,6 +5,16 @@ All notable changes to CodeNotify will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.0] - 2026-08-17
+
+### Added
+- **Production Dockerization**: Multi-stage Alpine Bun container running as non-root user
+- **GitHub Container Registry CI/CD**: Automated image building and publishing (`ghcr.io/celestial-0/codenotify-server`) on Git push and tags
+- **Strict Typing Architecture**: End-to-end type safety, removed all `any` casts and strongly typed MongoDB queries
+- **ES Modules (ESM)**: Full migration to native ES Modules (`"type": "module"`)
+- **Port Standardization**: Unified backend running port to `3999` across services, configurations, and Docker compose
+- **Security Hardening**: Fixed CWE-915 privilege escalation, mounted `helmet()`, dynamic CORS origin validation, and SHA-256 token hashing
+
 ## [0.1.0-beta] - 2026-01-06
 
 ### Added

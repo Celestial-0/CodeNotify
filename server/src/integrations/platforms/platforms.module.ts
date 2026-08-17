@@ -7,7 +7,7 @@ import { CodeforcesAdapter } from './codeforces/codeforces.adapter';
 import { LeetCodeAdapter } from './leetcode/leetcode.adapter';
 import { CodeChefAdapter } from './codechef/codechef.adapter';
 import { AtCoderAdapter } from './atcoder/atcoder.adapter';
-import { PlatformAdapter } from './base/platform.interface';
+import type { PlatformAdapter } from './base/platform.interface';
 import { PLATFORM_ADAPTERS_TOKEN } from '../../common/common.constants';
 
 /**
